@@ -7,6 +7,6 @@ dependencies {
     implementation(project(":sharkuscator.obfuscator"))
 }
 
-//application {
-//    mainClass = "dev.sharkuscator."
-//}
+application {
+    mainClass = "dev.sharkuscator.BootstrapSharkuscator"
+}

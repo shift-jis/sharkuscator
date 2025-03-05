@@ -1,0 +1,3 @@
+package dev.sharkuscator.obfuscator.configuration.transformers
+
+open class TransformerConfiguration

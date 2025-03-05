@@ -17,13 +17,8 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-// Include the `app` and `utils` subprojects in the build.
-// If there are changes in only one of the projects, Gradle will rebuild only the one that has changed.
-// Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
-include(":app")
-include(":utils")
+include("sharkuscator.annotations")
+include("sharkuscator.obfuscator")
+include("sharkuscator.standalone")
 
 rootProject.name = "sharkuscator"
-include("sharkuscator.obfuscator")
-include("sharkuscator.annotations")
-include("sharkuscator.standalone")

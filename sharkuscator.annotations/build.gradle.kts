@@ -10,7 +10,3 @@ repositories {
 dependencies {
     implementation(libs.bundles.kotlinxEcosystem)
 }
-
-kotlin {
-    jvmToolchain(8)
-}
