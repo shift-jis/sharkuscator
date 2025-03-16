@@ -10,7 +10,7 @@ open class JsonConfiguration {
     @get:SerializedName("transformers")
     val transformers: JsonObject = JsonObject()
 
-    fun <T : TransformerConfiguration> fromTransformer(transformer: SharkTransformer, clazz: Class<T>): T {
-        return Sharkuscator.GSON.fromJson(this.transformers.getAsJsonObject(transformer.getName()), clazz)
+    fun <T : TransformerConfiguration> fromTransformer(transformer: SharkTransformer<T>, clazz: Class<T>): T {
+        return Sharkuscator.gson.fromJson(this.transformers.getAsJsonObject(transformer.getName()), clazz)
     }
 }

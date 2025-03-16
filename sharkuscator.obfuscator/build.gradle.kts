@@ -19,8 +19,7 @@ dependencies {
     }
     implementation("com.github.xxDark:SSVM:1.9.0.3")
 
-    implementation("org.slf4j:slf4j-simple:2.1.0-alpha1")
-    implementation("org.slf4j:slf4j-api:2.1.0-alpha1")
+    implementation("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
     implementation("com.google.code.gson:gson:2.12.1")
 
     implementation("dev.reimer:progressbar-ktx:0.1.0")
