@@ -1,6 +1,9 @@
 plugins {
-    kotlin("plugin.lombok") version "2.1.10"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+
     id("io.freefair.lombok") version "8.10"
+    kotlin("plugin.lombok") version "2.1.10"
+
     id("buildsrc.convention.kotlin-jvm")
     alias(libs.plugins.kotlinPluginSerialization)
 }
@@ -15,6 +18,7 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.17.0")
 
     implementation("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
+    implementation("meteordevelopment:orbit:0.2.4")
     implementation("com.google.code.gson:gson:2.12.1")
 
     compileOnly("org.projectlombok:lombok:1.18.36")

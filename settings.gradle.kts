@@ -4,6 +4,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven("https://jitpack.io")
+        maven("https://maven.meteordev.org/releases")
     }
 }
 

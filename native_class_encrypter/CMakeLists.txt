@@ -11,7 +11,7 @@ add_library(class_encrypter SHARED
         src/class_encrypter.cpp
         src/class_encrypter.h
 
-        includes/xxtea.c
+        includes/xxtea.cpp
         includes/xxtea.h
 )
 
@@ -22,6 +22,6 @@ add_library(class_decrypter SHARED
         src/decrypter_agent.cpp
         src/decrypter_agent.h
 
-        includes/xxtea.c
+        includes/xxtea.cpp
         includes/xxtea.h
 )
