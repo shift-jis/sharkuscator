@@ -3,10 +3,6 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(libs.bundles.kotlinxEcosystem)
 }

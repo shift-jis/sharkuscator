@@ -85,6 +85,7 @@ void JNICALL class_decryption_hook(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jclass 
     for (int i = 0; i < class_data_len; i++) {
         _data[i] = class_data[i];
     }
+    printf("class loaded: %s\n", name);
 }
 
 void package_separators(char* file_path_buffer, const char* options) {

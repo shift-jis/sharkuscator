@@ -5,25 +5,17 @@ plugins {
     alias(libs.plugins.kotlinPluginSerialization)
 }
 
-repositories {
-    mavenCentral()
-    maven("https://jitpack.io")
-}
-
 dependencies {
-    implementation("com.github.LLVM-but-worse.maple-ir:app-services:1.0.0-SNAPSHOT-1") {
-        exclude(module = "property-framework")
-    }
-    implementation("com.github.LLVM-but-worse.maple-ir:ir:1.0.0-SNAPSHOT-1") {
-        exclude(module = "property-framework")
-    }
+    implementation(files("../libraries/mapleir-full-with-deps.jar"))
+
+    implementation("com.github.Col-E:jphantom:1.4.3")
     implementation("com.github.xxDark:SSVM:1.9.0.3")
+
+    implementation("net.java.dev.jna:jna-platform:5.17.0")
+    implementation("net.java.dev.jna:jna:5.17.0")
 
     implementation("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
     implementation("com.google.code.gson:gson:2.12.1")
-
-    implementation("dev.reimer:progressbar-ktx:0.1.0")
-    implementation("me.tongfei:progressbar:0.10.1")
 
     compileOnly("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.36")
@@ -31,4 +23,3 @@ dependencies {
     implementation(libs.bundles.kotlinxEcosystem)
     testImplementation(kotlin("test"))
 }
-

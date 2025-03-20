@@ -1,12 +1,16 @@
 package dev.sharkuscator
 
-import dev.sharkuscator.obfuscator.SharkSession
+import com.xenomachina.argparser.ArgParser
 import dev.sharkuscator.obfuscator.Sharkuscator
+import java.io.File
 import java.nio.file.Paths
 
 object BootstrapSharkuscator {
     @JvmStatic
     fun main(args: Array<String>) {
-        Sharkuscator.obfuscate(SharkSession(Paths.get("./shark_config.json"), Paths.get("./input_jar.jar"), Paths.get("./output_jar.jar")))
+        ArgParser(args).parseInto(::ObfuscatorArguments).run {
+            val obfuscator = Sharkuscator(Paths.get(configJsonPath), File(inputJarPath), File(outputJarPath))
+            obfuscator.obfuscate()
+        }
     }
 }

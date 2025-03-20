@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":sharkuscator.obfuscator"))
+    implementation("com.xenomachina:kotlin-argparser:2.0.7")
 }
 
 application {

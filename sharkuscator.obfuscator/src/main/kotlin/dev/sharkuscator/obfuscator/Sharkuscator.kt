@@ -1,86 +1,97 @@
 package dev.sharkuscator.obfuscator
 
-import com.google.gson.FormattingStyle
+import com.google.common.collect.ImmutableList
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import dev.sharkuscator.obfuscator.assembly.SharkClassNode
-import dev.sharkuscator.obfuscator.classsource.ZipImportResult
-import dev.sharkuscator.obfuscator.configuration.JsonConfiguration
-import dev.sharkuscator.obfuscator.encryption.ClassEncrypter
-import dev.sharkuscator.obfuscator.hierarchies.DefaultHierarchy
-import dev.sharkuscator.obfuscator.hierarchies.HierarchyCache
+import dev.sharkuscator.obfuscator.assembler.KlassResolvingDumper
+import dev.sharkuscator.obfuscator.assembler.KlassWriter
+import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
+import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
+import dev.sharkuscator.obfuscator.extensions.toSnakeCase
+import dev.sharkuscator.obfuscator.transformers.SharkTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscate.ClassEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscate.ExampleTransformer
 import org.apache.log4j.LogManager
 import org.apache.log4j.Logger
+import org.mapleir.app.service.ApplicationClassSource
+import org.mapleir.app.service.CompleteResolvingJarDumper
+import org.mapleir.app.service.LibraryClassSource
 import org.mapleir.asm.ClassNode
-import org.mapleir.asm.FieldNode
-import org.mapleir.asm.MethodNode
-import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.topdank.byteengineer.commons.data.JarContents
+import org.topdank.byteengineer.commons.data.JarInfo
+import org.topdank.byteio.`in`.SingleJarDownloader
 import java.io.File
+import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.jar.JarFile
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 import kotlin.io.path.readText
 
-object Sharkuscator {
-    private val logger: Logger = LogManager.getLogger("(Sharkuscator)")
 
-    private val loadedLibraries: MutableList<String> = mutableListOf()
-    private val hierarchy: HierarchyCache = DefaultHierarchy()
-
-    private val prettyStyle = FormattingStyle.PRETTY.withIndent("    ")
-    val gson: Gson = GsonBuilder().setFormattingStyle(prettyStyle).create()
-
-    private lateinit var configuration: JsonConfiguration
-    private lateinit var sharkSession: SharkSession
-    private lateinit var importResult: ZipImportResult
-
-    fun obfuscate(sharkSession: SharkSession) {
-        this.sharkSession = sharkSession
-        this.configuration = importConfiguration()
-        this.importResult = importZipEntries()
+class Sharkuscator(
+    private val configJsonPath: Path,
+    private val inputJarFile: File,
+    private val outputJarFile: File,
+) {
+    companion object {
+        val logger: Logger = LogManager.getLogger("(Sharkuscator)")
+        val gson: Gson = GsonBuilder().create()
     }
 
-    private fun importConfiguration(): JsonConfiguration {
+    private val loadedNatives = mutableListOf<String>()
+    private val transformers = mutableListOf(
+        ExampleTransformer(),
+        ClassEncryptionTransformer(),
+    )
+
+    private lateinit var configuration: GsonConfiguration
+    private lateinit var jarContents: JarContents<ClassNode>
+    private lateinit var classSource: ApplicationClassSource
+
+    fun obfuscate() {
+        configuration = importConfiguration()
+        jarContents = downloadJarContents(inputJarFile)
+
+        // TODO Support JMods
+        classSource = ApplicationClassSource(inputJarFile.getName().drop(4), jarContents.classContents)
+        classSource.addLibraries(resolveLibraries(classSource, File(System.getProperty("java.home"), "lib/jce.jar")))
+        classSource.addLibraries(resolveLibraries(classSource, File(System.getProperty("java.home"), "lib/rt.jar")))
+
+        KlassResolvingDumper(jarContents, classSource).dump(outputJarFile)
+    }
+
+    private fun importConfiguration(): GsonConfiguration {
         try {
             logger.info("Importing configuration...")
-            return gson.fromJson(sharkSession.configurationFile.readText(), JsonConfiguration::class.java)
+            return gson.fromJson(configJsonPath.readText(), GsonConfiguration::class.java)
         } catch (exception: Exception) {
             exception.printStackTrace()
-            return JsonConfiguration();
+            return GsonConfiguration()
         }
     }
 
-    private fun importZipEntries(): ZipImportResult {
-        val classNodes = mutableMapOf<String, SharkClassNode>()
-        val resources = mutableMapOf<String, ByteArray>()
-        val packages = mutableMapOf<String, ByteArray>()
-        logger.info("Importing jar entries...")
-
-        try {
-            val inputJarFile = JarFile(sharkSession.inputJarPath.toFile())
-            for (sortedEntry in inputJarFile.entries().toList().sortedBy { !it.name.split("/").last().contains(".") }) {
-                val streamData = inputJarFile.getInputStream(sortedEntry).readBytes()
-                if (sortedEntry.name.endsWith(".class")) {
-                    classNodes[sortedEntry.name] = SharkClassNode(ClassNode().apply {
-                        ClassReader(streamData).accept(node, ClassReader.EXPAND_FRAMES)
-                        node.methods.forEach { methods.add(MethodNode(it, this)) }
-                        node.fields.forEach { fields.add(FieldNode(it, this)) }
-                    })
-                } else if (!sortedEntry.name.endsWith("/")) {
-                    resources[sortedEntry.name] = streamData
-                } else {
-                    packages[sortedEntry.name] = streamData
-                }
-            }
-        } catch (exception: Exception) {
-            exception.printStackTrace()
+    private fun initializeTransformers(): ImmutableList<SharkTransformer<TransformerConfiguration>> {
+        val builder = ImmutableList.builder<SharkTransformer<TransformerConfiguration>>()
+        for (transformer in transformers.filter { configuration.transformers.has(it.getName().toSnakeCase()) }) {
+            builder.add(transformer.apply { initialization(configuration) })
         }
+        return builder.build()
+    }
 
-        return ZipImportResult(classNodes, resources, packages)
+    private fun resolveLibraries(classSource: ApplicationClassSource, libraryFile: File): LibraryClassSource {
+        return LibraryClassSource(classSource, downloadJarContents(libraryFile).classContents)
+    }
+
+    private fun downloadJarContents(jarFile: File): JarContents<ClassNode> {
+        return SingleJarDownloader<ClassNode>(JarInfo(jarFile)).apply { download() }.jarContents
     }
 
     private fun useNativeLibrary(nativeLibrary: String): Boolean {
-        if (loadedLibraries.contains(nativeLibrary)) {
+        if (loadedNatives.contains(nativeLibrary)) {
             return true
         }
 
@@ -92,21 +103,22 @@ object Sharkuscator {
         logger.info(System.getProperty("java.library.path"))
 
         try {
-            val declaredField = ClassLoader::class.java.getDeclaredField("sys_paths")
-            declaredField.setAccessible(true)
-            declaredField.set(null, null)
+            ClassLoader::class.java.getDeclaredField("sys_paths").apply {
+                isAccessible = true
+                set(null, null)
+            }
         } catch (exception: Exception) {
             exception.printStackTrace()
-            return false;
+            return false
         }
 
         System.loadLibrary(absolutePath.split("/").last().split(".dll").first())
-        loadedLibraries.add(nativeLibrary)
+        loadedNatives.add(nativeLibrary)
         return true
     }
 
     private fun extractResource(name: String, suffix: String): String? {
-        val inputStream = Sharkuscator.javaClass.getResourceAsStream(name) ?: return null
+        val inputStream = Sharkuscator::class.java.getResourceAsStream(name) ?: return null
         val extractedFile = File.createTempFile(System.nanoTime().toString(), suffix)
         Files.copy(inputStream, extractedFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
         inputStream.close()
