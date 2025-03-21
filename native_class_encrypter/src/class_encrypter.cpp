@@ -1,9 +1,8 @@
 #include "class_encrypter.h"
 
+#include "../includes/xxtea.h"
 #include <cstdlib>
 #include <cstring>
-
-#include "../includes/xxtea.h"
 
 #define XXTEA_ENCRYPT_START_OFFSET 10
 #define XXTEA_SUB_BLOCK_SIZE 4
@@ -53,7 +52,7 @@ JNIEXPORT auto Java_dev_sharkuscator_obfuscator_encryption_ClassEncrypter_encryp
     return class_byte_array;
 }
 
-void xxtea_encrypt_class(const size_t class_size, unsigned char* class_data, const unsigned char* key_data) {
+void xxtea_encrypt_class(const jint class_size, unsigned char* class_data, const unsigned char* key_data) {
     for (int i = 0; i < class_size; ++i) {
         class_data[i] = static_cast<char>(convert_to_magic(class_data[i]));
     }
@@ -72,8 +71,10 @@ void xxtea_encrypt_class(const size_t class_size, unsigned char* class_data, con
         class_data[last_index] = temp_data;
     }
 
-    for (int i = 0; i < (class_size - XXTEA_ENCRYPT_START_OFFSET) / XXTEA_BLOCK_SIZE; i++) {
-        xxtea_encrypt_block(XXTEA_ENCRYPT_START_OFFSET + i * XXTEA_BLOCK_SIZE, class_data, key_data);
+    if (class_size > XXTEA_ENCRYPT_START_OFFSET) {
+        for (int i = 0; i < (class_size - XXTEA_ENCRYPT_START_OFFSET) / XXTEA_BLOCK_SIZE; i++) {
+            xxtea_encrypt_block(XXTEA_ENCRYPT_START_OFFSET + i * XXTEA_BLOCK_SIZE, class_data, key_data);
+        }
     }
 }
 
@@ -90,18 +91,18 @@ void xxtea_encrypt_block(const int data_offset, unsigned char* class_data, const
         (bytes_to_uint32(key_data + XXTEA_SUB_BLOCK_SIZE * 2)),
         (bytes_to_uint32(key_data + XXTEA_SUB_BLOCK_SIZE * 3)),
     };
-    uint32_t uintBlocks[2] = {
+    uint32_t uint_blocks[2] = {
         bytes_to_uint32(block1_bytes),
         bytes_to_uint32(block2_bytes),
     };
 
-    xxtea_encrypt(uintBlocks, xxtea_key);
+    xxtea_encrypt(uint_blocks, xxtea_key);
 
     unsigned char encrypted_block1_bytes[XXTEA_SUB_BLOCK_SIZE];
     unsigned char encrypted_block2_bytes[XXTEA_SUB_BLOCK_SIZE];
 
-    uint32_to_bytes(uintBlocks[0], encrypted_block1_bytes);
-    uint32_to_bytes(uintBlocks[1], encrypted_block2_bytes);
+    uint32_to_bytes(uint_blocks[0], encrypted_block1_bytes);
+    uint32_to_bytes(uint_blocks[1], encrypted_block2_bytes);
 
     memcpy(class_data + data_offset, encrypted_block1_bytes, XXTEA_SUB_BLOCK_SIZE);
     memcpy(class_data + data_offset + XXTEA_SUB_BLOCK_SIZE, encrypted_block2_bytes, XXTEA_SUB_BLOCK_SIZE);

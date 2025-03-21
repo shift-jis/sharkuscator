@@ -1,7 +1,8 @@
 package dev.sharkuscator.obfuscator.assembler
 
 import dev.sharkuscator.obfuscator.SharedInstances
-import dev.sharkuscator.obfuscator.transformers.events.ClassWriteEvent
+import dev.sharkuscator.obfuscator.transformers.events.writes.ResourceWriteEvent
+import dev.sharkuscator.obfuscator.transformers.events.writes.ClassWriteEvent
 import org.mapleir.app.service.ApplicationClassSource
 import org.mapleir.app.service.ClassTree
 import org.mapleir.app.service.CompleteResolvingJarDumper
@@ -11,17 +12,8 @@ import org.topdank.byteengineer.commons.data.JarContents
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 
-class KlassResolvingDumper(jarContents: JarContents<ClassNode>, private val classSource: ApplicationClassSource) : CompleteResolvingJarDumper(jarContents, classSource) {
-//    override fun dump(outputJarFile: File) {
-//        if (outputJarFile.exists() && !outputJarFile.delete()) {
-//            Sharkuscator.logger.error("Could not delete an already existing destination file")
-//            return
-//        }
-//
-//        JarOutputStream(FileOutputStream(outputJarFile)).use {
-//            it.setLevel(Deflater.DEFAULT_COMPRESSION)
-//        }
-//    }
+class KlassResolvingDumper(private val jarContents: JarContents<ClassNode>, private val classSource: ApplicationClassSource) : CompleteResolvingJarDumper(jarContents, classSource) {
+    private val singleSuccessful = 1
 
     override fun dumpClass(outputStream: JarOutputStream, name: String, classNode: ClassNode): Int {
         val classEntry = JarEntry("${classNode.name}.class")
@@ -31,10 +23,10 @@ class KlassResolvingDumper(jarContents: JarContents<ClassNode>, private val clas
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_FRAMES)
             classNode.node.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(classSource, classWriter.toByteArray())
+            val classWriteEvent = ClassWriteEvent(jarContents, classSource, classNode, classWriter.toByteArray())
             SharedInstances.eventBus.post(classWriteEvent)
             if (classWriteEvent.isCancelled) {
-                return 1
+                return singleSuccessful
             }
 
             outputStream.write(classWriteEvent.classData)
@@ -42,16 +34,29 @@ class KlassResolvingDumper(jarContents: JarContents<ClassNode>, private val clas
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_MAXS)
             classNode.node.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(classSource, classWriter.toByteArray())
+            val classWriteEvent = ClassWriteEvent(jarContents, classSource, classNode, classWriter.toByteArray())
             SharedInstances.eventBus.post(classWriteEvent)
             if (classWriteEvent.isCancelled) {
-                return 1
+                return singleSuccessful
             }
 
             outputStream.write(classWriteEvent.classData)
         }
 
-        return 1
+        return singleSuccessful
+    }
+
+    override fun dumpResource(outputStream: JarOutputStream, name: String, bytes: ByteArray): Int {
+        val resourceWriteEvent = ResourceWriteEvent(classSource, name, bytes)
+        SharedInstances.eventBus.post(resourceWriteEvent)
+        if (resourceWriteEvent.isCancelled) {
+            return singleSuccessful
+        }
+
+        val resourceEntry = JarEntry(resourceWriteEvent.name)
+        outputStream.putNextEntry(resourceEntry)
+        outputStream.write(resourceWriteEvent.bytes)
+        return singleSuccessful
     }
 
     override fun buildClassWriter(tree: ClassTree, flags: Int): ClassWriter {

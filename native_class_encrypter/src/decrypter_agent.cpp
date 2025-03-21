@@ -5,6 +5,8 @@
 #include <vector>
 #include <windows.h>
 
+#include "class_decrypter.h"
+
 unsigned char* KEY_DATA;
 char* PACKAGE_NAME;
 
@@ -51,24 +53,6 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm, char* options, void* reserved) {
         return JNI_ERR;
     }
 
-    // const HMODULE jvm_module = LoadLibrary("jvm.dll");
-    // if (jvm_module == nullptr) {
-    //     return JNI_ERR;
-    // }
-    //
-    // FARPROC vm_structs_address = GetProcAddress(jvm_module, "gHotSpotVMStructs");
-    // if (vm_structs_address == nullptr) {
-    //     return JNI_ERR;
-    // }
-    //
-    // const auto base_address = reinterpret_cast<uintptr_t>(jvm_module);
-    // const auto function_rva = reinterpret_cast<uintptr_t>(vm_structs_address) - base_address;
-    //
-    // printf("gHotSpotVMStructs RVA: 0x%016llx\n", function_rva);
-    // printf("Function Addr: 0x%016llx\n", reinterpret_cast<uintptr_t>(vm_structs_address));
-    // *reinterpret_cast<size_t*>(vm_structs_address) = 0;
-    // FreeLibrary(jvm_module);
-
     return JNI_OK;
 }
 
@@ -77,15 +61,21 @@ JNIEXPORT void JNICALL Agent_OnUnload(JavaVM* vm) {
 }
 
 void JNICALL class_decryption_hook(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jclass class_being_redefined, jobject loader, const char* name, jobject protection_domain, jint class_data_len, const unsigned char* class_data, jint* new_class_data_len,
-                              unsigned char** new_class_data) {
+                                   unsigned char** new_class_data) {
     *new_class_data_len = class_data_len;
     jvmti_env->Allocate(class_data_len, new_class_data);
 
     unsigned char *_data = *new_class_data;
-    for (int i = 0; i < class_data_len; i++) {
-        _data[i] = class_data[i];
+    if (name && strncmp(name, PACKAGE_NAME, strlen(PACKAGE_NAME)) == 0) {
+        for (int i = 0; i < class_data_len; i++) {
+            _data[i] = class_data[i];
+        }
+        xxtea_decrypt_class(class_data_len, _data, KEY_DATA);
+    } else {
+        for (int i = 0; i < class_data_len; i++) {
+            _data[i] = class_data[i];
+        }
     }
-    printf("class loaded: %s\n", name);
 }
 
 void package_separators(char* file_path_buffer, const char* options) {
