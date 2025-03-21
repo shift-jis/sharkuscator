@@ -13,10 +13,7 @@ class FieldRenamingTransformer : AbstractTransformer<RenamingConfiguration>("Fie
     private val dictionary = AlphabetDictionary()
 
     @EventHandler
-    private fun onFieldTransform(transformEvent: FieldTransformEvent) {
-        SharedInstances.remapper.setMapping(
-            Type.getObjectType(transformEvent.eventNode.fullyName()).internalName,
-            "${configuration.prefix}${dictionary.nextString()}"
-        )
+    private fun onFieldTransform(event: FieldTransformEvent) {
+        SharedInstances.remapper.setMapping(event.eventNode.fullyName(), "${configuration.prefix}${dictionary.nextString()}")
     }
 }

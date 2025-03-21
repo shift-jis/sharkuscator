@@ -8,11 +8,10 @@ import meteordevelopment.orbit.EventHandler
 
 class LocalVariableRemoveTransformer : AbstractTransformer<TransformerConfiguration>("LocalVariableRemove", TransformerConfiguration::class.java) {
     @EventHandler
-    private fun onMethodTransform(transformEvent: MethodTransformEvent) {
-        if (transformEvent.eventNode.isNative || transformEvent.eventNode.isClInit()) {
+    private fun onMethodTransform(event: MethodTransformEvent) {
+        if (event.eventNode.isNative || event.eventNode.isClInit()) {
             return
         }
-
-        transformEvent.eventNode.node.localVariables = null
+        event.eventNode.node.localVariables = null
     }
 }

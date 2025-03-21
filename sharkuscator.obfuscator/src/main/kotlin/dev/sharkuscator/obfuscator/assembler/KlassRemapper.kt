@@ -26,6 +26,10 @@ class KlassRemapper : Remapper() {
         return mappings[internalName]
     }
 
+    fun contains(internalName: String): Boolean {
+        return mappings.containsKey(internalName)
+    }
+
     fun setMapping(previous: String, newest: String) {
         mappings[previous] = newest
     }

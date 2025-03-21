@@ -13,14 +13,14 @@ class ResourceRenamingTransformer : AbstractTransformer<TransformerConfiguration
     private val dictionary = SimilarDictionary(20)
 
     @EventHandler
-    private fun onResourceWrite(writeEvent: ResourceWriteEvent) {
-        writeEvent.name = mappings[writeEvent.name] ?: writeEvent.name
+    private fun onResourceWrite(event: ResourceWriteEvent) {
+        event.name = mappings[event.name] ?: event.name
     }
 
     @EventHandler
-    private fun onMethodTransform(transformEvent: MethodTransformEvent) {
-        val methodNode = transformEvent.eventNode.node
-        if (transformEvent.eventNode.isNative || transformEvent.eventNode.isAbstract || methodNode.instructions == null) {
+    private fun onMethodTransform(event: MethodTransformEvent) {
+        val methodNode = event.eventNode.node
+        if (event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
@@ -36,7 +36,7 @@ class ResourceRenamingTransformer : AbstractTransformer<TransformerConfiguration
 
         methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst != null && it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
             val resourceName = (instruction.cst as String).substring(1)
-            if (transformEvent.jarContents.resourceContents.any { it.name == resourceName }) {
+            if (event.jarContents.resourceContents.any { it.name == resourceName }) {
                 if (!mappings.containsKey(resourceName)) {
                     mappings[resourceName] = dictionary.nextString()
                 }

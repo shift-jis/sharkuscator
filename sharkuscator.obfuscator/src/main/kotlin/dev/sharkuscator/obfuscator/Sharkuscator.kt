@@ -61,7 +61,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
     fun obfuscate() {
 //        SharedInstances.logger.level = Level.DEBUG
-        System.setErr(PrintStream(NullOutputStream()))
+//        System.setErr(PrintStream(NullOutputStream()))
 
         configuration = importConfiguration()
         exclusions = MixedExclusionRule(configuration.exclusions.map { StringExclusionRule(it.toRegex()) })

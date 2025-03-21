@@ -19,13 +19,13 @@ class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfigurat
     }
 
     @EventHandler(priority = 1337)
-    private fun onClassWrite(writeEvent: ClassWriteEvent) {
+    private fun onClassWrite(event: ClassWriteEvent) {
         if (configuration.password.length != 16) {
             SharedInstances.logger.error("Encryption key is not 16 characters long")
             return
         }
 
-        writeEvent.classData = ClassEncrypter.encrypt(writeEvent.classData, configuration.password.encodeToByteArray())
-        SharedInstances.logger.debug("Encrypted ${writeEvent.eventNode.name}")
+        event.classData = ClassEncrypter.encrypt(event.classData, configuration.password.encodeToByteArray())
+        SharedInstances.logger.debug("Encrypted ${event.eventNode.name}")
     }
 }

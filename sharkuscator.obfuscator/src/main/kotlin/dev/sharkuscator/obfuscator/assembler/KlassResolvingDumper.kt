@@ -29,19 +29,17 @@ class KlassResolvingDumper(
             return
         }
 
-        JarOutputStream(FileOutputStream(outputJarFile)).use {
-            for (jarResource in jarContents.resourceContents) {
-                if (!jarResource.name.endsWith("/") && jarResource.name.contains(".")) {
-                    discoveredPackages.add(jarResource.name.split("/").dropLast(1).joinToString("/"))
-                }
+        JarOutputStream(FileOutputStream(outputJarFile)).use { outputStream ->
+            jarContents.resourceContents.filter { !it.name.endsWith("/") }.forEach {
+                discoveredPackages.add(it.name.split("/").dropLast(1).joinToString("/"))
             }
 
             for (classNode in jarContents.classContents) {
-                dumpClass(it, classNode.name, classNode)
+                dumpClass(outputStream, classNode.name, classNode)
             }
 
             for (jarResource in jarContents.resourceContents) {
-                dumpResource(it, jarResource.name, jarResource.data)
+                dumpResource(outputStream, jarResource.name, jarResource.data)
             }
         }
     }
@@ -94,7 +92,7 @@ class KlassResolvingDumper(
     }
 
     override fun dumpResource(outputStream: JarOutputStream, name: String, bytes: ByteArray): Int {
-        if (!name.startsWith("META-INF") && name.endsWith("/") && !discoveredPackages.contains(name)) {
+        if (name.endsWith("/") && !discoveredPackages.contains(name)) {
             return 0
         }
 
