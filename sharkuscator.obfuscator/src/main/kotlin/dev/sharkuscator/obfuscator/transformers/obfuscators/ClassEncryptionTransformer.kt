@@ -26,6 +26,6 @@ class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfigurat
         }
 
         event.classData = ClassEncrypter.encrypt(event.classData, configuration.password.encodeToByteArray())
-        SharedInstances.logger.debug("Encrypted ${event.eventNode.name}")
+        SharedInstances.logger.debug("Encrypted ${event.classNode.name}")
     }
 }

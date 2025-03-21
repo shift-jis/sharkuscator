@@ -56,7 +56,7 @@ class KlassResolvingDumper(
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_FRAMES)
             originalNode.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(jarContents, classSource, classNode, classWriter.toByteArray())
+            val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
                 SharedInstances.eventBus.post(classWriteEvent)
                 if (classWriteEvent.isCancelled) {
@@ -73,7 +73,7 @@ class KlassResolvingDumper(
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_MAXS)
             originalNode.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(jarContents, classSource, classNode, classWriter.toByteArray())
+            val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
                 SharedInstances.eventBus.post(classWriteEvent)
                 if (classWriteEvent.isCancelled) {

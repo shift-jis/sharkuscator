@@ -24,19 +24,9 @@ class ResourceRenamingTransformer : AbstractTransformer<TransformerConfiguration
             return
         }
 
-//        SharedInstances.irFactory.getFor(transformEvent.eventNode).allExprStream().filter { it is ConstantExpr && it.constant is String && (it.constant as String).isNotEmpty() }.forEach { unit ->
-//            val resourceName = (unit.asConstant().constant as String).substring(1)
-//            if (transformEvent.jarContents.resourceContents.any { it.name == resourceName }) {
-//                if (!mappings.containsKey(resourceName)) {
-//                    mappings[resourceName] = dictionary.nextString()
-//                }
-//                (unit as Expr).parent.overwrite(unit, ConstantExpr(mappings[resourceName]))
-//            }
-//        }
-
         methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst != null && it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
             val resourceName = (instruction.cst as String).substring(1)
-            if (event.jarContents.resourceContents.any { it.name == resourceName }) {
+            if (event.context.jarContents.resourceContents.any { it.name == resourceName }) {
                 if (!mappings.containsKey(resourceName)) {
                     mappings[resourceName] = dictionary.nextString()
                 }

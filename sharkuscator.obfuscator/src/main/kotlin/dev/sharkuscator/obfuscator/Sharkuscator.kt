@@ -6,6 +6,7 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
+import dev.sharkuscator.obfuscator.transformers.events.EventContext
 import dev.sharkuscator.obfuscator.transformers.events.transform.ClassTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transform.FieldTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transform.MethodTransformEvent
@@ -15,6 +16,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenamin
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.KlassRenamingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenamingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenamingTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.InnerKlassRemoveTransform
 import dev.sharkuscator.obfuscator.transformers.shrinkers.KlassSourceRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import org.mapleir.DefaultInvocationResolver
@@ -50,6 +52,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         // shrinks
         LocalVariableRemoveTransformer(),
         KlassSourceRemoveTransformer(),
+        InnerKlassRemoveTransform(),
     )
 
     private lateinit var configuration: GsonConfiguration
@@ -57,7 +60,6 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
     private lateinit var jarContents: JarContents<ClassNode>
     private lateinit var classSource: ApplicationClassSource
-    private lateinit var analysisContext: AnalysisContext
 
     fun obfuscate() {
 //        SharedInstances.logger.level = Level.DEBUG
@@ -71,13 +73,11 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/jce.jar")))
         classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/rt.jar")))
 
-        analysisContext = BasicContextBuilder().apply {
-            setDataFlowAnalysis(LiveDataFlowAnalysisImpl(SharedInstances.irFactory))
-            setCache(SharedInstances.irFactory)
-
-            setInvocationResolver(DefaultInvocationResolver(classSource))
-            setApplicationContext(SimpleApplicationContext(classSource))
-            setApplication(classSource)
+        val analysisContext = buildAnalysisContext()
+        val eventContext = EventContext.EventContextBuilder().apply {
+            setAnalysisContext(analysisContext)
+            setClassSource(classSource)
+            setJarContents(jarContents)
         }.build()
 
         SharedInstances.eventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
@@ -96,14 +96,14 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         }
 
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->
-            SharedInstances.eventBus.post(ClassTransformEvent(jarContents, classSource, classContent.value))
+            SharedInstances.eventBus.post(ClassTransformEvent(eventContext, classContent.value))
 
             classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
-                SharedInstances.eventBus.post(MethodTransformEvent(jarContents, classSource, it))
+                SharedInstances.eventBus.post(MethodTransformEvent(eventContext, it))
             }
 
             classContent.value.fields.filter { !exclusions.excluded(it) }.forEach {
-                SharedInstances.eventBus.post(FieldTransformEvent(jarContents, classSource, it))
+                SharedInstances.eventBus.post(FieldTransformEvent(eventContext, it))
             }
         }
 
@@ -137,5 +137,16 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
     private fun downloadJarContents(jarFile: File): JarContents<ClassNode> {
         return SingleJarDownloader<ClassNode>(JarInfo(jarFile)).apply { download() }.jarContents
+    }
+
+    private fun buildAnalysisContext(): AnalysisContext {
+        return BasicContextBuilder().apply {
+            setDataFlowAnalysis(LiveDataFlowAnalysisImpl(SharedInstances.irFactory))
+            setCache(SharedInstances.irFactory)
+
+            setInvocationResolver(DefaultInvocationResolver(classSource))
+            setApplicationContext(SimpleApplicationContext(classSource))
+            setApplication(classSource)
+        }.build()
     }
 }
