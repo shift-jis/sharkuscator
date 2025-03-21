@@ -2,6 +2,7 @@ package dev.sharkuscator.obfuscator
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import dev.sharkuscator.obfuscator.assembler.KlassRemapper
 import meteordevelopment.orbit.EventBus
 import org.apache.log4j.LogManager
 import org.apache.log4j.Logger
@@ -16,6 +17,7 @@ object SharedInstances {
     val gson: Gson = GsonBuilder().create()
 
     val irFactory = IRCache(ControlFlowGraphBuilder::build)
+    val remapper = KlassRemapper()
     val eventBus = EventBus()
 
     fun useNativeLibrary(nativeLibrary: String): Boolean {

@@ -1,6 +1,5 @@
 package dev.sharkuscator.obfuscator.configuration
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import dev.sharkuscator.obfuscator.SharedInstances

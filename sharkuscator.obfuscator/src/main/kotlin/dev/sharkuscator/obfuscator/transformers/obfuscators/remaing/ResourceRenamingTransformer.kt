@@ -1,16 +1,11 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators
+package dev.sharkuscator.obfuscator.transformers.obfuscators.remaing
 
-import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.SimilarDictionary
-import dev.sharkuscator.obfuscator.extensions.overwrite
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
-import dev.sharkuscator.obfuscator.transformers.events.transforms.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.writes.ResourceWriteEvent
+import dev.sharkuscator.obfuscator.transformers.events.assemble.ResourceWriteEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.MethodTransformEvent
 import meteordevelopment.orbit.EventHandler
-import org.mapleir.ir.code.Expr
-import org.mapleir.ir.code.expr.ConstantExpr
-import org.objectweb.asm.Type
 import org.objectweb.asm.tree.LdcInsnNode
 
 class ResourceRenamingTransformer : AbstractTransformer<TransformerConfiguration>("ResourceRenaming", TransformerConfiguration::class.java) {
@@ -30,21 +25,22 @@ class ResourceRenamingTransformer : AbstractTransformer<TransformerConfiguration
         }
 
 //        SharedInstances.irFactory.getFor(transformEvent.eventNode).allExprStream().filter { it is ConstantExpr && it.constant is String && (it.constant as String).isNotEmpty() }.forEach { unit ->
-//            val resourceName = ((unit as ConstantExpr).constant as String).substring(1)
+//            val resourceName = (unit.asConstant().constant as String).substring(1)
 //            if (transformEvent.jarContents.resourceContents.any { it.name == resourceName }) {
-//                SharedInstances.logger.info(resourceName)
+//                if (!mappings.containsKey(resourceName)) {
+//                    mappings[resourceName] = dictionary.nextString()
+//                }
+//                (unit as Expr).parent.overwrite(unit, ConstantExpr(mappings[resourceName]))
 //            }
 //        }
 
         methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst != null && it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
             val resourceName = (instruction.cst as String).substring(1)
             if (transformEvent.jarContents.resourceContents.any { it.name == resourceName }) {
-                if (mappings.containsKey(resourceName)) {
-                    instruction.cst = mappings[resourceName]
-                } else {
+                if (!mappings.containsKey(resourceName)) {
                     mappings[resourceName] = dictionary.nextString()
-                    instruction.cst = mappings[resourceName]
                 }
+                instruction.cst = mappings[resourceName]
             }
         }
     }

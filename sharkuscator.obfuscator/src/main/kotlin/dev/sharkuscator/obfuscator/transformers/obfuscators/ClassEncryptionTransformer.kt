@@ -5,7 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.ClassEncryptionConfiguration
 import dev.sharkuscator.obfuscator.encryption.ClassEncrypter
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
-import dev.sharkuscator.obfuscator.transformers.events.writes.ClassWriteEvent
+import dev.sharkuscator.obfuscator.transformers.events.assemble.ClassWriteEvent
 import meteordevelopment.orbit.EventHandler
 import java.io.File
 

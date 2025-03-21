@@ -1,4 +1,4 @@
-package dev.sharkuscator.obfuscator.transformers.events.transforms
+package dev.sharkuscator.obfuscator.transformers.events.transform
 
 import dev.sharkuscator.obfuscator.transformers.events.TransformerEvent
 import org.mapleir.app.service.ApplicationClassSource

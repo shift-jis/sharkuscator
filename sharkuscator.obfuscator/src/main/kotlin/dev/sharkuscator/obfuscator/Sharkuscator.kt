@@ -6,12 +6,17 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
-import dev.sharkuscator.obfuscator.transformers.events.transforms.ClassTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforms.FieldTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforms.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforms.ResourceTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.ClassTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.FieldTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.MethodTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.ResourceTransformEvent
 import dev.sharkuscator.obfuscator.transformers.obfuscators.ClassEncryptionTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.ResourceRenamingTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenamingTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.KlassRenamingTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenamingTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenamingTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.KlassSourceRemoveTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import org.mapleir.DefaultInvocationResolver
 import org.mapleir.app.client.SimpleApplicationContext
 import org.mapleir.app.service.ApplicationClassSource
@@ -19,14 +24,14 @@ import org.mapleir.app.service.LibraryClassSource
 import org.mapleir.asm.ClassNode
 import org.mapleir.context.AnalysisContext
 import org.mapleir.context.BasicAnalysisContext.BasicContextBuilder
-import org.mapleir.context.IRCache
 import org.mapleir.deob.dataflow.LiveDataFlowAnalysisImpl
-import org.mapleir.ir.cfg.builder.ControlFlowGraphBuilder
+import org.mapleir.ir.algorithms.BoissinotDestructor
+import org.mapleir.ir.algorithms.LocalsReallocator
+import org.mapleir.ir.codegen.ControlFlowGraphDumper
 import org.topdank.byteengineer.commons.data.JarContents
 import org.topdank.byteengineer.commons.data.JarInfo
 import org.topdank.byteio.`in`.SingleJarDownloader
 import java.io.File
-import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.invoke.MethodHandles
 import java.nio.file.Path
@@ -35,8 +40,16 @@ import kotlin.io.path.readText
 
 class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: File, private val outputJarFile: File) {
     private val transformers = mutableListOf(
+        // obfuscates
+        KlassRenamingTransformer(),
+        FieldRenamingTransformer(),
+        MethodRenamingTransformer(),
         ResourceRenamingTransformer(),
         ClassEncryptionTransformer(),
+
+        // shrinks
+        LocalVariableRemoveTransformer(),
+        KlassSourceRemoveTransformer(),
     )
 
     private lateinit var configuration: GsonConfiguration
@@ -44,14 +57,11 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
     private lateinit var jarContents: JarContents<ClassNode>
     private lateinit var classSource: ApplicationClassSource
-    private lateinit var analysis: AnalysisContext
+    private lateinit var analysisContext: AnalysisContext
 
     fun obfuscate() {
 //        SharedInstances.logger.level = Level.DEBUG
-        System.setOut(PrintStream(object : OutputStream() {
-            override fun write(b: Int) {
-            }
-        }))
+        System.setErr(PrintStream(NullOutputStream()))
 
         configuration = importConfiguration()
         exclusions = MixedExclusionRule(configuration.exclusions.map { StringExclusionRule(it.toRegex()) })
@@ -61,7 +71,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/jce.jar")))
         classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/rt.jar")))
 
-        analysis = BasicContextBuilder().apply {
+        analysisContext = BasicContextBuilder().apply {
             setDataFlowAnalysis(LiveDataFlowAnalysisImpl(SharedInstances.irFactory))
             setCache(SharedInstances.irFactory)
 
@@ -97,8 +107,18 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
             }
         }
 
+        SharedInstances.logger.info("Retranslating SSA IR to standard flavour")
+        for ((methodNode, controlFlowGraph) in analysisContext.irCache.entries) {
+            controlFlowGraph.verify()
+
+            BoissinotDestructor.leaveSSA(controlFlowGraph)
+            LocalsReallocator.realloc(controlFlowGraph)
+
+            ControlFlowGraphDumper(controlFlowGraph, methodNode).dump()
+        }
+
         SharedInstances.logger.info("Recompiling Class...")
-        KlassResolvingDumper(jarContents, classSource).dump(outputJarFile)
+        KlassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
     }
 
     private fun importConfiguration(): GsonConfiguration {
