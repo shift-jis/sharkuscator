@@ -12,3 +12,49 @@ This project requires some external libraries to be placed in the `thirdparty` f
 After downloading the libraries, make sure to place them in the `./thirdparty` directory.
 
 * [MapleIR (1.0.0)](https://github.com/LLVM-but-worse/maple-ir/releases/tag/1.0.0-SNAPSHOT-1)
+
+## Configuration
+
+Here is a sample configuration
+
+```json
+{
+    "transformers": {
+        "resource_renaming": {
+            "enabled": true
+        },
+        "method_renaming": {
+            "enabled": true,
+            "prefix": ""
+        },
+        "class_renaming": {
+            "enabled": true,
+            "prefix": "native0"
+        },
+        "field_renaming": {
+            "enabled": true,
+            "prefix": ""
+        },
+
+        "local_variable_remove": {
+            "enabled": true
+        },
+        "class_source_remove": {
+            "enabled": true
+        },
+        "inner_class_remove": {
+            "enabled": false
+        },
+
+        "class_encryption": {
+            "password": "DefaultPassword!",
+            "enabled": false
+        }
+    },
+    "exclusions": [
+        "oshi.*",
+        "org.*",
+        "com.*"
+    ]
+}
+```
