@@ -147,6 +147,9 @@ modules.xml
 *.ipr
 
 ### Kotlin ###
+# Session file
+.kotlin/*
+
 # Compiled class file
 *.class
 

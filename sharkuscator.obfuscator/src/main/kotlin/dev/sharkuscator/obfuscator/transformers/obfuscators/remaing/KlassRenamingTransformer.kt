@@ -15,10 +15,9 @@ class KlassRenamingTransformer : AbstractTransformer<RenamingConfiguration>("Cla
 
     @EventHandler
     private fun onClassTransform(event: ClassTransformEvent) {
-        if (event.eventNode.isAnnotation() || event.eventNode.isSynthetic) {
+        if (event.eventNode.isAnnotation() || event.context.classSource.isLibraryClass(event.eventNode.name)) {
             return
         }
-
         SharedInstances.remapper.setMapping(event.eventNode.name, "${configuration.prefix}/${dictionary.nextString()}")
     }
 
