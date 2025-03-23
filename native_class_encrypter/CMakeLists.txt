@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.30)
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 11)
 
-project(sharkuscator_encrypter)
-enable_language(ASM)
+project(native_class_encrypter)
+enable_language(ASM_MASM)
 
 find_package(JNI REQUIRED)
 include_directories(${JNI_INCLUDE_DIRS})

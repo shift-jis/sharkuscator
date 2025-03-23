@@ -27,7 +27,7 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm, char* options, void* reserved) {
     strcpy(reinterpret_cast<char*>(KEY_DATA), reinterpret_cast<char*>(key_data));
 
     jvmtiEnv* jvmti_env;
-    if (const jint return_code = vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION); JNI_OK != return_code) {
+    if (const jint return_code = vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION_1_2); JNI_OK != return_code) {
         return return_code;
     }
 
@@ -60,12 +60,11 @@ JNIEXPORT void JNICALL Agent_OnUnload(JavaVM* vm) {
     // TODO
 }
 
-void JNICALL class_decryption_hook(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jclass class_being_redefined, jobject loader, const char* name, jobject protection_domain, jint class_data_len, const unsigned char* class_data, jint* new_class_data_len,
-                                   unsigned char** new_class_data) {
+void JNICALL class_decryption_hook(jvmtiEnv* jvmti_env, JNIEnv* jni_env, jclass class_being_redefined, jobject loader, const char* name, jobject protection_domain, jint class_data_len, const unsigned char* class_data, jint* new_class_data_len, unsigned char** new_class_data) {
     *new_class_data_len = class_data_len;
     jvmti_env->Allocate(class_data_len, new_class_data);
 
-    unsigned char *_data = *new_class_data;
+    unsigned char* _data = *new_class_data;
     if (name && strncmp(name, PACKAGE_NAME, strlen(PACKAGE_NAME)) == 0) {
         for (int i = 0; i < class_data_len; i++) {
             _data[i] = class_data[i];
