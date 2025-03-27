@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 
@@ -26,4 +28,8 @@ dependencies {
 
     implementation(libs.bundles.kotlinxEcosystem)
     testImplementation(kotlin("test"))
+}
+
+tasks.named("shadowJar", ShadowJar::class.java) {
+    archiveFileName = "sharkuscator.jar"
 }

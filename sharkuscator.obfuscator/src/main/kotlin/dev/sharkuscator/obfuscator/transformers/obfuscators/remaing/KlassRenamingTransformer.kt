@@ -1,24 +1,31 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.remaing
 
-import com.esotericsoftware.asm.Type
 import dev.sharkuscator.obfuscator.SharedInstances
+import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenamingConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.AlphabetDictionary
+import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
+import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.extensions.isAnnotation
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.assemble.ResourceWriteEvent
-import dev.sharkuscator.obfuscator.transformers.events.transform.ClassTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.KlassTransformEvent
 import meteordevelopment.orbit.EventHandler
 
 class KlassRenamingTransformer : AbstractTransformer<RenamingConfiguration>("ClassRenaming", RenamingConfiguration::class.java) {
-    private val dictionary = AlphabetDictionary()
+    private lateinit var dictionary: MappingDictionary
+
+    override fun initialization(configuration: GsonConfiguration): RenamingConfiguration {
+        dictionary = DictionaryFactory.forName(super.initialization(configuration).dictionary)
+        return this.configuration
+    }
 
     @EventHandler
-    private fun onClassTransform(event: ClassTransformEvent) {
+    private fun onKlassTransform(event: KlassTransformEvent) {
         if (event.eventNode.isAnnotation() || event.context.classSource.isLibraryClass(event.eventNode.name)) {
             return
         }
-        SharedInstances.remapper.setMapping(event.eventNode.name, "${configuration.prefix}/${dictionary.nextString()}")
+        SharedInstances.klassRemapper.setMapping(event.eventNode.name, "${configuration.prefix}${dictionary.nextString()}")
     }
 
     @EventHandler
@@ -28,7 +35,7 @@ class KlassRenamingTransformer : AbstractTransformer<RenamingConfiguration>("Cla
             return
         }
 
-        SharedInstances.remapper.mappings.filter { !it.key.contains(".") }.forEach { (previous, newest) ->
+        SharedInstances.klassRemapper.mappings.filter { !it.key.contains(".") }.forEach { (previous, newest) ->
             val mainClassRegex = "(?<=[: ])${previous.replace("/", ".")}".toRegex()
             event.resourceData = mainClassRegex.replace(event.resourceData.decodeToString(), newest).toByteArray()
         }

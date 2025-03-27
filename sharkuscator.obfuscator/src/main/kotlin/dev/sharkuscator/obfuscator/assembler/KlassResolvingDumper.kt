@@ -2,7 +2,7 @@ package dev.sharkuscator.obfuscator.assembler
 
 import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
-import dev.sharkuscator.obfuscator.transformers.events.assemble.ClassWriteEvent
+import dev.sharkuscator.obfuscator.transformers.events.assemble.KlassWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.assemble.ResourceWriteEvent
 import org.mapleir.app.service.ApplicationClassSource
 import org.mapleir.app.service.ClassTree
@@ -46,7 +46,7 @@ class KlassResolvingDumper(
 
     override fun dumpClass(outputStream: JarOutputStream, name: String, classNode: ClassNode): Int {
         val originalNode = org.objectweb.asm.tree.ClassNode().apply {
-            classNode.node.accept(ClassRemapper(this, SharedInstances.remapper))
+            classNode.node.accept(ClassRemapper(this, SharedInstances.klassRemapper))
         }
 
         val classEntry = JarEntry("${originalNode.name}.class")
@@ -56,10 +56,10 @@ class KlassResolvingDumper(
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_FRAMES)
             originalNode.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
+            val klassWriteEvent = KlassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
-                SharedInstances.eventBus.post(classWriteEvent)
-                if (classWriteEvent.isCancelled) {
+                SharedInstances.eventBus.post(klassWriteEvent)
+                if (klassWriteEvent.isCancelled) {
                     return 0
                 }
             }
@@ -68,15 +68,15 @@ class KlassResolvingDumper(
                 discoveredPackages.add(originalNode.name.split("/").dropLast(1).joinToString("/"))
             }
 
-            outputStream.write(classWriteEvent.classData)
+            outputStream.write(klassWriteEvent.classData)
         } catch (exception: Exception) {
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_MAXS)
             originalNode.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
+            val klassWriteEvent = KlassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
-                SharedInstances.eventBus.post(classWriteEvent)
-                if (classWriteEvent.isCancelled) {
+                SharedInstances.eventBus.post(klassWriteEvent)
+                if (klassWriteEvent.isCancelled) {
                     return 0
                 }
             }
@@ -85,7 +85,7 @@ class KlassResolvingDumper(
                 discoveredPackages.add(originalNode.name.split("/").dropLast(1).joinToString("/"))
             }
 
-            outputStream.write(classWriteEvent.classData)
+            outputStream.write(klassWriteEvent.classData)
         }
 
         return 1

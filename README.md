@@ -21,7 +21,8 @@ Here is a sample configuration
 {
     "transformers": {
         "resource_renaming": {
-            "enabled": true
+            "enabled": true,
+            "prefix": ""
         },
         "method_renaming": {
             "enabled": true,
@@ -29,7 +30,7 @@ Here is a sample configuration
         },
         "class_renaming": {
             "enabled": true,
-            "prefix": "native0"
+            "prefix": "native0/"
         },
         "field_renaming": {
             "enabled": true,
@@ -39,11 +40,8 @@ Here is a sample configuration
         "local_variable_remove": {
             "enabled": true
         },
-        "class_source_remove": {
+        "source_stripper": {
             "enabled": true
-        },
-        "inner_class_remove": {
-            "enabled": false
         },
 
         "class_encryption": {

@@ -7,17 +7,17 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
 import dev.sharkuscator.obfuscator.transformers.events.EventContext
-import dev.sharkuscator.obfuscator.transformers.events.transform.ClassTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transform.KlassTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transform.FieldTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transform.MethodTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transform.ResourceTransformEvent
-import dev.sharkuscator.obfuscator.transformers.obfuscators.ClassEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.KlassEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenamingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.KlassRenamingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenamingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenamingTransformer
-import dev.sharkuscator.obfuscator.transformers.shrinkers.InnerKlassRemoveTransform
-import dev.sharkuscator.obfuscator.transformers.shrinkers.KlassSourceRemoveTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import org.mapleir.DefaultInvocationResolver
 import org.mapleir.app.client.SimpleApplicationContext
@@ -34,7 +34,6 @@ import org.topdank.byteengineer.commons.data.JarContents
 import org.topdank.byteengineer.commons.data.JarInfo
 import org.topdank.byteio.`in`.SingleJarDownloader
 import java.io.File
-import java.io.PrintStream
 import java.lang.invoke.MethodHandles
 import java.nio.file.Path
 import kotlin.io.path.readText
@@ -47,12 +46,12 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         FieldRenamingTransformer(),
         MethodRenamingTransformer(),
         ResourceRenamingTransformer(),
-        ClassEncryptionTransformer(),
+        KlassEncryptionTransformer(),
+        SyntheticAccessTransformer(),
 
         // shrinks
         LocalVariableRemoveTransformer(),
-        KlassSourceRemoveTransformer(),
-        InnerKlassRemoveTransform(),
+        SourceStripperTransformer(),
     )
 
     private lateinit var configuration: GsonConfiguration
@@ -74,18 +73,14 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/rt.jar")))
 
         val analysisContext = buildAnalysisContext()
-        val eventContext = EventContext.EventContextBuilder().apply {
-            setAnalysisContext(analysisContext)
-            setClassSource(classSource)
-            setJarContents(jarContents)
-        }.build()
+        val eventContext = buildEventContext(analysisContext)
 
         SharedInstances.eventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
             lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup
         }
 
         for (transformer in transformers.filter { configuration.transformers.has(it.getName().toSnakeCase()) }) {
-            if (transformer.initialization(configuration) && transformer.isEnabled()) {
+            if (transformer.initialization(configuration).enabled && transformer.isEnabled()) {
                 SharedInstances.eventBus.subscribe(transformer.apply { initialization(configuration) })
                 SharedInstances.logger.info("${transformer.getName()} subscribed")
             }
@@ -96,7 +91,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         }
 
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->
-            SharedInstances.eventBus.post(ClassTransformEvent(eventContext, classContent.value))
+            SharedInstances.eventBus.post(KlassTransformEvent(eventContext, classContent.value))
 
             classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
                 SharedInstances.eventBus.post(MethodTransformEvent(eventContext, it))
@@ -147,6 +142,14 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
             setInvocationResolver(DefaultInvocationResolver(classSource))
             setApplicationContext(SimpleApplicationContext(classSource))
             setApplication(classSource)
+        }.build()
+    }
+
+    private fun buildEventContext(analysisContext: AnalysisContext): EventContext {
+        return EventContext.EventContextBuilder().apply {
+            setAnalysisContext(analysisContext)
+            setClassSource(classSource)
+            setJarContents(jarContents)
         }.build()
     }
 }
