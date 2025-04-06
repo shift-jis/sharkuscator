@@ -1,4 +1,4 @@
-#include "class_encrypter.h"
+#include "class_encryptor.h"
 
 #include "../includes/xxtea.h"
 #include <cstdlib>

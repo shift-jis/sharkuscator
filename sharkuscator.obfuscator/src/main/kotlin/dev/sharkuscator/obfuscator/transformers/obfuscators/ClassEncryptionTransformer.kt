@@ -14,10 +14,10 @@ import java.nio.file.Paths
 @Deprecated("Because it does not work depending on the environment")
 class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfiguration>("ClassEncryption", ClassEncryptionConfiguration::class.java) {
     override fun initialization(configuration: GsonConfiguration): ClassEncryptionConfiguration {
-        if (!ResourceExtractor.useNativeLibrary("/class_encrypter.dll")) {
-            SharedInstances.logger.error("Failed to load class_encrypter.dll")
+        if (!ResourceExtractor.useNativeLibrary("/class_encryptor.dll")) {
+            SharedInstances.logger.error("Failed to load class_encryptor.dll")
         }
-        ResourceExtractor.extractResource("/class_decrypter.dll", Paths.get("./class_decrypter.dll"), false)
+        ResourceExtractor.extractResource("/class_decryptor.dll", Paths.get("./class_decryptor.dll"), false)
         return super.initialization(configuration)
     }
 

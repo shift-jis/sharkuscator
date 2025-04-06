@@ -1,4 +1,4 @@
-#include "class_decrypter.h"
+#include "class_decryptor.h"
 
 #include "../includes/xxtea.h"
 #include <cstdint>
