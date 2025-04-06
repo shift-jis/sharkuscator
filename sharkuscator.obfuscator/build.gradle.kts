@@ -12,6 +12,7 @@ plugins {
 
 dependencies {
     implementation(files("../thirdparty/mapleir-full-with-deps.jar"))
+    implementation(project(":sharkuscator.annotations"))
 
     implementation("com.github.Col-E:jphantom:1.4.3")
     implementation("com.github.xxDark:SSVM:1.9.0.3")

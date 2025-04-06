@@ -2,6 +2,7 @@ package dev.sharkuscator.obfuscator
 
 import dev.sharkuscator.obfuscator.assembler.ClassResolvingDumper
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
+import dev.sharkuscator.obfuscator.configuration.exclusions.AnnotationExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
@@ -67,7 +68,10 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 //        System.setErr(PrintStream(NullOutputStream()))
 
         configuration = importConfiguration()
-        exclusions = MixedExclusionRule(configuration.exclusions.map { StringExclusionRule(it.toRegex()) })
+        exclusions = MixedExclusionRule(buildList {
+            addAll(configuration.exclusions.map { StringExclusionRule(it.toRegex()) })
+            add(AnnotationExclusionRule())
+        })
 
         jarContents = downloadJarContents(inputJarFile)
         classSource = ApplicationClassSource(inputJarFile.getName().drop(4), jarContents.classContents)
