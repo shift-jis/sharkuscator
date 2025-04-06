@@ -3,7 +3,7 @@ package dev.sharkuscator.obfuscator.assembler
 import org.objectweb.asm.commons.Remapper
 
 
-class KlassRemapper : Remapper() {
+class ClassRemapper : Remapper() {
     val mappings = mutableMapOf<String, String>()
 
     override fun mapMethodName(owner: String, name: String, descriptor: String): String {

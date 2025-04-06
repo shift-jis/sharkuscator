@@ -2,7 +2,7 @@ package dev.sharkuscator.obfuscator
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import dev.sharkuscator.obfuscator.assembler.KlassRemapper
+import dev.sharkuscator.obfuscator.assembler.ClassRemapper
 import meteordevelopment.orbit.EventBus
 import org.apache.log4j.LogManager
 import org.apache.log4j.Logger
@@ -16,5 +16,5 @@ object SharedInstances {
     val irFactory = IRCache(ControlFlowGraphBuilder::build)
     val eventBus = EventBus()
 
-    val klassRemapper = KlassRemapper()
+    val classRemapper = ClassRemapper()
 }

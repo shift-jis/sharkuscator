@@ -27,7 +27,7 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM* vm, char* options, void* reserved) {
     strcpy(reinterpret_cast<char*>(KEY_DATA), reinterpret_cast<char*>(key_data));
 
     jvmtiEnv* jvmti_env;
-    if (const jint return_code = vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), JVMTI_VERSION_1_2); JNI_OK != return_code) {
+    if (const jint return_code = vm->GetEnv(reinterpret_cast<void**>(&jvmti_env), 0x30010201); JNI_OK != return_code) {
         return return_code;
     }
 

@@ -6,7 +6,7 @@ import org.objectweb.asm.ClassWriter
 
 
 // https://github.com/ItzSomebody/radon/blob/master/xyz.itzsomebody.radon/src/main/java/xyz/itzsomebody/radon/utils/asm/RadonClassWriter.java
-class KlassWriter(private val classSource: ApplicationClassSource, flags: Int) : ClassWriter(flags) {
+class ClassWriter(private val classSource: ApplicationClassSource, flags: Int) : ClassWriter(flags) {
     override fun getCommonSuperClass(type1: String, type2: String): String {
         if ("java/lang/Object" == type1 || "java/lang/Object" == type2) {
             return "java/lang/Object"

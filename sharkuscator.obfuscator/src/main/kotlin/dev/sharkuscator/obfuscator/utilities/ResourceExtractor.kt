@@ -1,13 +1,13 @@
 package dev.sharkuscator.obfuscator.utilities
 
 import dev.sharkuscator.obfuscator.Sharkuscator
-import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
 object ResourceExtractor {
     fun useNativeLibrary(nativeLibrary: String): Boolean {
-        var absolutePath = extractResource(nativeLibrary, File.createTempFile(System.nanoTime().toString(), ".dll")) ?: return false
+        var absolutePath = extractResource(nativeLibrary, Files.createTempFile(null, ".dll")) ?: return false
         absolutePath = absolutePath.replace("\\", "/")
 
         val libraryDirectory = absolutePath.split("/").dropLast(1).joinToString("/")
@@ -27,14 +27,19 @@ object ResourceExtractor {
         return true
     }
 
-    fun extractResource(name: String, destination: File): String? {
-        if (!destination.exists() && !destination.createNewFile()) {
+    fun extractResource(name: String, destination: Path = Files.createTempFile(null, null), deleteOnExit: Boolean = true): String? {
+        val destinationFile = destination.toFile()
+        if (!Files.exists(destination) && !destinationFile.createNewFile()) {
             return null
         }
 
+        if (deleteOnExit) {
+            destinationFile.deleteOnExit()
+        }
+
         val resourceAsStream = Sharkuscator::class.java.getResourceAsStream(name) ?: return null
-        Files.copy(resourceAsStream, destination.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(resourceAsStream, destination, StandardCopyOption.REPLACE_EXISTING)
         resourceAsStream.close()
-        return destination.absolutePath
+        return destinationFile.absolutePath
     }
 }

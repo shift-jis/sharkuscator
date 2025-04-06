@@ -1,24 +1,25 @@
 package dev.sharkuscator.obfuscator
 
-import dev.sharkuscator.obfuscator.assembler.KlassResolvingDumper
+import dev.sharkuscator.obfuscator.assembler.ClassResolvingDumper
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
 import dev.sharkuscator.obfuscator.transformers.events.EventContext
-import dev.sharkuscator.obfuscator.transformers.events.transform.KlassTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transform.FieldTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transform.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transform.ResourceTransformEvent
-import dev.sharkuscator.obfuscator.transformers.obfuscators.KlassEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
+import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transforming.ResourceTransformEvent
+import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenamingTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.KlassRenamingTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenamingTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenamingTransformer
-import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ClassRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import org.mapleir.DefaultInvocationResolver
 import org.mapleir.app.client.SimpleApplicationContext
 import org.mapleir.app.service.ApplicationClassSource
@@ -42,12 +43,13 @@ import kotlin.io.path.readText
 class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: File, private val outputJarFile: File) {
     private val transformers = mutableListOf(
         // obfuscates
-        KlassRenamingTransformer(),
-        FieldRenamingTransformer(),
-        MethodRenamingTransformer(),
-        ResourceRenamingTransformer(),
-        KlassEncryptionTransformer(),
+        ClassRenameTransformer(),
+        FieldRenameTransformer(),
+        MethodRenameTransformer(),
+        ResourceRenameTransformer(),
+
         SyntheticAccessTransformer(),
+        NativeObfuscateTransformer(),
 
         // shrinks
         LocalVariableRemoveTransformer(),
@@ -86,12 +88,14 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
             }
         }
 
+        SharedInstances.eventBus.post(ObfuscatorEvent.InitializationEvent(inputJarFile, outputJarFile))
+
         jarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
             SharedInstances.eventBus.post(ResourceTransformEvent(classSource, it.value.name, it.value.data))
         }
 
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->
-            SharedInstances.eventBus.post(KlassTransformEvent(eventContext, classContent.value))
+            SharedInstances.eventBus.post(ClassTransformEvent(eventContext, classContent.value))
 
             classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
                 SharedInstances.eventBus.post(MethodTransformEvent(eventContext, it))
@@ -102,7 +106,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
             }
         }
 
-        SharedInstances.logger.info("Retranslating SSA IR to standard flavour")
+        SharedInstances.logger.info("Translating SSA IR to standard flavour")
         for ((methodNode, controlFlowGraph) in analysisContext.irCache.entries) {
             controlFlowGraph.verify()
 
@@ -113,7 +117,8 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         }
 
         SharedInstances.logger.info("Recompiling Class...")
-        KlassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
+        ClassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
+        SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(inputJarFile, outputJarFile))
     }
 
     private fun importConfiguration(): GsonConfiguration {

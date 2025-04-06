@@ -12,6 +12,7 @@ This project requires some external libraries to be placed in the `thirdparty` f
 After downloading the libraries, make sure to place them in the `./thirdparty` directory.
 
 * [MapleIR (1.0.0)](https://github.com/LLVM-but-worse/maple-ir/releases/tag/1.0.0-SNAPSHOT-1)
+* [Native Obfuscator(3.5.4r)](https://github.com/radioegor146/native-obfuscator/releases/tag/3.5.4r)
 
 ## Configuration
 

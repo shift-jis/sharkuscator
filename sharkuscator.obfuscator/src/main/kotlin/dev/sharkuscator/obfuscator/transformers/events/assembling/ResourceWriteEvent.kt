@@ -1,4 +1,4 @@
-package dev.sharkuscator.obfuscator.transformers.events.assemble
+package dev.sharkuscator.obfuscator.transformers.events.assembling
 
 import dev.sharkuscator.obfuscator.transformers.events.CancellableEvent
 import org.mapleir.app.service.ApplicationClassSource
