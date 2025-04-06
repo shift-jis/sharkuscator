@@ -45,9 +45,11 @@ Here is a sample configuration
             "enabled": true
         },
 
-        "class_encryption": {
-            "password": "DefaultPassword!",
-            "enabled": false
+        "synthetic_access": {
+            "enabled": true
+        },
+        "native_obfuscate": {
+            "enabled": true
         }
     },
     "exclusions": [
