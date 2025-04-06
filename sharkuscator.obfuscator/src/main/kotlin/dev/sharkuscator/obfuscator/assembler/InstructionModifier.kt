@@ -1,5 +1,7 @@
 package dev.sharkuscator.obfuscator.assembler
 
+import dev.sharkuscator.obfuscator.assembler.operations.AppendOperation
+import dev.sharkuscator.obfuscator.assembler.operations.InsertOperation
 import dev.sharkuscator.obfuscator.assembler.operations.ModifierOperation
 import dev.sharkuscator.obfuscator.assembler.operations.ReplaceOperation
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -15,6 +17,14 @@ class InstructionModifier {
 
     fun replaceOperation(original: AbstractInsnNode, replacement: InsnList) {
         operations.add(ReplaceOperation(original, replacement))
+    }
+
+    fun insertOperation(instructions: InsnList) {
+        operations.add(InsertOperation(instructions))
+    }
+
+    fun appendOperation(original: AbstractInsnNode, instructions: InsnList) {
+        operations.add(AppendOperation(original, instructions))
     }
 
     fun apply(methodNode: MethodNode) {

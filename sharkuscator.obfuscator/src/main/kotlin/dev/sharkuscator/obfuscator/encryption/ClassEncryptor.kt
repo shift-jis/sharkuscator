@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.encryption
 
 @Deprecated("Deprecated due to inconsistent behavior across different environments")
-object ClassEncrypter {
+object ClassEncryptor {
     external fun encrypt(classData: ByteArray, keyData: ByteArray): ByteArray
 }

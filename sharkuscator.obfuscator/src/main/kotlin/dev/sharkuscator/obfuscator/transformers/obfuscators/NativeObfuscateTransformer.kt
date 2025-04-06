@@ -13,9 +13,16 @@ import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
 
 class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>("NativeObfuscate", TransformerConfiguration::class.java) {
+    private val obfuscatorPath = Paths.get("./thirdparty", "native-obfuscator.jar")
+
     @EventHandler
     @OptIn(ExperimentalPathApi::class)
     private fun onFinalization(event: ObfuscatorEvent.FinalizationEvent) {
+        if (!Files.exists(obfuscatorPath)) {
+            SharedInstances.logger.error("native-obfuscator.jar does not exist!")
+            return
+        }
+
         SharedInstances.logger.info("Running Native obfuscator...")
         val blackListFilePath = Files.createTempFile(null, ".txt")
         blackListFilePath.writeText(configuration.exclusions.joinToString("\n") { it.replace(".", "/") })
@@ -26,11 +33,7 @@ class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>
             nativeLibraryPath.deleteRecursively()
         }
 
-        val obfuscatorProcess = ProcessBuilder(
-            "java", "-jar", "./thirdparty/native-obfuscator.jar",
-            event.outputJarFile.name, nativeLibraryPath.toString(), "-p", "std_java", "-b", blackListFilePath.absolutePathString()
-        ).start()
-
+        val obfuscatorProcess = ProcessBuilder("java", "-jar", obfuscatorPath.toString(), event.outputJarFile.name, nativeLibraryPath.toString(), "-p", "std_java", "-b", blackListFilePath.absolutePathString()).start()
         obfuscatorProcess.inputStream.bufferedReader().use {
             SharedInstances.logger.info(it.readText())
         }

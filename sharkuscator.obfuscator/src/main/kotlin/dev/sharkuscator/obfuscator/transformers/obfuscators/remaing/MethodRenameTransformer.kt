@@ -26,7 +26,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
         }
 
         val classNode = event.eventNode.owner
-        if (classNode.node.superName != "java/lang/Object" || SharedInstances.classRemapper.contains(event.eventNode.fullyName())) {
+        if (classNode.isAnnotation() || classNode.node.superName != "java/lang/Object" || SharedInstances.classRemapper.contains(event.eventNode.fullyName())) {
             return
         }
 

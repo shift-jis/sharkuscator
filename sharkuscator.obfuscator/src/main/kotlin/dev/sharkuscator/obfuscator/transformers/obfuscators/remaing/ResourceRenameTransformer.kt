@@ -31,13 +31,13 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
             return
         }
 
-        methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst != null && it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
-            val resourceName = (instruction.cst as String).substring(1)
-            if (event.context.jarContents.resourceContents.any { it.name == resourceName }) {
-                if (!mappings.containsKey(resourceName)) {
-                    mappings[resourceName] = "${configuration.prefix}${dictionary.nextString()}"
+        methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
+            val constantValue = (instruction.cst as String).substring(1)
+            if (event.context.jarContents.resourceContents.any { it.name == constantValue }) {
+                if (!mappings.containsKey(constantValue)) {
+                    mappings[constantValue] = "${configuration.prefix}${dictionary.nextString()}"
                 }
-                instruction.cst = mappings[resourceName]
+                instruction.cst = mappings[constantValue]
             }
         }
     }

@@ -19,6 +19,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ClassRenameT
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.strings.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import org.mapleir.DefaultInvocationResolver
@@ -42,13 +43,14 @@ import kotlin.io.path.readText
 
 
 class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: File, private val outputJarFile: File) {
-    private val transformers = mutableListOf(
+    val transformers = mutableListOf(
         // obfuscates
         ClassRenameTransformer(),
         FieldRenameTransformer(),
         MethodRenameTransformer(),
         ResourceRenameTransformer(),
 
+        StringEncryptionTransformer(),
         SyntheticAccessTransformer(),
         NativeObfuscateTransformer(),
 
@@ -88,11 +90,11 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         for (transformer in transformers.filter { configuration.transformers.has(it.getName().toSnakeCase()) }) {
             if (transformer.initialization(configuration).enabled && transformer.isEnabled()) {
                 SharedInstances.eventBus.subscribe(transformer.apply { initialization(configuration) })
-                SharedInstances.logger.info("${transformer.getName()} subscribed")
+                SharedInstances.logger.debug("${transformer.getName()} subscribed")
             }
         }
 
-        SharedInstances.eventBus.post(ObfuscatorEvent.InitializationEvent(inputJarFile, outputJarFile))
+        SharedInstances.eventBus.post(ObfuscatorEvent.InitializationEvent(eventContext, inputJarFile, outputJarFile))
 
         jarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
             SharedInstances.eventBus.post(ResourceTransformEvent(classSource, it.value.name, it.value.data))
@@ -122,7 +124,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
         SharedInstances.logger.info("Recompiling Class...")
         ClassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
-        SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(inputJarFile, outputJarFile))
+        SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
     }
 
     private fun importConfiguration(): GsonConfiguration {
@@ -156,6 +158,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
     private fun buildEventContext(analysisContext: AnalysisContext): EventContext {
         return EventContext.EventContextBuilder().apply {
+            setSharkuscator(this@Sharkuscator)
             setAnalysisContext(analysisContext)
             setClassSource(classSource)
             setJarContents(jarContents)

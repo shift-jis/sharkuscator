@@ -16,7 +16,7 @@ git clone https://github.com/RabiesDev/sharkuscator.git
 Before building, make sure to place the following external libraries into the ./thirdparty directory:
 
 * [MapleIR 1.0.0](https://github.com/LLVM-but-worse/maple-ir/releases/tag/1.0.0-SNAPSHOT-1) (Required)
-* [Native Obfuscator 3.5.4r](https://github.com/radioegor146/native-obfuscator/releases/tag/3.5.4r) [Optional]
+* [Native Obfuscator 3.5.4r](https://github.com/radioegor146/native-obfuscator/releases/tag/3.5.4r) (Optional)
 
 ## ⚙️ Configuration Example
 Below is an example configuration.json:
@@ -68,6 +68,7 @@ Some parts of this project were inspired by or based on the following open-sourc
 
 * [skidfuscator-java-obfuscator](https://github.com/skidfuscatordev/skidfuscator-java-obfuscator)
 * [code-encryptor](https://github.com/4ra1n/code-encryptor)
+* [radon](https://github.com/ItzSomebody/radon)
 
 Special thanks to the authors of these tools for sharing their work.
 

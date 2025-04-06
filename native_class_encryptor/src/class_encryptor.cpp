@@ -15,7 +15,7 @@
 #define MAGIC_BYTE3 0xBA
 #define MAGIC_BYTE4 0xBE
 
-JNIEXPORT auto Java_dev_sharkuscator_obfuscator_encryption_ClassEncrypter_encrypt(JNIEnv* env, jclass cls, jbyteArray class_byte_array, jbyteArray key_byte_array) -> jbyteArray {
+JNIEXPORT auto Java_dev_sharkuscator_obfuscator_encryption_ClassEncryptor_encrypt(JNIEnv* env, jclass cls, jbyteArray class_byte_array, jbyteArray key_byte_array) -> jbyteArray {
     const jsize class_size = env->GetArrayLength(class_byte_array);
     const auto class_data = static_cast<unsigned char*>(malloc(class_size));
     if (class_data == nullptr) {

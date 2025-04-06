@@ -3,12 +3,11 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.ClassEncryptionConfiguration
-import dev.sharkuscator.obfuscator.encryption.ClassEncrypter
+import dev.sharkuscator.obfuscator.encryption.ClassEncryptor
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ClassWriteEvent
 import dev.sharkuscator.obfuscator.utilities.ResourceExtractor
 import meteordevelopment.orbit.EventHandler
-import java.io.File
 import java.nio.file.Paths
 
 @Deprecated("Deprecated due to inconsistent behavior across different environments")
@@ -28,7 +27,7 @@ class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfigurat
             return
         }
 
-        event.classData = ClassEncrypter.encrypt(event.classData, configuration.password.encodeToByteArray())
+        event.classData = ClassEncryptor.encrypt(event.classData, configuration.password.encodeToByteArray())
         SharedInstances.logger.debug("Encrypted ${event.classNode.name}")
     }
 }
