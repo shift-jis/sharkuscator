@@ -21,19 +21,19 @@ Here is a sample configuration
 ```json
 {
     "transformers": {
-        "resource_renaming": {
+        "resource_rename": {
+            "enabled": false,
+            "prefix": ""
+        },
+        "method_rename": {
             "enabled": true,
             "prefix": ""
         },
-        "method_renaming": {
+        "class_rename": {
             "enabled": true,
             "prefix": ""
         },
-        "class_renaming": {
-            "enabled": true,
-            "prefix": "native0/"
-        },
-        "field_renaming": {
+        "field_rename": {
             "enabled": true,
             "prefix": ""
         },
