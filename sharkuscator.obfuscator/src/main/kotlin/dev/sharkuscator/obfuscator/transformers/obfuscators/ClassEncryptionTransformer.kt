@@ -11,7 +11,7 @@ import meteordevelopment.orbit.EventHandler
 import java.io.File
 import java.nio.file.Paths
 
-@Deprecated("Because it does not work depending on the environment")
+@Deprecated("Deprecated due to inconsistent behavior across different environments")
 class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfiguration>("ClassEncryption", ClassEncryptionConfiguration::class.java) {
     override fun initialization(configuration: GsonConfiguration): ClassEncryptionConfiguration {
         if (!ResourceExtractor.useNativeLibrary("/class_encryptor.dll")) {
