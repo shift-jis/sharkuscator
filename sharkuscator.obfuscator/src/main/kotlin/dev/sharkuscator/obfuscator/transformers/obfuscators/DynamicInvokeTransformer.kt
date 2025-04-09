@@ -6,7 +6,6 @@ import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
 import meteordevelopment.orbit.EventHandler
 import meteordevelopment.orbit.EventPriority
@@ -32,16 +31,12 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
 
     @EventHandler(priority = EventPriority.LOW)
     private fun onMethodTransform(event: MethodTransformEvent) {
-        if (event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.isMain()) {
+        if (event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit()) {
             return
         }
 
         val classNode = event.eventNode.owner
-        if (classNode.isAnnotation() || classNode.isInterface() || classNode.isEnum || classNode.name == invokerClassName) {
-            return
-        }
-
-        if (event.context.findTransformer(StringEncryptionTransformer::class.java)?.let { classNode.name == it.stringEncryption.decryptorClassNode.name } == true) {
+        if (classNode.isAnnotation() || classNode.isInterface() || classNode.name == invokerClassName || classNode.name == "StringDecryptor") {
             return
         }
 

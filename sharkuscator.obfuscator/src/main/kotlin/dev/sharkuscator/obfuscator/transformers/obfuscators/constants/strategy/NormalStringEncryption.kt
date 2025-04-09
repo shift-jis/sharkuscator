@@ -16,8 +16,8 @@ class NormalStringEncryption : StringEncryptionStrategy {
     private val decryptMethodDescriptor = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
     private val decryptMethodAccess = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC
 
-    lateinit var decryptorMethodNode: MethodNode
-    lateinit var decryptorClassNode: ClassNode
+    private lateinit var decryptorMethodNode: MethodNode
+    private lateinit var decryptorClassNode: ClassNode
 
     override fun createDecryptorClassNode(name: String): ClassNode {
         val decryptMethodNode = BytecodeAssembler.createMethodNode(decryptMethodAccess, "decrypt", decryptMethodDescriptor).apply {
