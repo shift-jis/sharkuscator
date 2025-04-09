@@ -15,11 +15,11 @@ import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransf
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ResourceTransformEvent
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ClassRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.FieldRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.MethodRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.remaing.ResourceRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.strings.StringEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import org.mapleir.DefaultInvocationResolver
@@ -97,7 +97,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         SharedInstances.eventBus.post(ObfuscatorEvent.InitializationEvent(eventContext, inputJarFile, outputJarFile))
 
         jarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
-            SharedInstances.eventBus.post(ResourceTransformEvent(classSource, it.value.name, it.value.data))
+            SharedInstances.eventBus.post(ResourceTransformEvent(eventContext, it.value.name, it.value.data))
         }
 
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->

@@ -1,21 +1,22 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.strings
+package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategy.NormalStringEncryption
+import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
 import meteordevelopment.orbit.EventHandler
-import org.objectweb.asm.tree.LdcInsnNode
+import org.apache.commons.lang3.RandomStringUtils
 
 class StringEncryptionTransformer : AbstractTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
-    @EventHandler
-    private fun onInitialization(event: ObfuscatorEvent.InitializationEvent) {
-    }
+    private val stringEncryption = NormalStringEncryption()
+    private val stringPool = StringPoolGenerator()
 
     @EventHandler
-    private fun onClassTransform(event: ClassTransformEvent) {
+    private fun onInitialization(event: ObfuscatorEvent.InitializationEvent) {
+        event.context.jarContents.classContents.add(stringEncryption.createDecryptorClassNode("StringDecryptor"))
     }
 
     @EventHandler
@@ -25,10 +26,10 @@ class StringEncryptionTransformer : AbstractTransformer<TransformerConfiguration
             return
         }
 
-//        methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
-//            val constantValue = (instruction.cst as String).substring(1)
-//            println(constantValue)
-//        }
+        BytecodeAssembler.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
+            val resultPair = stringEncryption.encryptString(string, RandomStringUtils.randomAlphanumeric(string.length))
+            stringEncryption.replaceInstructions(methodNode.instructions, instruction, resultPair.first, resultPair.second)
+        }
     }
 
     @EventHandler

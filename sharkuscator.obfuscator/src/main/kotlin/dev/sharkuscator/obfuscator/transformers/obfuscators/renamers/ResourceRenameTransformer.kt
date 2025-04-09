@@ -1,4 +1,4 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.remaing
+package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
@@ -7,8 +7,8 @@ import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
 import meteordevelopment.orbit.EventHandler
-import org.objectweb.asm.tree.LdcInsnNode
 
 class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
     private val mappings = mutableMapOf<String, String>()
@@ -21,7 +21,7 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
 
     @EventHandler
     private fun onResourceWrite(event: ResourceWriteEvent) {
-        event.name = mappings[event.name] ?: event.name
+        event.name = mappings["/${event.name}"] ?: event.name
     }
 
     @EventHandler
@@ -31,13 +31,12 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
             return
         }
 
-        methodNode.instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.forEach { instruction ->
-            val constantValue = (instruction.cst as String).substring(1)
-            if (event.context.jarContents.resourceContents.any { it.name == constantValue }) {
-                if (!mappings.containsKey(constantValue)) {
-                    mappings[constantValue] = "${configuration.prefix}${dictionary.nextString()}"
+        BytecodeAssembler.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, value) ->
+            if (event.context.jarContents.resourceContents.any { it.name == value }) {
+                if (!mappings.containsKey(value)) {
+                    mappings[value] = "${configuration.prefix}${dictionary.nextString()}"
                 }
-                instruction.cst = mappings[constantValue]
+                instruction.cst = "/${mappings[value]}"
             }
         }
     }

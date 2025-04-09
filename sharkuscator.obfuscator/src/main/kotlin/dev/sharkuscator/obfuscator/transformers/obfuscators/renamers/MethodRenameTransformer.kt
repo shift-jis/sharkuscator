@@ -1,4 +1,4 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.remaing
+package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 
 import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration

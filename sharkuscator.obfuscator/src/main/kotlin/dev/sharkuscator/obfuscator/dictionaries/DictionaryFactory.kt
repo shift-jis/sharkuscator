@@ -9,7 +9,7 @@ object DictionaryFactory {
         }
     }
 
-    private fun defaultDictionary(): MappingDictionary {
+    fun defaultDictionary(): MappingDictionary {
         return AlphabetDictionary()
     }
 }
