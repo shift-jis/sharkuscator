@@ -5,11 +5,11 @@ import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
-import dev.sharkuscator.obfuscator.extensions.isAnnotation
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import meteordevelopment.orbit.EventHandler
+import meteordevelopment.orbit.EventPriority
 
 class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
     private lateinit var dictionary: MappingDictionary
@@ -19,9 +19,9 @@ class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRe
         return this.configuration
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     private fun onClassTransform(event: ClassTransformEvent) {
-        if (event.eventNode.isAnnotation() || event.context.classSource.isLibraryClass(event.eventNode.name)) {
+        if (/*event.eventNode.isAnnotation() || */event.context.classSource.isLibraryClass(event.eventNode.name)) {
             return
         }
         SharedInstances.classRemapper.setMapping(event.eventNode.name, "${configuration.prefix}${dictionary.nextString()}")

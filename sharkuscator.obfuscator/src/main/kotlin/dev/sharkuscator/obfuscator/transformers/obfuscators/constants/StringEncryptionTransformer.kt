@@ -11,8 +11,7 @@ import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
 
 class StringEncryptionTransformer : AbstractTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
-    private val stringEncryption = NormalStringEncryption()
-    private val stringPool = StringPoolGenerator()
+    val stringEncryption = NormalStringEncryption()
 
     @EventHandler
     private fun onInitialization(event: ObfuscatorEvent.InitializationEvent) {

@@ -9,6 +9,7 @@ import dev.sharkuscator.obfuscator.extensions.fullyName
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
 import meteordevelopment.orbit.EventHandler
+import meteordevelopment.orbit.EventPriority
 
 class FieldRenameTransformer : AbstractTransformer<RenameConfiguration>("FieldRename", RenameConfiguration::class.java) {
     private val badInterfaces = listOf("com.sun.jna.*".toRegex())
@@ -19,7 +20,7 @@ class FieldRenameTransformer : AbstractTransformer<RenameConfiguration>("FieldRe
         return this.configuration
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     private fun onFieldTransform(event: FieldTransformEvent) {
         if (badInterfaces.any { it.matches(event.eventNode.owner.node.superName) }) {
             return

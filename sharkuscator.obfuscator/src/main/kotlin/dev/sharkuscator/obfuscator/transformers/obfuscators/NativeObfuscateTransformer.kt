@@ -5,6 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import meteordevelopment.orbit.EventHandler
+import meteordevelopment.orbit.EventPriority
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.ExperimentalPathApi
@@ -15,7 +16,7 @@ import kotlin.io.path.writeText
 class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>("NativeObfuscate", TransformerConfiguration::class.java) {
     private val obfuscatorPath = Paths.get("./thirdparty", "native-obfuscator.jar")
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     @OptIn(ExperimentalPathApi::class)
     private fun onFinalization(event: ObfuscatorEvent.FinalizationEvent) {
         if (!Files.exists(obfuscatorPath)) {

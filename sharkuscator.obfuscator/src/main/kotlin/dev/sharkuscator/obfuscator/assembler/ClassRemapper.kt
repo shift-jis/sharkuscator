@@ -7,19 +7,19 @@ class ClassRemapper : Remapper() {
     val mappings = mutableMapOf<String, String>()
 
     override fun mapMethodName(owner: String, name: String, descriptor: String): String {
-        return map("$owner.$name$descriptor") ?: name
+        return mappings["$owner.$name$descriptor"] ?: name
     }
 
     override fun mapInvokeDynamicMethodName(name: String, descriptor: String): String {
-        return map(".$name$descriptor") ?: name
+        return mappings[".$name$descriptor"] ?: name
     }
 
     override fun mapAnnotationAttributeName(descriptor: String, name: String): String {
-        return map("$descriptor.$name") ?: name
+        return mappings["$descriptor.$name"] ?: name
     }
 
     override fun mapFieldName(owner: String, name: String, descriptor: String): String {
-        return map("$owner.$name") ?: name
+        return mappings["$owner.$name"] ?: name
     }
 
     override fun map(internalName: String): String? {

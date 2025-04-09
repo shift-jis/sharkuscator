@@ -8,7 +8,6 @@ import org.mapleir.asm.ClassNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
-import java.lang.invoke.MethodHandles
 
 /**
  * Basic Xor string encryption

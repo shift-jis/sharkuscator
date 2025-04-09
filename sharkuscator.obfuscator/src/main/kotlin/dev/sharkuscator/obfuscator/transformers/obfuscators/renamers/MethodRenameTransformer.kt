@@ -9,6 +9,7 @@ import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import meteordevelopment.orbit.EventHandler
+import meteordevelopment.orbit.EventPriority
 
 class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("MethodRename", RenameConfiguration::class.java) {
     private val badInterfaces = listOf("com.sun.jna.*".toRegex())
@@ -19,7 +20,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
         return this.configuration
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     private fun onMethodTransform(event: MethodTransformEvent) {
         if (event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.isMain()) {
             return

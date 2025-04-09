@@ -9,6 +9,7 @@ import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteE
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
 import meteordevelopment.orbit.EventHandler
+import meteordevelopment.orbit.EventPriority
 
 class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
     private val mappings = mutableMapOf<String, String>()
@@ -24,7 +25,7 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
         event.name = mappings["/${event.name}"] ?: event.name
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     private fun onMethodTransform(event: MethodTransformEvent) {
         val methodNode = event.eventNode.node
         if (event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
