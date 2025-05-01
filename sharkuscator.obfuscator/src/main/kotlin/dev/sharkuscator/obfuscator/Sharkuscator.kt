@@ -9,8 +9,8 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
 import dev.sharkuscator.obfuscator.transformers.events.EventContext
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ResourceTransformEvent
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer

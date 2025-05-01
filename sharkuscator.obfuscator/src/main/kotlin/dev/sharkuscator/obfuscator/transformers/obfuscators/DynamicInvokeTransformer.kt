@@ -2,12 +2,14 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 
 import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
-import dev.sharkuscator.obfuscator.extensions.*
+import dev.sharkuscator.obfuscator.extensions.isAnnotation
+import dev.sharkuscator.obfuscator.extensions.isClInit
+import dev.sharkuscator.obfuscator.extensions.isInit
+import dev.sharkuscator.obfuscator.extensions.isInterface
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler

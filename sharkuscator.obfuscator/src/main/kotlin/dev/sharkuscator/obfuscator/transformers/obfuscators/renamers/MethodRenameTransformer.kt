@@ -17,7 +17,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
     lateinit var dictionary: MappingDictionary
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
-        dictionary = DictionaryFactory.forName(super.initialization(configuration).dictionary)
+        dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
         return this.configuration
     }
 

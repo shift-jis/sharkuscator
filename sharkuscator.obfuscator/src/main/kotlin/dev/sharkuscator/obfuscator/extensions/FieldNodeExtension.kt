@@ -2,7 +2,6 @@ package dev.sharkuscator.obfuscator.extensions
 
 import jdk.internal.org.objectweb.asm.Opcodes
 import org.mapleir.asm.FieldNode
-import org.mapleir.asm.MethodNode
 
 fun FieldNode.fullyName(): String = "${owner.name}.${node.name}"
 

@@ -11,13 +11,10 @@ import org.mapleir.asm.ClassNode
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.topdank.byteengineer.commons.data.JarContents
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
-import java.util.zip.Deflater
-import java.util.zip.ZipEntry
 
 
 class ResolvingDumper(
