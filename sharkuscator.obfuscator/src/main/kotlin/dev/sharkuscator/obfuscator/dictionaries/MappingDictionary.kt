@@ -1,7 +1,9 @@
 package dev.sharkuscator.obfuscator.dictionaries
 
-abstract class MappingDictionary(private val name: String) {
+abstract class MappingDictionary(val name: String) {
     abstract fun nextString(): String
+
+    abstract fun isDangerous(): Boolean
 
     protected fun toBijective(charset: CharArray, _decimal: Int): String {
         val builder = StringBuilder()
