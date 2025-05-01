@@ -11,12 +11,16 @@ import org.mapleir.asm.ClassNode
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.topdank.byteengineer.commons.data.JarContents
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
+import java.util.zip.Deflater
+import java.util.zip.ZipEntry
 
-class ClassResolvingDumper(
+
+class ResolvingDumper(
     private val jarContents: JarContents<ClassNode>,
     private val classSource: ApplicationClassSource,
     private val exclusions: ExclusionRule,
@@ -69,7 +73,7 @@ class ClassResolvingDumper(
             }
 
             outputStream.write(classWriteEvent.classData)
-        } catch (exception: Exception) {
+        } catch (_: Exception) {
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_MAXS)
             originalNode.accept(classWriter)
 

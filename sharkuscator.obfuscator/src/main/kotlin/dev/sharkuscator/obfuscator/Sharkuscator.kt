@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator
 
-import dev.sharkuscator.obfuscator.assembler.ClassResolvingDumper
+import dev.sharkuscator.obfuscator.assembler.ResolvingDumper
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.exclusions.AnnotationExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
@@ -113,7 +113,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         }
 
         SharedInstances.logger.info("Recompiling Class...")
-        ClassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
+        ResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
         SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
     }
 

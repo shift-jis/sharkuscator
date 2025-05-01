@@ -15,6 +15,8 @@ fun MethodNode.isInit(): Boolean = name == "<init>"
 
 fun MethodNode.isSynthetic(): Boolean = (node.access and Opcodes.ACC_SYNTHETIC) != 0
 
+fun MethodNode.isBridge(): Boolean = (node.access and Opcodes.ACC_BRIDGE) != 0
+
 fun MethodNode.invokeStatic(): MethodInsnNode {
     return BytecodeAssembler.createInvokeStatic(owner.name, name, desc)
 }

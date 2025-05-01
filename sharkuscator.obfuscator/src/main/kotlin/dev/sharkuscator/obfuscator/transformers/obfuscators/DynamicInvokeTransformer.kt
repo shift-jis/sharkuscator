@@ -48,7 +48,7 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
             return
         }
 
-        val encryptionTransformer = event.context.findTransformer(StringEncryptionTransformer::class.java)
+//        val encryptionTransformer = event.context.findTransformer(StringEncryptionTransformer::class.java)
         val methodNode = event.eventNode.node
 
         methodNode.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->

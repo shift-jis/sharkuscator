@@ -10,3 +10,5 @@ fun ClassNode.isInterface(): Boolean = (node.access and Opcodes.ACC_INTERFACE) !
 fun ClassNode.isAnnotation(): Boolean = (node.access and Opcodes.ACC_ANNOTATION) != 0
 
 fun ClassNode.isAbstract(): Boolean = (node.access and Opcodes.ACC_ABSTRACT) != 0
+
+fun ClassNode.isMainClass(): Boolean = methods.any { it.isMain() }

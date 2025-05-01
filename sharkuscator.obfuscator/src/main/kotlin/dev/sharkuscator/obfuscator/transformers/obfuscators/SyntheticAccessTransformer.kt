@@ -1,6 +1,7 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
+import dev.sharkuscator.obfuscator.extensions.isBridge
 import dev.sharkuscator.obfuscator.extensions.isClInit
 import dev.sharkuscator.obfuscator.extensions.isInit
 import dev.sharkuscator.obfuscator.extensions.isInterface
@@ -20,14 +21,14 @@ class SyntheticAccessTransformer : AbstractTransformer<TransformerConfiguration>
 
     @EventHandler
     private fun onMethodTransform(event: MethodTransformEvent) {
-        if (event.eventNode.isSynthetic() || event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.owner.isInterface()) {
+        if (event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.owner.isInterface()) {
             return
         }
-        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC
+        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC or Opcodes.ACC_BRIDGE
     }
 
     @EventHandler
     private fun onFieldTransform(event: FieldTransformEvent) {
-        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC
+        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC or Opcodes.ACC_BRIDGE
     }
 }
