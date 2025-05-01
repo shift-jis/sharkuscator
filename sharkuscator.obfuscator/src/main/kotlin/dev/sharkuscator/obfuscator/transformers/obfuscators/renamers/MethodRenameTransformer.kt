@@ -7,13 +7,14 @@ import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import meteordevelopment.orbit.EventHandler
 import meteordevelopment.orbit.EventPriority
 
 class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("MethodRename", RenameConfiguration::class.java) {
     private val badInterfaces = listOf("com.sun.jna.*".toRegex())
-    private lateinit var dictionary: MappingDictionary
+    lateinit var dictionary: MappingDictionary
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
         dictionary = DictionaryFactory.forName(super.initialization(configuration).dictionary)
@@ -22,12 +23,12 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
 
     @EventHandler(priority = EventPriority.HIGH)
     private fun onMethodTransform(event: MethodTransformEvent) {
-        if (event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.isMain()) {
+        if (transformed || event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.isMain()) {
             return
         }
 
         val classNode = event.eventNode.owner
-        if (classNode.isAnnotation() || classNode.node.superName != "java/lang/Object" || SharedInstances.classRemapper.contains(event.eventNode.fullyName())) {
+        if (classNode.isAnnotation() || classNode.node.superName != "java/lang/Object" || SharedInstances.classRemapper.mappings.containsKey(event.eventNode.fullyName())) {
             return
         }
 
@@ -43,5 +44,9 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
         for (methodNode in invocationResolver.getHierarchyMethodChain(classNode, event.eventNode.name, event.eventNode.desc, true)) {
             SharedInstances.classRemapper.setMapping(methodNode.fullyName(), methodMapping)
         }
+    }
+
+    override fun getPriority(): Int {
+        return TransformerPriority.BELOW_MEDIUM
     }
 }

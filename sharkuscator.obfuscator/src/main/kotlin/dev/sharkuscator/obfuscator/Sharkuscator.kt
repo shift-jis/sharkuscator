@@ -9,18 +9,19 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
 import dev.sharkuscator.obfuscator.transformers.events.EventContext
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
+import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ResourceTransformEvent
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import org.mapleir.DefaultInvocationResolver
@@ -52,6 +53,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         ResourceRenameTransformer(),
 
         StringEncryptionTransformer(),
+        NumberComplexityTransformer(),
         SyntheticAccessTransformer(),
         DynamicInvokeTransformer(),
         NativeObfuscateTransformer(),
@@ -68,8 +70,10 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
     private lateinit var classSource: ApplicationClassSource
 
     fun obfuscate() {
-//        SharedInstances.logger.level = Level.DEBUG
-//        System.setErr(PrintStream(NullOutputStream()))
+        if (!inputJarFile.exists()) {
+            SharedInstances.logger.error("Input jar does not exist!")
+            return
+        }
 
         configuration = importConfiguration()
         exclusions = MixedExclusionRule(buildList {
@@ -84,6 +88,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
         val analysisContext = buildAnalysisContext()
         val eventContext = buildEventContext(analysisContext)
+        transformers.sortBy { it.getPriority() }
 
         SharedInstances.eventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
             lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup
@@ -91,11 +96,28 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
         for (transformer in transformers.filter { configuration.transformers.has(it.getName().toSnakeCase()) }) {
             if (transformer.initialization(configuration).enabled && transformer.isEnabled()) {
-                SharedInstances.eventBus.subscribe(transformer.apply { initialization(configuration) })
-                SharedInstances.logger.debug("${transformer.getName()} subscribed")
+                SharedInstances.eventBus.subscribe(transformer)
+                dispatchTransformEvents(eventContext)
+                transformer.transformed = true
             }
         }
 
+        SharedInstances.logger.info("Translating SSA IR to standard flavour")
+        for ((methodNode, controlFlowGraph) in analysisContext.irCache.entries) {
+            controlFlowGraph.verify()
+
+            BoissinotDestructor.leaveSSA(controlFlowGraph)
+            LocalsReallocator.realloc(controlFlowGraph)
+
+            ControlFlowGraphDumper(controlFlowGraph, methodNode).dump()
+        }
+
+        SharedInstances.logger.info("Recompiling Class...")
+        ClassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
+        SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
+    }
+
+    private fun dispatchTransformEvents(eventContext: EventContext) {
         SharedInstances.eventBus.post(ObfuscatorEvent.InitializationEvent(eventContext, inputJarFile, outputJarFile))
 
         jarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
@@ -113,20 +135,6 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
                 SharedInstances.eventBus.post(FieldTransformEvent(eventContext, it))
             }
         }
-
-        SharedInstances.logger.info("Translating SSA IR to standard flavour")
-        for ((methodNode, controlFlowGraph) in analysisContext.irCache.entries) {
-            controlFlowGraph.verify()
-
-            BoissinotDestructor.leaveSSA(controlFlowGraph)
-            LocalsReallocator.realloc(controlFlowGraph)
-
-            ControlFlowGraphDumper(controlFlowGraph, methodNode).dump()
-        }
-
-        SharedInstances.logger.info("Recompiling Class...")
-        ClassResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
-        SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
     }
 
     private fun importConfiguration(): GsonConfiguration {

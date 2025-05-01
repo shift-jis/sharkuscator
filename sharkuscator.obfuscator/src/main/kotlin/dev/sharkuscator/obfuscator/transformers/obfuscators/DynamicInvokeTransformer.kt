@@ -4,8 +4,12 @@ import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
 import meteordevelopment.orbit.EventHandler
 import meteordevelopment.orbit.EventPriority
@@ -19,19 +23,23 @@ import org.objectweb.asm.tree.*
 class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("DynamicInvoke", TransformerConfiguration::class.java) {
     private val returnOpcodes = arrayOf(Opcodes.POP, Opcodes.POP2, Opcodes.RETURN, Opcodes.IFNONNULL, Opcodes.IFNULL, Opcodes.CHECKCAST)
     private val invokeOpcodes = arrayOf(Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL, Opcodes.INVOKEINTERFACE)
-    private val invokerClassName = "DynamicInvoker"
+    private lateinit var invokerClassName: String
     private lateinit var invokerHandle: Handle
 
     @EventHandler
     private fun onInitialization(event: ObfuscatorEvent.InitializationEvent) {
-        val invokerMethodNode = createInvokerMethodNode(invokerClassName)
+        val classRenameTransformer = event.context.findTransformer(ClassRenameTransformer::class.java)!!
+        val methodRenameTransformer = event.context.findTransformer(MethodRenameTransformer::class.java)!!
+        invokerClassName = classRenameTransformer.dictionary.nextString()
+
+        val invokerMethodNode = createInvokerMethodNode(invokerClassName, methodRenameTransformer.dictionary.nextString())
         event.context.jarContents.classContents.add(ClassHelper.create(BytecodeAssembler.createClassNode(invokerClassName).apply { methods.add(invokerMethodNode) }))
         invokerHandle = Handle(Opcodes.H_INVOKESTATIC, invokerClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
     }
 
     @EventHandler(priority = EventPriority.LOW)
     private fun onMethodTransform(event: MethodTransformEvent) {
-        if (event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit()) {
+        if (transformed || event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit()) {
             return
         }
 
@@ -40,7 +48,9 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
             return
         }
 
+        val encryptionTransformer = event.context.findTransformer(StringEncryptionTransformer::class.java)
         val methodNode = event.eventNode.node
+
         methodNode.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->
             if (instruction.owner.startsWith("[") || instruction.owner == "java/lang/invoke/MethodHandles") {
                 return@forEach
@@ -67,12 +77,13 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
 
             val classNameMapping = SharedInstances.classRemapper.mappings[instruction.owner] ?: instruction.owner.replace('/', '.')
             val methodNameMapping = SharedInstances.classRemapper.mapMethodName(instruction.owner, instruction.name, instruction.desc)
+            val descriptionMapping = SharedInstances.classRemapper.replaceAll(instruction.desc)
 
             invokeDescriptor = Type.getMethodDescriptor(castedReturnType, *castedArgumentTypes)
             methodNode.instructions.insertBefore(
                 instruction, InvokeDynamicInsnNode(
-                    "DYNAMIC_INVOKE_JUMP_SCARE", invokeDescriptor, invokerHandle, instruction.opcode,
-                    classNameMapping, methodNameMapping, instruction.desc
+                    "", invokeDescriptor, invokerHandle, instruction.opcode,
+                    classNameMapping, methodNameMapping, descriptionMapping
                 )
             )
 
@@ -87,7 +98,11 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
         }
     }
 
-    private fun createInvokerMethodNode(className: String): MethodNode {
+    override fun getPriority(): Int {
+        return TransformerPriority.LOWER
+    }
+
+    private fun createInvokerMethodNode(className: String, methodName: String): MethodNode {
         val invokerDescriptor = "(Ljava/lang/invoke/MethodHandles\$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;"
         val methodHandleDescriptor = "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;"
         val methodTypeDescriptor = "(Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodType;"
@@ -100,7 +115,7 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
         val labelReturnCallSite = LabelNode()
         val labelUnsupportedOpcode = LabelNode()
 
-        return BytecodeAssembler.createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, "invoke", invokerDescriptor).apply {
+        return BytecodeAssembler.createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, methodName, invokerDescriptor).apply {
             instructions = BytecodeAssembler.buildInstructionList(
                 // Load and resolve method type
                 VarInsnNode(Opcodes.ALOAD, 6),

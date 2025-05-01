@@ -5,6 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguratio
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
@@ -28,7 +29,7 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
     @EventHandler(priority = EventPriority.HIGH)
     private fun onMethodTransform(event: MethodTransformEvent) {
         val methodNode = event.eventNode.node
-        if (event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
+        if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
@@ -40,5 +41,9 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
                 instruction.cst = "/${mappings[value]}"
             }
         }
+    }
+
+    override fun getPriority(): Int {
+        return TransformerPriority.BELOW_MEDIUM
     }
 }

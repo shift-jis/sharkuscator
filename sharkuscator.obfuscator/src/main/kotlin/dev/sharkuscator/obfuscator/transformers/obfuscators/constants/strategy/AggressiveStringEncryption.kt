@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.LdcInsnNode
 
 class AggressiveStringEncryption : StringEncryptionStrategy {
-    override fun createDecryptorClassNode(name: String): ClassNode {
+    override fun createDecryptClassNode(className: String, methodName: String): ClassNode {
         TODO("Not yet implemented")
     }
 

@@ -8,6 +8,10 @@ object BytecodeAssembler {
         return instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.map { Pair(it, it.cst as String) }
     }
 
+    fun findNonZeroNumbers(instructions: InsnList): List<Pair<LdcInsnNode, Number>> {
+        return instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is Number && (it.cst as Number) != 0 }.map { Pair(it, it.cst as Number) }
+    }
+
     fun buildInstructionList(vararg instructions: AbstractInsnNode): InsnList {
         return InsnList().apply {
             instructions.forEach { add(it) }

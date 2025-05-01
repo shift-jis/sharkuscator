@@ -6,13 +6,14 @@ import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguratio
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import meteordevelopment.orbit.EventHandler
 import meteordevelopment.orbit.EventPriority
 
 class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
-    private lateinit var dictionary: MappingDictionary
+    lateinit var dictionary: MappingDictionary
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
         dictionary = DictionaryFactory.forName(super.initialization(configuration).dictionary)
@@ -21,7 +22,7 @@ class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRe
 
     @EventHandler(priority = EventPriority.HIGH)
     private fun onClassTransform(event: ClassTransformEvent) {
-        if (/*event.eventNode.isAnnotation() || */event.context.classSource.isLibraryClass(event.eventNode.name)) {
+        if (transformed || event.context.classSource.isLibraryClass(event.eventNode.name)) {
             return
         }
         SharedInstances.classRemapper.setMapping(event.eventNode.name, "${configuration.prefix}${dictionary.nextString()}")
@@ -38,5 +39,9 @@ class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRe
             val mainClassRegex = "(?<=[: ])${previous.replace("/", ".")}".toRegex()
             event.resourceData = mainClassRegex.replace(event.resourceData.decodeToString(), newest).toByteArray()
         }
+    }
+
+    override fun getPriority(): Int {
+        return TransformerPriority.BELOW_MEDIUM
     }
 }

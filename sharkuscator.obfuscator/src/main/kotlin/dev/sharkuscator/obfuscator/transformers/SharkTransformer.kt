@@ -9,5 +9,7 @@ interface SharkTransformer<T> {
 
     fun isEnabled(): Boolean
 
+    fun getPriority(): Int
+
     fun getName(): String
 }

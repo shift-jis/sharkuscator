@@ -8,6 +8,9 @@ import meteordevelopment.orbit.EventHandler
 class SourceStripperTransformer : AbstractTransformer<TransformerConfiguration>("SourceStripper", TransformerConfiguration::class.java) {
     @EventHandler
     private fun onClassTransform(event: ClassTransformEvent) {
+        if (event.eventNode.node.sourceDebug == null || event.eventNode.node.sourceFile == null) {
+            return
+        }
         event.eventNode.node.sourceDebug = null
         event.eventNode.node.sourceFile = null
     }

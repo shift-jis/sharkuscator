@@ -26,8 +26,12 @@ class ClassRemapper : Remapper() {
         return mappings[internalName]
     }
 
-    fun contains(internalName: String): Boolean {
-        return mappings.containsKey(internalName)
+    fun replaceAll(replacement: String): String {
+        var currentText = replacement
+        for (className in mappings.keys.filter { currentText.contains(it) }) {
+            currentText = currentText.replace(className, mappings[className]!!)
+        }
+        return currentText
     }
 
     fun setMapping(previous: String, newest: String) {

@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.LdcInsnNode
 
 interface StringEncryptionStrategy {
-    fun createDecryptorClassNode(name: String): ClassNode
+    fun createDecryptClassNode(className: String, methodName: String): ClassNode
 
     fun replaceInstructions(instructions: InsnList, original: LdcInsnNode, replacement: String, keyBytes: ByteArray)
 

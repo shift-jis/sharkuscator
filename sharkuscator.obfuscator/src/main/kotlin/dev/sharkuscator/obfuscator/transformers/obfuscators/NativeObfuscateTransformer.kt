@@ -3,6 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 import dev.sharkuscator.obfuscator.SharedInstances
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import meteordevelopment.orbit.EventHandler
 import meteordevelopment.orbit.EventPriority
@@ -39,5 +40,9 @@ class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>
             SharedInstances.logger.info(it.readText())
         }
         obfuscatorProcess.waitFor()
+    }
+
+    override fun getPriority(): Int {
+        return TransformerPriority.LOWEST
     }
 }

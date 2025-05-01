@@ -8,6 +8,7 @@ import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ClassWriteEvent
 import dev.sharkuscator.obfuscator.utilities.ResourceExtractor
 import meteordevelopment.orbit.EventHandler
+import meteordevelopment.orbit.EventPriority
 import java.nio.file.Paths
 
 @Deprecated("Deprecated due to inconsistent behavior across different environments")
@@ -20,7 +21,7 @@ class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfigurat
         return super.initialization(configuration)
     }
 
-    @EventHandler(priority = 1337)
+    @EventHandler(priority = EventPriority.HIGHEST)
     private fun onClassWrite(event: ClassWriteEvent) {
         if (configuration.password.length != 16) {
             SharedInstances.logger.error("Encryption key is not 16 characters long")

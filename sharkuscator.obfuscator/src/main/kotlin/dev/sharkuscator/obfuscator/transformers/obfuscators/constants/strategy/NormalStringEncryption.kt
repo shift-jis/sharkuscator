@@ -19,8 +19,8 @@ class NormalStringEncryption : StringEncryptionStrategy {
     private lateinit var decryptorMethodNode: MethodNode
     private lateinit var decryptorClassNode: ClassNode
 
-    override fun createDecryptorClassNode(name: String): ClassNode {
-        val decryptMethodNode = BytecodeAssembler.createMethodNode(decryptMethodAccess, "decrypt", decryptMethodDescriptor).apply {
+    override fun createDecryptClassNode(className: String, methodName: String): ClassNode {
+        val decryptMethodNode = BytecodeAssembler.createMethodNode(decryptMethodAccess, methodName, decryptMethodDescriptor).apply {
             val forLoopBeginLabelNode = LabelNode()
             val forLoopEndLabelNode = LabelNode()
 
@@ -88,7 +88,7 @@ class NormalStringEncryption : StringEncryptionStrategy {
             )
         }
 
-        return ClassHelper.create(BytecodeAssembler.createClassNode(name).apply { methods.add(decryptMethodNode) }).also {
+        return ClassHelper.create(BytecodeAssembler.createClassNode(className).apply { methods.add(decryptMethodNode) }).also {
             decryptorMethodNode = MethodNode(decryptMethodNode, it)
             decryptorClassNode = it
         }

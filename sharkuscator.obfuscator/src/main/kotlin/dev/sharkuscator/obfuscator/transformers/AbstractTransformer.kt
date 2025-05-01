@@ -5,6 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 
 abstract class AbstractTransformer<T : TransformerConfiguration>(private val name: String, private val clazz: Class<T>) : SharkTransformer<T> {
     protected lateinit var configuration: T
+    var transformed = false
 
     override fun initialization(configuration: GsonConfiguration): T {
         this.configuration = configuration.fromTransformer(this, clazz)
@@ -16,7 +17,11 @@ abstract class AbstractTransformer<T : TransformerConfiguration>(private val nam
     }
 
     override fun isEnabled(): Boolean {
-        return configuration.enabled
+        return configuration.enabled && !transformed
+    }
+
+    override fun getPriority(): Int {
+        return TransformerPriority.MEDIUM
     }
 
     override fun getName(): String {
