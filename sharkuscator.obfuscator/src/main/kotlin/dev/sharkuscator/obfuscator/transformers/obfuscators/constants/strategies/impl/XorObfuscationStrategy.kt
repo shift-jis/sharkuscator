@@ -1,30 +1,41 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategy
+package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.impl
 
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
 import dev.sharkuscator.obfuscator.extensions.xor
-import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.StringConstantObfuscationStrategy
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.mapleir.asm.ClassHelper
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.IincInsnNode
+import org.objectweb.asm.tree.InsnList
+import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.JumpInsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 
 /**
  * Basic Xor string encryption
  */
-class NormalStringEncryption : StringEncryptionStrategy {
+class XorObfuscationStrategy : StringConstantObfuscationStrategy {
     private val decryptMethodDescriptor = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-    private val decryptMethodAccess = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC
+    private val decryptMethodAccess = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
 
     private lateinit var decryptorMethodNode: MethodNode
     private lateinit var decryptorClassNode: ClassNode
 
     override fun createDecryptClassNode(className: String, methodName: String): ClassNode {
-        val decryptMethodNode = BytecodeAssembler.createMethodNode(decryptMethodAccess, methodName, decryptMethodDescriptor).apply {
+        val decryptMethodNode = BytecodeUtils.createMethodNode(decryptMethodAccess, methodName, decryptMethodDescriptor).apply {
             val forLoopBeginLabelNode = LabelNode()
             val forLoopEndLabelNode = LabelNode()
 
-            instructions = BytecodeAssembler.buildInstructionList(
+            instructions = BytecodeUtils.buildInstructionList(
                 // --- Initialization ---
                 VarInsnNode(Opcodes.ALOAD, 0),
                 MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I"),
@@ -88,20 +99,21 @@ class NormalStringEncryption : StringEncryptionStrategy {
             )
         }
 
-        return ClassHelper.create(BytecodeAssembler.createClassNode(className).apply { methods.add(decryptMethodNode) }).also {
+        return ClassHelper.create(BytecodeUtils.createClassNode(className).apply { methods.add(decryptMethodNode) }).also {
             decryptorMethodNode = MethodNode(decryptMethodNode, it)
             decryptorClassNode = it
         }
     }
 
-    override fun replaceInstructions(instructions: InsnList, original: LdcInsnNode, replacement: String, keyBytes: ByteArray) {
-        instructions.insert(original, decryptorMethodNode.invokeStatic())
-        instructions.insert(original, LdcInsnNode(keyBytes.decodeToString()))
-        instructions.insert(original, LdcInsnNode(replacement))
-        instructions.remove(original)
+    override fun replaceInstructions(instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String) {
+        val resultPair = obfuscateString(originalString, RandomStringUtils.randomAlphanumeric(originalString.length))
+        instructions.insert(targetInstruction, decryptorMethodNode.invokeStatic())
+        instructions.insert(targetInstruction, LdcInsnNode(resultPair.second.decodeToString()))
+        instructions.insert(targetInstruction, LdcInsnNode(resultPair.first))
+        instructions.remove(targetInstruction)
     }
 
-    override fun encryptString(value: String, keyBytes: ByteArray): Pair<String, ByteArray> {
-        return Pair(value xor keyBytes.decodeToString(), keyBytes)
+    override fun obfuscateString(originalString: String, keyBytes: ByteArray): Pair<String, ByteArray> {
+        return Pair(originalString xor keyBytes.decodeToString(), keyBytes)
     }
 }

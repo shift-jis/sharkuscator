@@ -8,9 +8,8 @@ import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
-import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
-import meteordevelopment.orbit.EventPriority
 
 class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
     private val mappings = mutableMapOf<String, String>()
@@ -26,14 +25,14 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
         event.name = mappings["/${event.name}"] ?: event.name
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler
     private fun onMethodTransform(event: MethodTransformEvent) {
         val methodNode = event.eventNode.node
         if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
-        BytecodeAssembler.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, value) ->
+        BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, value) ->
             if (event.context.jarContents.resourceContents.any { it.name == value }) {
                 if (!mappings.containsKey(value)) {
                     mappings[value] = "${configuration.prefix}${dictionary.nextString()}"

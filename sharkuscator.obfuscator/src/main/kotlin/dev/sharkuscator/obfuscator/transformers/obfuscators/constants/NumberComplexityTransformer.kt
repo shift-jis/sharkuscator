@@ -4,12 +4,12 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategy.NormalNumberComplexity
-import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.impl.LoadBitsAndConvertStrategy
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
 
 class NumberComplexityTransformer : AbstractTransformer<TransformerConfiguration>("NumberComplexity", TransformerConfiguration::class.java) {
-    private val numberComplexity = NormalNumberComplexity()
+    private val numberComplexity = LoadBitsAndConvertStrategy()
 
     @EventHandler
     private fun onMethodTransform(event: MethodTransformEvent) {
@@ -18,8 +18,8 @@ class NumberComplexityTransformer : AbstractTransformer<TransformerConfiguration
             return
         }
 
-        BytecodeAssembler.findNonZeroNumbers(methodNode.instructions).forEach { (instruction, value) ->
-//            println(value)
+        BytecodeUtils.findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
+            numberComplexity.replaceInstructions(methodNode.instructions, instruction, value)
         }
     }
 

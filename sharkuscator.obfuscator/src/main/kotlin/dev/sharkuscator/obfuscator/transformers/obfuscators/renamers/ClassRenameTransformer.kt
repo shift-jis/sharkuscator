@@ -12,7 +12,6 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import meteordevelopment.orbit.EventHandler
-import meteordevelopment.orbit.EventPriority
 
 class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
     private val defaultDictionary = DictionaryFactory.defaultDictionary()
@@ -23,7 +22,7 @@ class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRe
         return this.configuration
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler
     private fun onClassTransform(event: ClassTransformEvent) {
         if (transformed || event.context.classSource.isLibraryClass(event.eventNode.name)) {
             return

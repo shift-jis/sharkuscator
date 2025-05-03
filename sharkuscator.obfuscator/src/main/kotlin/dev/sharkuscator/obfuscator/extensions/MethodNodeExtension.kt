@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.extensions
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodInsnNode
@@ -18,5 +18,5 @@ fun MethodNode.isSynthetic(): Boolean = (node.access and Opcodes.ACC_SYNTHETIC) 
 fun MethodNode.isBridge(): Boolean = (node.access and Opcodes.ACC_BRIDGE) != 0
 
 fun MethodNode.invokeStatic(): MethodInsnNode {
-    return BytecodeAssembler.createInvokeStatic(owner.name, name, desc)
+    return BytecodeUtils.createInvokeStatic(owner.name, name, desc)
 }

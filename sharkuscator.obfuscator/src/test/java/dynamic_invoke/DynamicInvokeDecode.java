@@ -1,3 +1,5 @@
+package dynamic_invoke;
+
 import org.objectweb.asm.Opcodes;
 
 import java.lang.invoke.ConstantCallSite;
@@ -14,7 +16,7 @@ public class DynamicInvokeDecode {
         try {
             DynamicInvokeDecode dynamicInvokeDecode = new DynamicInvokeDecode();
             System.out.println((String) bootstrap(MethodHandles.lookup(), "test", MethodType.methodType(String.class, DynamicInvokeDecode.class, String.class, String.class, String.class, String.class), Opcodes.INVOKEVIRTUAL,
-                    "DynamicInvokeDecode",
+                    "dynamic_invoke.DynamicInvokeDecode",
                     "test", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;").dynamicInvoker().invoke(dynamicInvokeDecode, "1", "2", "3", "4"));
 //            System.out.println(new String(((byte[]) decodeHandle.invoke(Base64.getDecoder(), "xZLDvMOow6nigqzDrMOgw7I=".getBytes()))));
 //            System.out.println((String) returnHandle.invoke(dynamicInvokeDecode, "1", "2", "3", "4"));

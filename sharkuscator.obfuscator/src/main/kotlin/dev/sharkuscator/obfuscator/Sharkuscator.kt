@@ -16,6 +16,7 @@ import dev.sharkuscator.obfuscator.transformers.events.transforming.ResourceTran
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.LongConstantEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
@@ -52,6 +53,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         MethodRenameTransformer(),
         ResourceRenameTransformer(),
 
+        LongConstantEncryptionTransformer(),
         StringEncryptionTransformer(),
         NumberComplexityTransformer(),
         SyntheticAccessTransformer(),

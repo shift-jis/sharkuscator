@@ -1,9 +1,12 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
+import dev.sharkuscator.obfuscator.extensions.isBridge
 import dev.sharkuscator.obfuscator.extensions.isClInit
 import dev.sharkuscator.obfuscator.extensions.isInit
 import dev.sharkuscator.obfuscator.extensions.isInterface
+import dev.sharkuscator.obfuscator.extensions.isSynthetic
+import dev.sharkuscator.obfuscator.extensions.isVolatile
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
@@ -22,11 +25,15 @@ class SyntheticAccessTransformer : AbstractTransformer<TransformerConfiguration>
         if (event.eventNode.isClInit() || event.eventNode.isInit() || event.eventNode.owner.isInterface()) {
             return
         }
-        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC or Opcodes.ACC_BRIDGE
+        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC
+        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_BRIDGE
     }
 
     @EventHandler
     private fun onFieldTransform(event: FieldTransformEvent) {
-        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC or Opcodes.ACC_BRIDGE
+        if (event.eventNode.isVolatile() || event.eventNode.isSynthetic() || event.eventNode.isBridge()) {
+            return
+        }
+        event.eventNode.node.access = event.eventNode.node.access or Opcodes.ACC_SYNTHETIC
     }
 }

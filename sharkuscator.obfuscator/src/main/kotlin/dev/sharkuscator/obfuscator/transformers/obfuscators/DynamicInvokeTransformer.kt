@@ -12,9 +12,8 @@ import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
-import dev.sharkuscator.obfuscator.utilities.BytecodeAssembler
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
-import meteordevelopment.orbit.EventPriority
 import org.mapleir.asm.ClassHelper
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
@@ -35,11 +34,11 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
         invokerClassName = classRenameTransformer.dictionary.nextString()
 
         val invokerMethodNode = createInvokerMethodNode(invokerClassName, methodRenameTransformer.dictionary.nextString())
-        event.context.jarContents.classContents.add(ClassHelper.create(BytecodeAssembler.createClassNode(invokerClassName).apply { methods.add(invokerMethodNode) }))
+        event.context.jarContents.classContents.add(ClassHelper.create(BytecodeUtils.createClassNode(invokerClassName).apply { methods.add(invokerMethodNode) }))
         invokerHandle = Handle(Opcodes.H_INVOKESTATIC, invokerClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler
     private fun onMethodTransform(event: MethodTransformEvent) {
         if (transformed || event.eventNode.isNative || event.eventNode.isClInit() || event.eventNode.isInit()) {
             return
@@ -117,8 +116,8 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
         val labelReturnCallSite = LabelNode()
         val labelUnsupportedOpcode = LabelNode()
 
-        return BytecodeAssembler.createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, methodName, invokerDescriptor).apply {
-            instructions = BytecodeAssembler.buildInstructionList(
+        return BytecodeUtils.createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, methodName, invokerDescriptor).apply {
+            instructions = BytecodeUtils.buildInstructionList(
                 // Load and resolve method type
                 VarInsnNode(Opcodes.ALOAD, 6),
                 LdcInsnNode(Type.getObjectType(className)),
