@@ -1,4 +1,4 @@
-package encryption;
+package long_constant;
 
 /**
  * オペレーションまたは状態の対象となるオブジェクトの共通インターフェース。

@@ -1,13 +1,14 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
+package dev.sharkuscator.obfuscator.transformers.strategies
 
 import org.mapleir.asm.ClassNode
+import org.mapleir.asm.MethodNode
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 
 interface StringConstantObfuscationStrategy {
-    fun createDecryptClassNode(className: String, methodName: String): ClassNode
+    fun prepareDecoderMethod(classNode: ClassNode, decoderMethodName: String): MethodNode
 
-    fun replaceInstructions(instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String)
+    fun replaceInstructions(preparedDecoder: MethodNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String)
 
     fun obfuscateString(originalString: String, keyString: String): Pair<String, ByteArray> {
         return obfuscateString(originalString, keyString.encodeToByteArray())

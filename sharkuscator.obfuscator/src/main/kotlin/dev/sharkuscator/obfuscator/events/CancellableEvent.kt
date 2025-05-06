@@ -1,4 +1,4 @@
-package dev.sharkuscator.obfuscator.transformers.events
+package dev.sharkuscator.obfuscator.events
 
 import meteordevelopment.orbit.ICancellable
 

@@ -1,4 +1,4 @@
-package encryption;
+package long_constant;
 
 import java.lang.invoke.MethodHandles;
 

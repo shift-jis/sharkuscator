@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.assembler
 
-import dev.sharkuscator.obfuscator.extensions.isInterface
+import dev.sharkuscator.obfuscator.extensions.isDeclaredAsInterface
 import org.mapleir.app.service.ApplicationClassSource
 import org.objectweb.asm.ClassWriter
 
@@ -33,7 +33,7 @@ class ClassWriter(private val classSource: ApplicationClassSource, flags: Int) :
             return type2
         }
 
-        if (classSource.findClassNode(type1).isInterface() || classSource.findClassNode(type2).isInterface()) {
+        if (classSource.findClassNode(type1).isDeclaredAsInterface() || classSource.findClassNode(type2).isDeclaredAsInterface()) {
             return "java/lang/Object"
         }
 

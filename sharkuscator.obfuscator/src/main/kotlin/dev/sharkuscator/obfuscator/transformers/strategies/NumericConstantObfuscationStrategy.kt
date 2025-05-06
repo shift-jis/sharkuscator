@@ -1,10 +1,11 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
+package dev.sharkuscator.obfuscator.transformers.strategies
 
+import org.mapleir.asm.ClassNode
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 
 interface NumericConstantObfuscationStrategy {
-    fun replaceInstructions(instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number)
+    fun replaceInstructions(classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number)
 
     fun obfuscateNumber(originalValue: Number, keyNumber: Number = 0): Pair<Number, Number>
 }

@@ -1,10 +1,10 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators
 
-import dev.sharkuscator.obfuscator.SharedInstances
+import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
+import dev.sharkuscator.obfuscator.events.ObfuscatorEvent
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
-import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
 import meteordevelopment.orbit.EventHandler
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -17,14 +17,15 @@ class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>
     private val obfuscatorPath = Paths.get("./thirdparty", "native-obfuscator.jar")
 
     @EventHandler
+    @Suppress("unused")
     @OptIn(ExperimentalPathApi::class)
     private fun onFinalization(event: ObfuscatorEvent.FinalizationEvent) {
         if (!Files.exists(obfuscatorPath)) {
-            SharedInstances.logger.error("native-obfuscator.jar does not exist!")
+            ObfuscatorServices.sharkLogger.error("native-obfuscator.jar does not exist!")
             return
         }
 
-        SharedInstances.logger.info("Running Native obfuscator...")
+        ObfuscatorServices.sharkLogger.info("Running Native obfuscator...")
         val blackListFilePath = Files.createTempFile(null, ".txt")
         blackListFilePath.writeText(configuration.exclusions.joinToString("\n") { it.replace(".", "/") })
         blackListFilePath.toFile().deleteOnExit()
@@ -36,7 +37,7 @@ class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>
 
         val obfuscatorProcess = ProcessBuilder("java", "-jar", obfuscatorPath.toString(), event.outputJarFile.name, nativeLibraryPath.toString(), "-p", "std_java", "-b", blackListFilePath.absolutePathString()).start()
         obfuscatorProcess.inputStream.bufferedReader().use {
-            SharedInstances.logger.info(it.readText())
+            ObfuscatorServices.sharkLogger.info(it.readText())
         }
         obfuscatorProcess.waitFor()
     }

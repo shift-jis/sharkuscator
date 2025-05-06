@@ -1,37 +1,29 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.impl
+package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
 import dev.sharkuscator.obfuscator.extensions.xor
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.StringConstantObfuscationStrategy
+import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import org.apache.commons.lang3.RandomStringUtils
-import org.mapleir.asm.ClassHelper
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.IincInsnNode
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LabelNode
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
-import org.objectweb.asm.tree.VarInsnNode
+import org.objectweb.asm.tree.*
 
 /**
  * Basic Xor string encryption
  */
-class XorObfuscationStrategy : StringConstantObfuscationStrategy {
-    private val decryptMethodDescriptor = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-    private val decryptMethodAccess = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
+    private val methodDescriptor = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+    private val methodAccess = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+    private val decodeMethodNodeCache = mutableMapOf<ClassNode, MethodNode>()
 
-    private lateinit var decryptorMethodNode: MethodNode
-    private lateinit var decryptorClassNode: ClassNode
+    override fun prepareDecoderMethod(classNode: ClassNode, decoderMethodName: String): MethodNode {
+        if (decodeMethodNodeCache.containsKey(classNode)) {
+            return decodeMethodNodeCache.getValue(classNode)
+        }
 
-    override fun createDecryptClassNode(className: String, methodName: String): ClassNode {
-        val decryptMethodNode = BytecodeUtils.createMethodNode(decryptMethodAccess, methodName, decryptMethodDescriptor).apply {
+        val builtMethodNode = BytecodeUtils.createMethodNode(methodAccess, decoderMethodName, methodDescriptor).apply {
             val forLoopBeginLabelNode = LabelNode()
             val forLoopEndLabelNode = LabelNode()
 
@@ -99,15 +91,15 @@ class XorObfuscationStrategy : StringConstantObfuscationStrategy {
             )
         }
 
-        return ClassHelper.create(BytecodeUtils.createClassNode(className).apply { methods.add(decryptMethodNode) }).also {
-            decryptorMethodNode = MethodNode(decryptMethodNode, it)
-            decryptorClassNode = it
+        return MethodNode(builtMethodNode, classNode).also {
+            decodeMethodNodeCache.putIfAbsent(classNode, it)
+            classNode.addMethod(it)
         }
     }
 
-    override fun replaceInstructions(instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String) {
+    override fun replaceInstructions(preparedDecoder: MethodNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String) {
         val resultPair = obfuscateString(originalString, RandomStringUtils.randomAlphanumeric(originalString.length))
-        instructions.insert(targetInstruction, decryptorMethodNode.invokeStatic())
+        instructions.insert(targetInstruction, preparedDecoder.invokeStatic())
         instructions.insert(targetInstruction, LdcInsnNode(resultPair.second.decodeToString()))
         instructions.insert(targetInstruction, LdcInsnNode(resultPair.first))
         instructions.remove(targetInstruction)

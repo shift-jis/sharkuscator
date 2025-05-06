@@ -6,13 +6,12 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.AnnotationExclusionR
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
+import dev.sharkuscator.obfuscator.events.ObfuscatorEvent
+import dev.sharkuscator.obfuscator.events.transforming.ClassTransformEvent
+import dev.sharkuscator.obfuscator.events.transforming.FieldTransformEvent
+import dev.sharkuscator.obfuscator.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.events.transforming.ResourceTransformEvent
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
-import dev.sharkuscator.obfuscator.transformers.events.EventContext
-import dev.sharkuscator.obfuscator.transformers.events.ObfuscatorEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.ClassTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.FieldTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.MethodTransformEvent
-import dev.sharkuscator.obfuscator.transformers.events.transforming.ResourceTransformEvent
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
@@ -73,7 +72,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
     fun obfuscate() {
         if (!inputJarFile.exists()) {
-            SharedInstances.logger.error("Input jar does not exist!")
+            ObfuscatorServices.sharkLogger.error("Input jar does not exist!")
             return
         }
 
@@ -83,28 +82,28 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
             add(AnnotationExclusionRule())
         })
 
-        jarContents = downloadJarContents(inputJarFile)
+        jarContents = loadJarContents(inputJarFile)
         classSource = ApplicationClassSource(inputJarFile.getName().drop(4), jarContents.classContents)
-        classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/jce.jar")))
-        classSource.addLibraries(resolveLibrary(classSource, File(System.getProperty("java.home"), "lib/rt.jar")))
+        classSource.addLibraries(loadLibrarySource(classSource, File(System.getProperty("java.home"), "lib/jce.jar")))
+        classSource.addLibraries(loadLibrarySource(classSource, File(System.getProperty("java.home"), "lib/rt.jar")))
 
-        val analysisContext = buildAnalysisContext()
-        val eventContext = buildEventContext(analysisContext)
+        val analysisContext = createAnalysisContext()
+        val eventContext = createObfuscationContext(analysisContext)
         transformers.sortBy { it.getPriority() }
 
-        SharedInstances.eventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
+        ObfuscatorServices.mainEventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
             lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup
         }
 
         for (transformer in transformers.filter { configuration.transformers.has(it.getName().toSnakeCase()) }) {
             if (transformer.initialization(configuration).enabled && transformer.isEnabled()) {
-                SharedInstances.eventBus.subscribe(transformer)
+                ObfuscatorServices.mainEventBus.subscribe(transformer)
                 dispatchTransformEvents(eventContext)
                 transformer.transformed = true
             }
         }
 
-        SharedInstances.logger.info("Translating SSA IR to standard flavour")
+        ObfuscatorServices.sharkLogger.info("Translating SSA IR to standard flavour")
         for ((methodNode, controlFlowGraph) in analysisContext.irCache.entries) {
             controlFlowGraph.verify()
 
@@ -114,53 +113,53 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
             ControlFlowGraphDumper(controlFlowGraph, methodNode).dump()
         }
 
-        SharedInstances.logger.info("Recompiling Class...")
+        ObfuscatorServices.sharkLogger.info("Recompiling Class...")
         ResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
-        SharedInstances.eventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
     }
 
-    private fun dispatchTransformEvents(eventContext: EventContext) {
-        SharedInstances.eventBus.post(ObfuscatorEvent.InitializationEvent(eventContext, inputJarFile, outputJarFile))
+    private fun dispatchTransformEvents(obfuscationContext: ObfuscationContext) {
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvent.InitializationEvent(obfuscationContext, inputJarFile, outputJarFile))
 
         jarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
-            SharedInstances.eventBus.post(ResourceTransformEvent(eventContext, it.value.name, it.value.data))
+            ObfuscatorServices.mainEventBus.post(ResourceTransformEvent(obfuscationContext, it.value.name, it.value.data))
         }
 
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->
-            SharedInstances.eventBus.post(ClassTransformEvent(eventContext, classContent.value))
+            ObfuscatorServices.mainEventBus.post(ClassTransformEvent(obfuscationContext, classContent.value))
 
             classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
-                SharedInstances.eventBus.post(MethodTransformEvent(eventContext, it))
+                ObfuscatorServices.mainEventBus.post(MethodTransformEvent(obfuscationContext, it))
             }
 
             classContent.value.fields.filter { !exclusions.excluded(it) }.forEach {
-                SharedInstances.eventBus.post(FieldTransformEvent(eventContext, it))
+                ObfuscatorServices.mainEventBus.post(FieldTransformEvent(obfuscationContext, it))
             }
         }
     }
 
     private fun importConfiguration(): GsonConfiguration {
         try {
-            SharedInstances.logger.info("Importing configuration...")
-            return SharedInstances.gson.fromJson(configJsonPath.readText(), GsonConfiguration::class.java)
+            ObfuscatorServices.sharkLogger.info("Importing configuration...")
+            return ObfuscatorServices.jsonProcessor.fromJson(configJsonPath.readText(), GsonConfiguration::class.java)
         } catch (exception: Exception) {
             exception.printStackTrace()
             return GsonConfiguration()
         }
     }
 
-    private fun resolveLibrary(classSource: ApplicationClassSource, libraryFile: File): LibraryClassSource {
-        return LibraryClassSource(classSource, downloadJarContents(libraryFile).classContents)
+    private fun loadLibrarySource(classSource: ApplicationClassSource, libraryFile: File): LibraryClassSource {
+        return LibraryClassSource(classSource, loadJarContents(libraryFile).classContents)
     }
 
-    private fun downloadJarContents(jarFile: File): JarContents<ClassNode> {
+    private fun loadJarContents(jarFile: File): JarContents<ClassNode> {
         return SingleJarDownloader<ClassNode>(JarInfo(jarFile)).apply { download() }.jarContents
     }
 
-    private fun buildAnalysisContext(): AnalysisContext {
+    private fun createAnalysisContext(): AnalysisContext {
         return BasicContextBuilder().apply {
-            setDataFlowAnalysis(LiveDataFlowAnalysisImpl(SharedInstances.irFactory))
-            setCache(SharedInstances.irFactory)
+            setDataFlowAnalysis(LiveDataFlowAnalysisImpl(ObfuscatorServices.controlFlowGraphCache))
+            setCache(ObfuscatorServices.controlFlowGraphCache)
 
             setInvocationResolver(DefaultInvocationResolver(classSource))
             setApplicationContext(SimpleApplicationContext(classSource))
@@ -168,8 +167,8 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         }.build()
     }
 
-    private fun buildEventContext(analysisContext: AnalysisContext): EventContext {
-        return EventContext.EventContextBuilder().apply {
+    private fun createObfuscationContext(analysisContext: AnalysisContext): ObfuscationContext {
+        return ObfuscationContext.Builder().apply {
             setSharkuscator(this@Sharkuscator)
             setAnalysisContext(analysisContext)
             setClassSource(classSource)

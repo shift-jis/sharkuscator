@@ -1,9 +1,9 @@
 package dev.sharkuscator.obfuscator.assembler
 
-import dev.sharkuscator.obfuscator.SharedInstances
+import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
-import dev.sharkuscator.obfuscator.transformers.events.assembling.ClassWriteEvent
-import dev.sharkuscator.obfuscator.transformers.events.assembling.ResourceWriteEvent
+import dev.sharkuscator.obfuscator.events.assembling.ClassWriteEvent
+import dev.sharkuscator.obfuscator.events.assembling.ResourceWriteEvent
 import org.mapleir.app.service.ApplicationClassSource
 import org.mapleir.app.service.ClassTree
 import org.mapleir.app.service.CompleteResolvingJarDumper
@@ -26,7 +26,7 @@ class ResolvingDumper(
 
     override fun dump(outputJarFile: File) {
         if (outputJarFile.exists() && !outputJarFile.delete()) {
-            SharedInstances.logger.error("Could not delete an already existing destination file")
+            ObfuscatorServices.sharkLogger.error("Could not delete an already existing destination file")
             return
         }
 
@@ -47,7 +47,7 @@ class ResolvingDumper(
 
     override fun dumpClass(outputStream: JarOutputStream, name: String, classNode: ClassNode): Int {
         val originalNode = org.objectweb.asm.tree.ClassNode().apply {
-            classNode.node.accept(ClassRemapper(this, SharedInstances.classRemapper))
+            classNode.node.accept(ClassRemapper(this, ObfuscatorServices.symbolRemapper))
         }
 
         val classEntry = JarEntry("${originalNode.name}.class")
@@ -59,7 +59,7 @@ class ResolvingDumper(
 
             val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
-                SharedInstances.eventBus.post(classWriteEvent)
+                ObfuscatorServices.mainEventBus.post(classWriteEvent)
                 if (classWriteEvent.isCancelled) {
                     return 0
                 }
@@ -76,7 +76,7 @@ class ResolvingDumper(
 
             val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
-                SharedInstances.eventBus.post(classWriteEvent)
+                ObfuscatorServices.mainEventBus.post(classWriteEvent)
                 if (classWriteEvent.isCancelled) {
                     return 0
                 }
@@ -99,7 +99,7 @@ class ResolvingDumper(
 
         val resourceWriteEvent = ResourceWriteEvent(classSource, name, bytes)
         if (!exclusions.excluded(name)) {
-            SharedInstances.eventBus.post(resourceWriteEvent)
+            ObfuscatorServices.mainEventBus.post(resourceWriteEvent)
             if (resourceWriteEvent.isCancelled) {
                 return 0
             }

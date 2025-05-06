@@ -6,15 +6,18 @@ class WordListDictionary(
     private val length: Int
 ) : MappingDictionary("WordList") {
 
-    override fun nextString(): String {
+    override fun generateNextName(): String {
         return when (generationStyle) {
             GenerationStyle.CharacterRepeat -> (0..length).joinToString("") { charset.joinToString("") { it.repeat((1..4).random()) } }
             GenerationStyle.WordConcatenation -> (0..length).joinToString("") { charset.random() }
         }
     }
 
-    override fun isDangerous(): Boolean {
+    override fun generatesUnsafeNames(): Boolean {
         return false
+    }
+
+    override fun resetNameGenerator() {
     }
 
     enum class GenerationStyle {

@@ -1,9 +1,11 @@
 package dev.sharkuscator.obfuscator.dictionaries
 
 abstract class MappingDictionary(val name: String) {
-    abstract fun nextString(): String
+    abstract fun generateNextName(): String
 
-    abstract fun isDangerous(): Boolean
+    abstract fun generatesUnsafeNames(): Boolean
+
+    abstract fun resetNameGenerator()
 
     protected fun toBijective(charset: CharArray, _decimal: Int): String {
         val builder = StringBuilder()

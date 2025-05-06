@@ -1,16 +1,15 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.impl
+package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.NumericConstantObfuscationStrategy
+import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
+import org.mapleir.asm.ClassNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
 
-class LoadBitsAndConvertStrategy : NumericConstantObfuscationStrategy {
-    override fun replaceInstructions(instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
+class FloatingPointFromBitsStrategy : NumericConstantObfuscationStrategy {
+    override fun replaceInstructions(classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         val obfuscatedNumber = obfuscateNumber(originalValue)
         when (originalValue) {
             is Double -> {
@@ -18,19 +17,12 @@ class LoadBitsAndConvertStrategy : NumericConstantObfuscationStrategy {
                 instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
                 instructions.remove(targetInstruction)
             }
+
             is Float -> {
                 instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Float", "intBitsToFloat", "(J)D"))
                 instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
                 instructions.remove(targetInstruction)
             }
-//            is Int -> {
-//                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Long", "intValue", "()I"))
-//                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/Long", "<init>", "(J)V"))
-//                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
-//                instructions.insert(targetInstruction, InsnNode(Opcodes.DUP))
-//                instructions.insert(targetInstruction, TypeInsnNode(Opcodes.NEW, "java/lang/Long"))
-//                instructions.remove(targetInstruction)
-//            }
         }
     }
 
