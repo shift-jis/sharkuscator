@@ -12,7 +12,7 @@ import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
 
 class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
-    private val mappings = mutableMapOf<String, String>()
+    private val resourceNameMappings = mutableMapOf<String, String>()
     private lateinit var dictionary: MappingDictionary<String>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
@@ -23,7 +23,7 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
     @EventHandler
     @Suppress("unused")
     private fun onResourceWrite(event: AssemblerEvents.ResourceWriteEvent) {
-        event.name = mappings["/${event.name}"] ?: event.name
+        event.name = resourceNameMappings[event.name] ?: resourceNameMappings["/${event.name}"] ?: event.name
     }
 
     @EventHandler
@@ -36,10 +36,12 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
 
         BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             if (event.context.jarContents.resourceContents.any { it.name == string }) {
-                if (!mappings.containsKey(string)) {
-                    mappings[string] = "${configuration.prefix}${dictionary.generateNextName(null)}"
+                if (!resourceNameMappings.containsKey(string)) {
+                    resourceNameMappings[string] = "${configuration.prefix}${dictionary.generateNextName(null)}"
                 }
-                instruction.cst = "/${mappings[string]}"
+
+                val leadingSlashIfPresent = if (string.startsWith("/")) "/" else ""
+                instruction.cst = "$leadingSlashIfPresent${resourceNameMappings[string]}"
             }
         }
     }

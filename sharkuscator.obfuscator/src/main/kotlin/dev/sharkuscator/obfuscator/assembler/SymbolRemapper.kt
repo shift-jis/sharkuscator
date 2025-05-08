@@ -26,6 +26,26 @@ class SymbolRemapper : Remapper() {
         return symbolMappings[internalName]
     }
 
+    fun findClosestMethodMapping(owner: String, name: String, parametersHint: Array<Any>? = null): String {
+        var fallbackMatchKey: String? = null
+        val methodPrefix = "$owner.$name"
+
+        for (originalMappingKey in symbolMappings.keys) {
+            if (originalMappingKey.startsWith(methodPrefix)) {
+                val descriptorPart = originalMappingKey.substring(methodPrefix.length)
+                if (descriptorPart.startsWith("(")) {
+                    if ((parametersHint == null || parametersHint.isEmpty()) && descriptorPart.startsWith("()")) {
+                        return symbolMappings.getValue(originalMappingKey)
+                    } else if (fallbackMatchKey == null) {
+                        fallbackMatchKey = originalMappingKey
+                    }
+                }
+            }
+        }
+
+        return fallbackMatchKey?.let { symbolMappings.getValue(it) } ?: name
+    }
+
     fun applyMappingsToText(inputText: String): String {
         var currentText = inputText
         for (className in symbolMappings.keys.filter { currentText.contains(it) }) {

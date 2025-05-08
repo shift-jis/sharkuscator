@@ -225,7 +225,6 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             JumpInsnNode(Opcodes.GOTO, decryptionLoopStartLabel),
 
             staticInitializerExitLabel,
-//            InsnNode(Opcodes.RETURN),
         )
 
         val staticInitializer = targetClassNode.getOrCreateStaticInitializer()

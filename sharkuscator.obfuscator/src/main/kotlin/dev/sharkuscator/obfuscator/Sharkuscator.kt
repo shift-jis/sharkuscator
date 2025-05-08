@@ -18,6 +18,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncr
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ReflectRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
@@ -48,6 +49,7 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         FieldRenameTransformer(),
         MethodRenameTransformer(),
         ResourceRenameTransformer(),
+        ReflectRenameTransformer(),
 
         LongConstantEncryptionTransformer(),
         StringEncryptionTransformer(),
@@ -125,12 +127,12 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->
             ObfuscatorServices.mainEventBus.post(TransformerEvents.ClassTransformEvent(obfuscationContext, classContent.value))
 
-            classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
-                ObfuscatorServices.mainEventBus.post(TransformerEvents.MethodTransformEvent(obfuscationContext, it))
-            }
-
             classContent.value.fields.filter { !exclusions.excluded(it) }.forEach {
                 ObfuscatorServices.mainEventBus.post(TransformerEvents.FieldTransformEvent(obfuscationContext, it))
+            }
+
+            classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
+                ObfuscatorServices.mainEventBus.post(TransformerEvents.MethodTransformEvent(obfuscationContext, it))
             }
         }
     }
