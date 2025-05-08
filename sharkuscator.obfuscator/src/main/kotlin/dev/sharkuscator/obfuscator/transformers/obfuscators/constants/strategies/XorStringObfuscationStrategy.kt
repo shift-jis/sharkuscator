@@ -14,16 +14,16 @@ import org.objectweb.asm.tree.*
  * Basic Xor string encryption
  */
 class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
-    private val methodDescriptor = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-    private val methodAccess = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
-    private val decodeMethodNodeCache = mutableMapOf<ClassNode, MethodNode>()
+    private val DECODER_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+    private val DECODER_METHOD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+    private val decodeMethodCache = mutableMapOf<ClassNode, MethodNode>()
 
-    override fun prepareDecoderMethod(classNode: ClassNode, decoderMethodName: String): MethodNode {
-        if (decodeMethodNodeCache.containsKey(classNode)) {
-            return decodeMethodNodeCache.getValue(classNode)
+    override fun prepareDecoderMethod(targetClassNode: ClassNode, decoderMethodName: String): MethodNode {
+        if (decodeMethodCache.containsKey(targetClassNode)) {
+            return decodeMethodCache.getValue(targetClassNode)
         }
 
-        val builtMethodNode = BytecodeUtils.createMethodNode(methodAccess, decoderMethodName, methodDescriptor).apply {
+        val builtMethodNode = BytecodeUtils.createMethodNode(DECODER_METHOD_ACCESS, decoderMethodName, DECODER_METHOD_DESCRIPTOR).apply {
             val forLoopBeginLabelNode = LabelNode()
             val forLoopEndLabelNode = LabelNode()
 
@@ -91,18 +91,26 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
             )
         }
 
-        return MethodNode(builtMethodNode, classNode).also {
-            decodeMethodNodeCache.putIfAbsent(classNode, it)
-            classNode.addMethod(it)
+        return MethodNode(builtMethodNode, targetClassNode).also {
+            decodeMethodCache.putIfAbsent(targetClassNode, it)
+            targetClassNode.addMethod(it)
         }
     }
 
     override fun replaceInstructions(preparedDecoder: MethodNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String) {
-        val resultPair = obfuscateString(originalString, RandomStringUtils.randomAlphanumeric(originalString.length))
-        instructions.insert(targetInstruction, preparedDecoder.invokeStatic())
-        instructions.insert(targetInstruction, LdcInsnNode(resultPair.second.decodeToString()))
-        instructions.insert(targetInstruction, LdcInsnNode(resultPair.first))
+        val obfuscatedString = obfuscateString(originalString, RandomStringUtils.randomAlphanumeric(originalString.length))
+        val replacementInstructions = BytecodeUtils.buildInstructionList(
+            LdcInsnNode(obfuscatedString.first),
+            LdcInsnNode(obfuscatedString.second.decodeToString()),
+            preparedDecoder.invokeStatic()
+        )
+
+        instructions.insert(targetInstruction, replacementInstructions)
         instructions.remove(targetInstruction)
+    }
+
+    override fun finalizeClass(targetClassNode: ClassNode) {
+        // do nothing
     }
 
     override fun obfuscateString(originalString: String, keyBytes: ByteArray): Pair<String, ByteArray> {

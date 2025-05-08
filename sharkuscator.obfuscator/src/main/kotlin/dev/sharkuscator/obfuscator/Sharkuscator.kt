@@ -6,11 +6,8 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.AnnotationExclusionR
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
-import dev.sharkuscator.obfuscator.events.ObfuscatorEvent
-import dev.sharkuscator.obfuscator.events.transforming.ClassTransformEvent
-import dev.sharkuscator.obfuscator.events.transforming.FieldTransformEvent
-import dev.sharkuscator.obfuscator.events.transforming.MethodTransformEvent
-import dev.sharkuscator.obfuscator.events.transforming.ResourceTransformEvent
+import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
+import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.toSnakeCase
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
@@ -115,25 +112,25 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
         ObfuscatorServices.sharkLogger.info("Recompiling Class...")
         ResolvingDumper(jarContents, classSource, exclusions).dump(outputJarFile)
-        ObfuscatorServices.mainEventBus.post(ObfuscatorEvent.FinalizationEvent(eventContext, inputJarFile, outputJarFile))
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.FinalizationEvents(eventContext, inputJarFile, outputJarFile))
     }
 
     private fun dispatchTransformEvents(obfuscationContext: ObfuscationContext) {
-        ObfuscatorServices.mainEventBus.post(ObfuscatorEvent.InitializationEvent(obfuscationContext, inputJarFile, outputJarFile))
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.InitializationEvents(obfuscationContext, inputJarFile, outputJarFile))
 
         jarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
-            ObfuscatorServices.mainEventBus.post(ResourceTransformEvent(obfuscationContext, it.value.name, it.value.data))
+            ObfuscatorServices.mainEventBus.post(TransformerEvents.ResourceTransformEvent(obfuscationContext, it.value.name, it.value.data))
         }
 
         jarContents.classContents.namedMap().filter { !exclusions.excluded(it.value) }.forEach { classContent ->
-            ObfuscatorServices.mainEventBus.post(ClassTransformEvent(obfuscationContext, classContent.value))
+            ObfuscatorServices.mainEventBus.post(TransformerEvents.ClassTransformEvent(obfuscationContext, classContent.value))
 
             classContent.value.methods.filter { !exclusions.excluded(it) }.forEach {
-                ObfuscatorServices.mainEventBus.post(MethodTransformEvent(obfuscationContext, it))
+                ObfuscatorServices.mainEventBus.post(TransformerEvents.MethodTransformEvent(obfuscationContext, it))
             }
 
             classContent.value.fields.filter { !exclusions.excluded(it) }.forEach {
-                ObfuscatorServices.mainEventBus.post(FieldTransformEvent(obfuscationContext, it))
+                ObfuscatorServices.mainEventBus.post(TransformerEvents.FieldTransformEvent(obfuscationContext, it))
             }
         }
     }

@@ -2,8 +2,7 @@ package dev.sharkuscator.obfuscator.assembler
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
-import dev.sharkuscator.obfuscator.events.assembling.ClassWriteEvent
-import dev.sharkuscator.obfuscator.events.assembling.ResourceWriteEvent
+import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import org.mapleir.app.service.ApplicationClassSource
 import org.mapleir.app.service.ClassTree
 import org.mapleir.app.service.CompleteResolvingJarDumper
@@ -46,8 +45,14 @@ class ResolvingDumper(
     }
 
     override fun dumpClass(outputStream: JarOutputStream, name: String, classNode: ClassNode): Int {
+        val classDumpEvent = AssemblerEvents.ClassDumpEvent(classNode)
+        ObfuscatorServices.mainEventBus.post(classDumpEvent)
+        if (classDumpEvent.isCancelled) {
+            return 0
+        }
+
         val originalNode = org.objectweb.asm.tree.ClassNode().apply {
-            classNode.node.accept(ClassRemapper(this, ObfuscatorServices.symbolRemapper))
+            classDumpEvent.classNode.node.accept(ClassRemapper(this, ObfuscatorServices.symbolRemapper))
         }
 
         val classEntry = JarEntry("${originalNode.name}.class")
@@ -57,7 +62,7 @@ class ResolvingDumper(
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_FRAMES)
             originalNode.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
+            val classWriteEvent = AssemblerEvents.ClassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
                 ObfuscatorServices.mainEventBus.post(classWriteEvent)
                 if (classWriteEvent.isCancelled) {
@@ -74,7 +79,7 @@ class ResolvingDumper(
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_MAXS)
             originalNode.accept(classWriter)
 
-            val classWriteEvent = ClassWriteEvent(classNode, classWriter.toByteArray())
+            val classWriteEvent = AssemblerEvents.ClassWriteEvent(classNode, classWriter.toByteArray())
             if (!exclusions.excluded(classNode)) {
                 ObfuscatorServices.mainEventBus.post(classWriteEvent)
                 if (classWriteEvent.isCancelled) {
@@ -97,7 +102,7 @@ class ResolvingDumper(
             return 0
         }
 
-        val resourceWriteEvent = ResourceWriteEvent(classSource, name, bytes)
+        val resourceWriteEvent = AssemblerEvents.ResourceWriteEvent(classSource, name, bytes)
         if (!exclusions.excluded(name)) {
             ObfuscatorServices.mainEventBus.post(resourceWriteEvent)
             if (resourceWriteEvent.isCancelled) {

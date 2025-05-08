@@ -4,7 +4,7 @@ import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.ClassEncryptionConfiguration
 import dev.sharkuscator.obfuscator.encryption.ClassEncryptor
-import dev.sharkuscator.obfuscator.events.assembling.ClassWriteEvent
+import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.utilities.ResourceUtils
 import meteordevelopment.orbit.EventHandler
@@ -22,7 +22,7 @@ class ClassEncryptionTransformer : AbstractTransformer<ClassEncryptionConfigurat
 
     @EventHandler
     @Suppress("unused")
-    private fun onClassWrite(event: ClassWriteEvent) {
+    private fun onClassWrite(event: AssemblerEvents.ClassWriteEvent) {
         if (configuration.password.length != 16) {
             ObfuscatorServices.sharkLogger.error("Encryption key is not 16 characters long")
             return

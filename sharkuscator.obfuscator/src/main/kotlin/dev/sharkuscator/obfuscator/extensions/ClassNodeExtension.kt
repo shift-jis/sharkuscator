@@ -1,8 +1,11 @@
 package dev.sharkuscator.obfuscator.extensions
 
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
+import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.InsnNode
 
 fun ClassNode.getQualifiedName(): String = "${node.name}.class"
 
@@ -13,6 +16,23 @@ fun ClassNode.isDeclaredAsAnnotation(): Boolean = (node.access and Opcodes.ACC_A
 fun ClassNode.isDeclaredAsAbstract(): Boolean = (node.access and Opcodes.ACC_ABSTRACT) != 0
 
 fun ClassNode.containsMainMethod(): Boolean = methods.any { it.hasMainSignature() }
+
+fun ClassNode.getOrCreateStaticInitializer(): MethodNode {
+    return methods.find { it.isStaticInitializer() } ?: addNewStaticInitializer()
+}
+
+fun ClassNode.addNewStaticInitializer(): MethodNode {
+    val staticInitializer = BytecodeUtils.createMethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V").apply {
+        instructions = BytecodeUtils.buildInstructionList(InsnNode(Opcodes.RETURN))
+    }
+    return MethodNode(staticInitializer, this).also {
+        this.addMethod(it)
+    }
+}
+
+fun ClassNode.addField(fieldNode: org.objectweb.asm.tree.FieldNode) {
+    addField(FieldNode(fieldNode, this))
+}
 
 fun ClassNode.addField(fieldNode: FieldNode) {
     fields.add(fieldNode)

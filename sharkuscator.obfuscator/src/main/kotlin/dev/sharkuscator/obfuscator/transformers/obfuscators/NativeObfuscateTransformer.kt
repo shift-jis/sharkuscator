@@ -2,7 +2,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
-import dev.sharkuscator.obfuscator.events.ObfuscatorEvent
+import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
@@ -19,7 +19,7 @@ class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     @OptIn(ExperimentalPathApi::class)
-    private fun onFinalization(event: ObfuscatorEvent.FinalizationEvent) {
+    private fun onFinalization(event: ObfuscatorEvents.FinalizationEvents) {
         if (!Files.exists(obfuscatorPath)) {
             ObfuscatorServices.sharkLogger.error("native-obfuscator.jar does not exist!")
             return

@@ -27,7 +27,7 @@ object BytecodeUtils {
         Opcodes.SIPUSH to -1,
     )
 
-    fun integerPushInstruction(value: Int): AbstractInsnNode {
+    fun integerPushInstruction(value: Number): AbstractInsnNode {
         return when (value) {
             -1 -> InsnNode(Opcodes.ICONST_M1)
             0 -> InsnNode(Opcodes.ICONST_0)
@@ -36,8 +36,8 @@ object BytecodeUtils {
             3 -> InsnNode(Opcodes.ICONST_3)
             4 -> InsnNode(Opcodes.ICONST_4)
             5 -> InsnNode(Opcodes.ICONST_5)
-            in Byte.MIN_VALUE..Byte.MAX_VALUE -> IntInsnNode(Opcodes.BIPUSH, value)
-            in Short.MIN_VALUE..Short.MAX_VALUE -> IntInsnNode(Opcodes.SIPUSH, value)
+            in Short.MIN_VALUE..Short.MAX_VALUE -> IntInsnNode(Opcodes.SIPUSH, value.toInt())
+            in Byte.MIN_VALUE..Byte.MAX_VALUE -> IntInsnNode(Opcodes.BIPUSH, value.toInt())
             else -> LdcInsnNode(value)
         }
     }
@@ -102,6 +102,10 @@ object BytecodeUtils {
             this.access = Opcodes.ACC_PUBLIC
             this.name = name
         }
+    }
+
+    fun createFieldNode(access: Int, name: String, descriptor: String, value: Any? = null): FieldNode {
+        return FieldNode(access, name, descriptor, null, value)
     }
 
     fun createMethodNode(access: Int, name: String, descriptor: String): MethodNode {

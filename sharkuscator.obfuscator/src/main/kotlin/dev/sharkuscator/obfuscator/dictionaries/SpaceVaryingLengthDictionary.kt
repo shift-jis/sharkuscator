@@ -1,9 +1,9 @@
 package dev.sharkuscator.obfuscator.dictionaries
 
-class SpaceVaryingLengthDictionary : MappingDictionary("SpaceVaryingLength") {
+class SpaceVaryingLengthDictionary<T> : MappingDictionary<T>("SpaceVaryingLength") {
     private val generatedStrings = mutableSetOf<String>()
 
-    override fun generateNextName(): String {
+    override fun generateNextName(element: T?): String {
         while (true) {
             val nextString = " ".repeat((200..700).random())
             if (generatedStrings.add(nextString)) {

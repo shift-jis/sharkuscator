@@ -1,7 +1,8 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
-import dev.sharkuscator.obfuscator.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.events.AssemblerEvents
+import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.DESStringObfuscationStrategy
@@ -14,18 +15,24 @@ class StringEncryptionTransformer : AbstractTransformer<TransformerConfiguration
 
     @EventHandler
     @Suppress("unused")
-    private fun onMethodTransform(event: MethodTransformEvent) {
+    private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.eventNode.node
         if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
         val renameTransformer = event.context.findTransformer(MethodRenameTransformer::class.java)!!.dictionary
-        val decodeMethodNode = obfuscationStrategy.prepareDecoderMethod(event.eventNode.owner, renameTransformer.generateNextName())
+        val decodeMethodNode = obfuscationStrategy.prepareDecoderMethod(event.eventNode.owner, renameTransformer.generateNextName(event.eventNode.owner))
 
         BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             obfuscationStrategy.replaceInstructions(decodeMethodNode, methodNode.instructions, instruction, string)
         }
+    }
+
+    @EventHandler
+    @Suppress("unused")
+    private fun onClassDump(event: AssemblerEvents.ClassDumpEvent) {
+        obfuscationStrategy.finalizeClass(event.classNode)
     }
 
     override fun getPriority(): Int {

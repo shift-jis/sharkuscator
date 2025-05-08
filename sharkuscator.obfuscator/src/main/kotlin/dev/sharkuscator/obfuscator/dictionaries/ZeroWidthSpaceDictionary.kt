@@ -1,9 +1,9 @@
 package dev.sharkuscator.obfuscator.dictionaries
 
-class ZeroWidthSpaceDictionary(private val prefix: String = "dummy") : MappingDictionary("ZeroWidthSpace") {
+class ZeroWidthSpaceDictionary<T>(private val prefix: String = "dummy") : MappingDictionary<T>("ZeroWidthSpace") {
     private val generatedStrings = mutableSetOf<String>()
 
-    override fun generateNextName(): String {
+    override fun generateNextName(element: T?): String {
         while (true) {
             val separator = "\u200B".repeat((0..50).random())
             val nextString = prefix.toCharArray().joinToString(separator)

@@ -5,15 +5,16 @@ import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
-import dev.sharkuscator.obfuscator.events.transforming.MethodTransformEvent
+import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
+import org.mapleir.asm.ClassNode
 
 class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("MethodRename", RenameConfiguration::class.java) {
     private val badInterfaces = listOf("com.sun.jna.*".toRegex())
-    lateinit var dictionary: MappingDictionary
+    lateinit var dictionary: MappingDictionary<ClassNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
         dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
@@ -22,7 +23,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
 
     @EventHandler
     @Suppress("unused")
-    private fun onMethodTransform(event: MethodTransformEvent) {
+    private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         if (transformed || event.eventNode.isNative || event.eventNode.isStaticInitializer() || event.eventNode.isConstructor() || event.eventNode.hasMainSignature()) {
             return
         }
@@ -37,7 +38,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
             return
         }
 
-        val methodMapping = "${configuration.prefix}${dictionary.generateNextName()}"
+        val methodMapping = "${configuration.prefix}${dictionary.generateNextName(event.eventNode.owner)}"
         ObfuscatorServices.symbolRemapper.setMapping(event.eventNode.getQualifiedName(), methodMapping)
 
         val invocationResolver = event.context.analysisContext.invocationResolver
