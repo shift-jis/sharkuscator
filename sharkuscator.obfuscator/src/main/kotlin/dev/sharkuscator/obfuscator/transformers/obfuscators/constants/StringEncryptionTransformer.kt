@@ -17,7 +17,7 @@ class StringEncryptionTransformer : AbstractTransformer<TransformerConfiguration
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.eventNode.node
-        if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
+        if (transformed || methodNode.instructions == null || !BytecodeUtils.containsNonEmptyStrings(methodNode.instructions)) {
             return
         }
 

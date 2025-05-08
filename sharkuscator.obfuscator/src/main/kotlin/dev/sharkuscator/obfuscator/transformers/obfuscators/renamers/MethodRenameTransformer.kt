@@ -44,6 +44,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
         val invocationResolver = event.context.analysisContext.invocationResolver
         for (methodNode in invocationResolver.getHierarchyMethodChain(classNode, event.eventNode.name, event.eventNode.desc, true)) {
             ObfuscatorServices.symbolRemapper.setMapping(methodNode.getQualifiedName(), methodMapping)
+            dictionary.generateNextName(methodNode.owner)
         }
     }
 

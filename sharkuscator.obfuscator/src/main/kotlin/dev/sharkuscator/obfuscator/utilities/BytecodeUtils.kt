@@ -80,6 +80,10 @@ object BytecodeUtils {
         }
     }
 
+    fun containsNonEmptyStrings(instructions: InsnList): Boolean {
+        return findNonEmptyStrings(instructions).isNotEmpty()
+    }
+
     fun findNonEmptyStrings(instructions: InsnList): List<Pair<LdcInsnNode, String>> {
         return instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.map { Pair(it, it.cst as String) }
     }
