@@ -25,20 +25,26 @@ Below is an example configuration.json:
 {
     "transformers": {
         "resource_rename": {
-            "enabled": false,
+            "enabled": true,
             "prefix": ""
         },
         "method_rename": {
             "enabled": true,
+            "dictionary": "alphabetical",
             "prefix": ""
         },
         "class_rename": {
             "enabled": true,
+            "dictionary": "alphabetical",
             "prefix": ""
         },
         "field_rename": {
             "enabled": true,
+            "dictionary": "alphabetical",
             "prefix": ""
+        },
+        "reflect_rename": {
+            "enabled": true
         },
 
         "local_variable_remove": {
@@ -48,7 +54,16 @@ Below is an example configuration.json:
             "enabled": true
         },
 
+        "string_encryption": {
+            "enabled": true
+        },
+        "number_complexity": {
+            "enabled": true
+        },
         "synthetic_access": {
+            "enabled": true
+        },
+        "dynamic_invoke": {
             "enabled": true
         },
         "native_obfuscate": {
