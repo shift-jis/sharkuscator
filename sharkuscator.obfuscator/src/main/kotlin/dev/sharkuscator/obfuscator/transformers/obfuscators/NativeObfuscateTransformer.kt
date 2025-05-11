@@ -14,7 +14,7 @@ import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
 
 class NativeObfuscateTransformer : BaseTransformer<TransformerConfiguration>("NativeObfuscate", TransformerConfiguration::class.java) {
-    private val obfuscatorPath = Paths.get("./$#thirdparty", "native-obfuscator.jar")
+    private val obfuscatorPath = Paths.get("./thirdparty", "native-obfuscator.jar")
 
     @EventHandler
     @Suppress("unused")

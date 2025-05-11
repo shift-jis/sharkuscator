@@ -30,8 +30,8 @@ class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename
             return
         }
 
-        var classMapping = "\u0000" + dictionary.generateNextName(null)
-        if (/*dictionary.generatesUnsafeNames() && */(event.eventNode.containsMainMethod() || event.eventNode.isDeclaredAsAnnotation())) {
+        var classMapping = dictionary.generateNextName(null)
+        if (dictionary.generatesUnsafeNames() && (event.eventNode.containsMainMethod() || event.eventNode.isDeclaredAsAnnotation())) {
             classMapping = defaultDictionary.generateNextName(null)
         }
 

@@ -86,7 +86,7 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
             invokeDescriptor = Type.getMethodDescriptor(castedReturnType, *castedArgumentTypes)
             methodNode.instructions.insertBefore(
                 instruction, InvokeDynamicInsnNode(
-                    RandomStringUtils.randomAlphabetic(8), invokeDescriptor, invokerHandle,
+                    RandomStringUtils.randomAlphabetic(14), invokeDescriptor, invokerHandle,
                     instruction.opcode, classNameMapping, methodNameMapping, descriptionMapping
                 )
             )
