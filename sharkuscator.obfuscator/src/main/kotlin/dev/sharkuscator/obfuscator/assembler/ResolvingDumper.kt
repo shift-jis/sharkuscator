@@ -75,7 +75,9 @@ class ResolvingDumper(
             }
 
             outputStream.write(classWriteEvent.classData)
-        } catch (_: Exception) {
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+
             val classWriter = buildClassWriter(classSource.classTree, ClassWriter.COMPUTE_MAXS)
             originalNode.accept(classWriter)
 
@@ -102,7 +104,7 @@ class ResolvingDumper(
             return 0
         }
 
-        val resourceWriteEvent = AssemblerEvents.ResourceWriteEvent(classSource, name, bytes)
+        val resourceWriteEvent = AssemblerEvents.ResourceWriteEvent(name, bytes)
         if (!exclusions.excluded(name)) {
             ObfuscatorServices.mainEventBus.post(resourceWriteEvent)
             if (resourceWriteEvent.isCancelled) {

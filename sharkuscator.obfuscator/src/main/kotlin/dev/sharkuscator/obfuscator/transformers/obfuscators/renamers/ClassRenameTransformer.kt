@@ -9,12 +9,12 @@ import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.containsMainMethod
 import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.ClassNode
 
-class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
+class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
     private val defaultDictionary = DictionaryFactory.createDefaultDictionary<ClassNode>()
     lateinit var dictionary: MappingDictionary<ClassNode>
 
@@ -52,7 +52,7 @@ class ClassRenameTransformer : AbstractTransformer<RenameConfiguration>("ClassRe
         }
     }
 
-    override fun getPriority(): Int {
+    override fun getExecutionPriority(): Int {
         return TransformerPriority.BELOW_MEDIUM
     }
 }

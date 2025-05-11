@@ -8,7 +8,7 @@ import dev.sharkuscator.obfuscator.extensions.isConstructor
 import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
 import dev.sharkuscator.obfuscator.extensions.isDeclaredAsInterface
 import dev.sharkuscator.obfuscator.extensions.isStaticInitializer
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
@@ -22,7 +22,7 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 
 
-class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("DynamicInvoke", TransformerConfiguration::class.java) {
+class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("DynamicInvoke", TransformerConfiguration::class.java) {
     private val returnOpcodes = arrayOf(Opcodes.POP, Opcodes.POP2, Opcodes.RETURN, Opcodes.IFNONNULL, Opcodes.IFNULL, Opcodes.CHECKCAST)
     private val invokeOpcodes = arrayOf(Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL, Opcodes.INVOKEINTERFACE)
     private lateinit var invokerClassName: String
@@ -102,7 +102,7 @@ class DynamicInvokeTransformer : AbstractTransformer<TransformerConfiguration>("
         }
     }
 
-    override fun getPriority(): Int {
+    override fun getExecutionPriority(): Int {
         return TransformerPriority.LOWER
     }
 

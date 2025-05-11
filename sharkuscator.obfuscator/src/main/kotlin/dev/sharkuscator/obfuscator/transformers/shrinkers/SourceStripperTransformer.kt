@@ -2,10 +2,10 @@ package dev.sharkuscator.obfuscator.transformers.shrinkers
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import meteordevelopment.orbit.EventHandler
 
-class SourceStripperTransformer : AbstractTransformer<TransformerConfiguration>("SourceStripper", TransformerConfiguration::class.java) {
+class SourceStripperTransformer : BaseTransformer<TransformerConfiguration>("SourceStripper", TransformerConfiguration::class.java) {
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {

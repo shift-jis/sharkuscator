@@ -7,9 +7,9 @@ interface SharkTransformer<T> {
 
     fun getConfiguration(): Class<T>
 
-    fun isEnabled(): Boolean
+    fun canTransform(): Boolean
 
-    fun getPriority(): Int
+    fun getExecutionPriority(): Int
 
-    fun getName(): String
+    fun getTransformerName(): String
 }

@@ -23,25 +23,27 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     private val DECODER_METHOD_DESCRIPTOR = "(I)Ljava/lang/String;"
     private val DECODER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
 
-    private val encryptedStringsByClass = mutableMapOf<ClassNode, MutableList<String>>()
-    private val preparedDecoderMethods = mutableMapOf<ClassNode, MethodNode>()
-    private val encryptionKeyStore = mutableMapOf<ClassNode, ByteArray>()
+    private val classToEncryptedStrings = mutableMapOf<ClassNode, MutableList<String>>()
+    private val classToDecoderMethod = mutableMapOf<ClassNode, MethodNode>()
+    private val classToEncryptionKey = mutableMapOf<ClassNode, ByteArray>()
 
     private val initializationVectorSpec = IvParameterSpec(ByteArray(8))
     private val secretKeyFactory = SecretKeyFactory.getInstance("DES")
     private val cipher = Cipher.getInstance("DES/CBC/PKCS5Padding")
 
+    private val stringsFieldName = " "
+
     override fun prepareDecoderMethod(targetClassNode: ClassNode, decoderMethodName: String): MethodNode {
-        if (preparedDecoderMethods.containsKey(targetClassNode)) {
-            return preparedDecoderMethods.getValue(targetClassNode)
+        if (classToDecoderMethod.containsKey(targetClassNode)) {
+            return classToDecoderMethod.getValue(targetClassNode)
         }
 
-        encryptedStringsByClass[targetClassNode] = mutableListOf()
-        encryptionKeyStore[targetClassNode] = Random.nextBytes(8)
+        classToEncryptedStrings[targetClassNode] = mutableListOf()
+        classToEncryptionKey[targetClassNode] = Random.nextBytes(8)
 
         val builtMethodNode = BytecodeUtils.createMethodNode(DECODER_METHOD_ACCESS, decoderMethodName, DECODER_METHOD_DESCRIPTOR).apply {
             instructions = BytecodeUtils.buildInstructionList(
-                FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, "funny", DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR),
+                FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR),
                 VarInsnNode(Opcodes.ILOAD, 0),
                 InsnNode(Opcodes.AALOAD),
                 InsnNode(Opcodes.ARETURN),
@@ -49,17 +51,17 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         }
 
         return MethodNode(builtMethodNode, targetClassNode).also {
-            preparedDecoderMethods.putIfAbsent(targetClassNode, it)
+            classToDecoderMethod.putIfAbsent(targetClassNode, it)
             targetClassNode.addMethod(it)
         }
     }
 
     override fun replaceInstructions(preparedDecoder: MethodNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String) {
-        val obfuscatedString = obfuscateString(originalString, encryptionKeyStore.getValue(preparedDecoder.owner))
-        encryptedStringsByClass[preparedDecoder.owner]!!.add(obfuscatedString.first)
+        val obfuscatedString = obfuscateString(originalString, classToEncryptionKey.getValue(preparedDecoder.owner))
+        classToEncryptedStrings[preparedDecoder.owner]!!.add(obfuscatedString.first)
 
         val replacementInstructions = BytecodeUtils.buildInstructionList(
-            LdcInsnNode(encryptedStringsByClass.getValue(preparedDecoder.owner).size - 1),
+            BytecodeUtils.complexIntegerPushInstruction(classToEncryptedStrings.getValue(preparedDecoder.owner).size - 1),
             preparedDecoder.invokeStatic()
         )
 
@@ -68,11 +70,11 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     }
 
     override fun finalizeClass(targetClassNode: ClassNode) {
-        if (!encryptedStringsByClass.containsKey(targetClassNode) || !encryptionKeyStore.containsKey(targetClassNode)) {
+        if (!classToEncryptedStrings.containsKey(targetClassNode) || !classToEncryptionKey.containsKey(targetClassNode)) {
             return
         }
 
-        val currentClassEncryptedStrings = encryptedStringsByClass.getValue(targetClassNode)
+        val currentClassEncryptedStrings = classToEncryptedStrings.getValue(targetClassNode)
         if (currentClassEncryptedStrings.isEmpty()) {
             return
         }
@@ -85,147 +87,119 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             }
         }
 
-        val generatedStringsFieldName = "funny"
-        targetClassNode.addField(BytecodeUtils.createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, generatedStringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        targetClassNode.addField(BytecodeUtils.createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
 
-        val decryptionKeyBytes = encryptionKeyStore.getValue(targetClassNode)
         val staticInitializerExitLabel = LabelNode()
         val decryptionLoopStartLabel = LabelNode()
+        val replacementInstructions = InsnList()
 
-        val replacementInstructions = BytecodeUtils.buildInstructionList(
-            // Initialize the deobfuscatedStrings array
-            BytecodeUtils.integerPushInstruction(currentClassEncryptedStrings.size),
-            TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"),
-            FieldInsnNode(Opcodes.PUTSTATIC, targetClassNode.name, generatedStringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR),
+        // Initialize the deobfuscatedStrings array
+        replacementInstructions.add(BytecodeUtils.integerPushInstruction(currentClassEncryptedStrings.size))
+        replacementInstructions.add(TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"))
+        replacementInstructions.add(FieldInsnNode(Opcodes.PUTSTATIC, targetClassNode.name, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
 
-            // DES Key and Cipher Initialization (original logic)
-            LdcInsnNode("DES"),
-            MethodInsnNode(Opcodes.INVOKESTATIC, "javax/crypto/SecretKeyFactory", "getInstance", "(Ljava/lang/String;)Ljavax/crypto/SecretKeyFactory;"),
-            VarInsnNode(Opcodes.ASTORE, 1),
+        // DES Key and Cipher Initialization (original logic)
+        replacementInstructions.add(LdcInsnNode("DES"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKESTATIC, "javax/crypto/SecretKeyFactory", "getInstance", "(Ljava/lang/String;)Ljavax/crypto/SecretKeyFactory;"))
+        replacementInstructions.add(VarInsnNode(Opcodes.ASTORE, 1))
 
-            LdcInsnNode("DES/CBC/PKCS5Padding"),
-            MethodInsnNode(Opcodes.INVOKESTATIC, "javax/crypto/Cipher", "getInstance", "(Ljava/lang/String;)Ljavax/crypto/Cipher;"),
-            VarInsnNode(Opcodes.ASTORE, 2),
+        replacementInstructions.add(LdcInsnNode("DES/CBC/PKCS5Padding"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKESTATIC, "javax/crypto/Cipher", "getInstance", "(Ljava/lang/String;)Ljavax/crypto/Cipher;"))
+        replacementInstructions.add(VarInsnNode(Opcodes.ASTORE, 2))
 
-            // This is a hardcoded key. This should match the key used for encryption.
-            // The original code uses a byte array [0,1,2,3,4,5,6,7] as the key material for DESKeySpec.
-            // This needs to be consistent with how `obfuscateString` generates/uses keys.
-            // For DES, key needs to be 8 bytes.
-            BytecodeUtils.integerPushInstruction(8),
-            IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_BYTE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(0),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[0]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(1),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[1]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(2),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[2]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(3),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[3]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(4),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[4]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(5),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[5]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(6),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[6]),
-            InsnNode(Opcodes.BASTORE),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(7),
-            BytecodeUtils.integerPushInstruction(decryptionKeyBytes[7]),
-            InsnNode(Opcodes.BASTORE),
-            VarInsnNode(Opcodes.ASTORE, 3),
+        // This is a hardcoded key. This should match the key used for encryption.
+        // This needs to be consistent with how `obfuscateString` generates/uses keys.
+        val decryptionKeyBytes = classToEncryptionKey.getValue(targetClassNode)
+        replacementInstructions.add(BytecodeUtils.integerPushInstruction(decryptionKeyBytes.size))
+        replacementInstructions.add(IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_BYTE))
 
-            // Cipher init
-            VarInsnNode(Opcodes.ALOAD, 2),
-            InsnNode(Opcodes.ICONST_2),
-            VarInsnNode(Opcodes.ALOAD, 1),
-            TypeInsnNode(Opcodes.NEW, "javax/crypto/spec/DESKeySpec"),
-            InsnNode(Opcodes.DUP),
-            VarInsnNode(Opcodes.ALOAD, 3),
-            MethodInsnNode(Opcodes.INVOKESPECIAL, "javax/crypto/spec/DESKeySpec", "<init>", "([B)V"),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "javax/crypto/SecretKeyFactory", "generateSecret", "(Ljava/security/spec/KeySpec;)Ljavax/crypto/SecretKey;"),
-            TypeInsnNode(Opcodes.NEW, "javax/crypto/spec/IvParameterSpec"),
-            InsnNode(Opcodes.DUP),
-            BytecodeUtils.integerPushInstruction(8),
-            IntInsnNode(Opcodes.NEWARRAY, 8),
-            MethodInsnNode(Opcodes.INVOKESPECIAL, "javax/crypto/spec/IvParameterSpec", "<init>", "([B)V"),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "javax/crypto/Cipher", "init", "(ILjava/security/Key;Ljava/security/spec/AlgorithmParameterSpec;)V"),
+        for (index in (0..decryptionKeyBytes.size - 1).shuffled()) {
+            replacementInstructions.add(InsnNode(Opcodes.DUP))
+            replacementInstructions.add(BytecodeUtils.complexIntegerPushInstruction(index))
+            replacementInstructions.add(BytecodeUtils.complexIntegerPushInstruction(decryptionKeyBytes[index]))
+            replacementInstructions.add(InsnNode(Opcodes.BASTORE))
+        }
 
-            // String processing loop setup
-            LdcInsnNode(combinedEncryptedPayload.toString()),
-            VarInsnNode(Opcodes.ASTORE, 4),
-            VarInsnNode(Opcodes.ALOAD, 4),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I"),
-            VarInsnNode(Opcodes.ISTORE, 5),
+        replacementInstructions.add(VarInsnNode(Opcodes.ASTORE, 3))
 
-            BytecodeUtils.integerPushInstruction(currentClassEncryptedStrings[0].length),
-            VarInsnNode(Opcodes.ISTORE, 6),
-            BytecodeUtils.integerPushInstruction(-1),
-            VarInsnNode(Opcodes.ISTORE, 7),
-            BytecodeUtils.integerPushInstruction(0),
-            VarInsnNode(Opcodes.ISTORE, 8),
+        // Cipher init
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 2))
+        replacementInstructions.add(InsnNode(Opcodes.ICONST_2))
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 1))
+        replacementInstructions.add(TypeInsnNode(Opcodes.NEW, "javax/crypto/spec/DESKeySpec"))
+        replacementInstructions.add(InsnNode(Opcodes.DUP))
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 3))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKESPECIAL, "javax/crypto/spec/DESKeySpec", "<init>", "([B)V"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "javax/crypto/SecretKeyFactory", "generateSecret", "(Ljava/security/spec/KeySpec;)Ljavax/crypto/SecretKey;"))
+        replacementInstructions.add(TypeInsnNode(Opcodes.NEW, "javax/crypto/spec/IvParameterSpec"))
+        replacementInstructions.add(InsnNode(Opcodes.DUP))
+        replacementInstructions.add(BytecodeUtils.integerPushInstruction(8))
+        replacementInstructions.add(IntInsnNode(Opcodes.NEWARRAY, 8))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKESPECIAL, "javax/crypto/spec/IvParameterSpec", "<init>", "([B)V"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "javax/crypto/Cipher", "init", "(ILjava/security/Key;Ljava/security/spec/AlgorithmParameterSpec;)V"))
 
-            decryptionLoopStartLabel,
+        // String processing loop setup
+        replacementInstructions.add(LdcInsnNode(combinedEncryptedPayload.toString()))
+        replacementInstructions.add(VarInsnNode(Opcodes.ASTORE, 4))
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 4))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I"))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 5))
 
-            IincInsnNode(7, 1),
-            VarInsnNode(Opcodes.ILOAD, 7),
-            VarInsnNode(Opcodes.ISTORE, 9),
+        replacementInstructions.add(BytecodeUtils.integerPushInstruction(currentClassEncryptedStrings[0].length))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 6))
+        replacementInstructions.add(BytecodeUtils.integerPushInstruction(-1))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 7))
+        replacementInstructions.add(BytecodeUtils.integerPushInstruction(0))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 8))
 
-            // Decrypt part
-            VarInsnNode(Opcodes.ALOAD, 2),
-            VarInsnNode(Opcodes.ALOAD, 4),
-            VarInsnNode(Opcodes.ILOAD, 9),
-            VarInsnNode(Opcodes.ILOAD, 9),
-            VarInsnNode(Opcodes.ILOAD, 6),
-            InsnNode(Opcodes.IADD),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;"),
-            FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "ISO_8859_1", "Ljava/nio/charset/Charset;"),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/nio/charset/Charset;)[B"),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "javax/crypto/Cipher", "doFinal", "([B)[B"),
-            VarInsnNode(Opcodes.ASTORE, 10),
+        replacementInstructions.add(decryptionLoopStartLabel)
 
-            // Store decrypted string
-            FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, generatedStringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR),
-            VarInsnNode(Opcodes.ILOAD, 8),
-            IincInsnNode(8, 1),
-            TypeInsnNode(Opcodes.NEW, "java/lang/String"),
-            InsnNode(Opcodes.DUP),
-            VarInsnNode(Opcodes.ALOAD, 10),
-            FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "UTF_8", "Ljava/nio/charset/Charset;"),
-            MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([BLjava/nio/charset/Charset;)V"),
-            InsnNode(Opcodes.AASTORE),
+        replacementInstructions.add(IincInsnNode(7, 1))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 7))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 9))
 
-            // Advance currentReadPosition (i3 in snippet) by chunkLength (c in snippet)
-            VarInsnNode(Opcodes.ILOAD, 7),
-            VarInsnNode(Opcodes.ILOAD, 6),
-            InsnNode(Opcodes.IADD),
-            InsnNode(Opcodes.DUP),
-            VarInsnNode(Opcodes.ISTORE, 7),
-            VarInsnNode(Opcodes.ILOAD, 5),
+        // Decrypt part
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 2))
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 4))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 9))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 9))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 6))
+        replacementInstructions.add(InsnNode(Opcodes.IADD))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;"))
+        replacementInstructions.add(FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "ISO_8859_1", "Ljava/nio/charset/Charset;"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/nio/charset/Charset;)[B"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "javax/crypto/Cipher", "doFinal", "([B)[B"))
+        replacementInstructions.add(VarInsnNode(Opcodes.ASTORE, 10))
 
-            // if (i5 >= length) goto returnLabel;
-            JumpInsnNode(Opcodes.IF_ICMPGE, staticInitializerExitLabel),
+        // Store decrypted string
+        replacementInstructions.add(FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 8))
+        replacementInstructions.add(IincInsnNode(8, 1))
+        replacementInstructions.add(TypeInsnNode(Opcodes.NEW, "java/lang/String"))
+        replacementInstructions.add(InsnNode(Opcodes.DUP))
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 10))
+        replacementInstructions.add(FieldInsnNode(Opcodes.GETSTATIC, "java/nio/charset/StandardCharsets", "UTF_8", "Ljava/nio/charset/Charset;"))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([BLjava/nio/charset/Charset;)V"))
+        replacementInstructions.add(InsnNode(Opcodes.AASTORE))
 
-            VarInsnNode(Opcodes.ALOAD, 4),
-            VarInsnNode(Opcodes.ILOAD, 7),
-            MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C"),
-            VarInsnNode(Opcodes.ISTORE, 6),
-            JumpInsnNode(Opcodes.GOTO, decryptionLoopStartLabel),
+        // Advance currentReadPosition (i3 in snippet) by chunkLength (c in snippet)
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 7))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 6))
+        replacementInstructions.add(InsnNode(Opcodes.IADD))
+        replacementInstructions.add(InsnNode(Opcodes.DUP))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 7))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 5))
 
-            staticInitializerExitLabel,
-        )
+        // if (i5 >= length) goto returnLabel;
+        replacementInstructions.add(JumpInsnNode(Opcodes.IF_ICMPGE, staticInitializerExitLabel))
+
+        replacementInstructions.add(VarInsnNode(Opcodes.ALOAD, 4))
+        replacementInstructions.add(VarInsnNode(Opcodes.ILOAD, 7))
+        replacementInstructions.add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "charAt", "(I)C"))
+        replacementInstructions.add(VarInsnNode(Opcodes.ISTORE, 6))
+        replacementInstructions.add(JumpInsnNode(Opcodes.GOTO, decryptionLoopStartLabel))
+
+        replacementInstructions.add(staticInitializerExitLabel)
 
         val staticInitializer = targetClassNode.getOrCreateStaticInitializer()
         staticInitializer.node.instructions.insert(replacementInstructions)

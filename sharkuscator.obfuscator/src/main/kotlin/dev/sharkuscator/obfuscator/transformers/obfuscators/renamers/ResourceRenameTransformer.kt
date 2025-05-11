@@ -6,12 +6,12 @@ import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
 
-class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
+class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
     private val resourceNameMappings = mutableMapOf<String, String>()
     private lateinit var dictionary: MappingDictionary<String>
 
@@ -46,7 +46,7 @@ class ResourceRenameTransformer : AbstractTransformer<RenameConfiguration>("Reso
         }
     }
 
-    override fun getPriority(): Int {
+    override fun getExecutionPriority(): Int {
         return TransformerPriority.BELOW_MEDIUM
     }
 }

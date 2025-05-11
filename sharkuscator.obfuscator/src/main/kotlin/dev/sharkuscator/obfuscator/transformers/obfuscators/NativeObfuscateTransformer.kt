@@ -3,7 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 import java.nio.file.Files
@@ -13,8 +13,8 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
 
-class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>("NativeObfuscate", TransformerConfiguration::class.java) {
-    private val obfuscatorPath = Paths.get("./thirdparty", "native-obfuscator.jar")
+class NativeObfuscateTransformer : BaseTransformer<TransformerConfiguration>("NativeObfuscate", TransformerConfiguration::class.java) {
+    private val obfuscatorPath = Paths.get("./$#thirdparty", "native-obfuscator.jar")
 
     @EventHandler
     @Suppress("unused")
@@ -42,7 +42,7 @@ class NativeObfuscateTransformer : AbstractTransformer<TransformerConfiguration>
         obfuscatorProcess.waitFor()
     }
 
-    override fun getPriority(): Int {
+    override fun getExecutionPriority(): Int {
         return TransformerPriority.LOWEST
     }
 }

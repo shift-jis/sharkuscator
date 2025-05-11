@@ -15,6 +15,6 @@ open class GsonConfiguration {
     val exclusions: Array<String> = emptyArray()
 
     fun <T : TransformerConfiguration> fromTransformer(transformer: SharkTransformer<T>, clazz: Class<T>): T {
-        return ObfuscatorServices.jsonProcessor.fromJson(transformers.getAsJsonObject(transformer.getName().toSnakeCase()), clazz)
+        return ObfuscatorServices.jsonProcessor.fromJson(transformers.getAsJsonObject(transformer.getTransformerName().toSnakeCase()), clazz)
     }
 }

@@ -52,7 +52,11 @@ public class StringEncryptTest {
         SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("DES");
         Cipher cipher = Cipher.getInstance("DES/CBC/PKCS5Padding");
 
-        byte[] byteArray = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+        byte[] byteArray = new byte[8];
+        for (int i = 0; i < 8; i++) {
+            byteArray[i] = (byte) i;
+        }
+
         cipher.init(Cipher.DECRYPT_MODE, secretKeyFactory.generateSecret(new DESKeySpec(byteArray)), new IvParameterSpec(new byte[8]));
 
         String packedStringsData = "Ø\u0085í\u009D\"\u001D0F×Ëó\u0019\u0005\u0015\u0096V ÛæÊ{GSTU©\u008D\u000F\u009B6¥~EÝì¸QÃ/ðòVø\u009F\u001C1B&v";
@@ -65,13 +69,11 @@ public class StringEncryptTest {
             int segmentStartIndex = ++currentReadPosition;
             byte[] decryptedSegmentBytes = cipher.doFinal(packedStringsData.substring(segmentStartIndex, segmentStartIndex + currentSegmentLength).getBytes(StandardCharsets.ISO_8859_1));
             deobfuscatedStrings[outputStringIndex++] = new String(decryptedSegmentBytes, StandardCharsets.UTF_8);
-//            System.out.println("Decrypted " + deobfuscatedStrings[outputStringIndex - 1]);
             if ((currentReadPosition += currentSegmentLength) >= packedDataLength) {
                 System.out.println("End");
                 return;
             }
             currentSegmentLength = packedStringsData.charAt(currentReadPosition);
-//            System.out.println("ReadPosition " + currentReadPosition + ", SegmentLength " + currentSegmentLength);
         }
     }
 

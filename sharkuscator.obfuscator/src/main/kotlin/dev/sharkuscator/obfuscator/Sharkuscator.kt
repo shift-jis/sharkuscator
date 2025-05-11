@@ -15,11 +15,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTrans
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.LongConstantEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ReflectRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.*
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import org.mapleir.DefaultInvocationResolver
@@ -88,14 +84,14 @@ class Sharkuscator(private val configJsonPath: Path, private val inputJarFile: F
 
         val analysisContext = createAnalysisContext()
         val eventContext = createObfuscationContext(analysisContext)
-        transformers.sortBy { it.getPriority() }
+        transformers.sortBy { it.getExecutionPriority() }
 
         ObfuscatorServices.mainEventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
             lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup
         }
 
-        for (transformer in transformers.filter { configuration.transformers.has(it.getName().toSnakeCase()) }) {
-            if (transformer.initialization(configuration).enabled && transformer.isEnabled()) {
+        for (transformer in transformers.filter { configuration.transformers.has(it.getTransformerName().toSnakeCase()) }) {
+            if (transformer.initialization(configuration).enabled && transformer.canTransform()) {
                 ObfuscatorServices.mainEventBus.subscribe(transformer)
                 dispatchTransformEvents(eventContext)
                 transformer.transformed = true

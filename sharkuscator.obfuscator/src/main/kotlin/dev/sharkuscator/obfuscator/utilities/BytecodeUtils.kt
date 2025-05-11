@@ -2,6 +2,15 @@ package dev.sharkuscator.obfuscator.utilities
 
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
+import kotlin.random.Random
+
+private data class IntegerDeobfuscationStep(val key: Int, val reverseOpcode: Int)
+
+private enum class IntegerObfuscationOpType {
+    XOR,
+    ADD,
+    SUB,
+}
 
 object BytecodeUtils {
     private val constNumberOpcodesMap = mapOf<Int, Number>(
@@ -67,6 +76,110 @@ object BytecodeUtils {
         }
     }
 
+    fun xorPushInstruction(value: Number, operand: Long = Random.nextLong()): InsnList {
+        return when (value) {
+            is Int, is Byte, is Short -> buildInstructionList(
+                integerPushInstruction(value.toInt() xor operand.toInt()),
+                integerPushInstruction(operand.toInt()),
+                InsnNode(Opcodes.IXOR)
+            )
+
+            is Long -> buildInstructionList(
+                longPushInstruction(value xor operand),
+                longPushInstruction(operand),
+                InsnNode(Opcodes.LXOR)
+            )
+
+            else -> buildInstructionList(integerPushInstruction(value))
+        }
+    }
+
+    fun shiftLeftPushInstruction(value: Number, shiftAmount: Long = Random.nextLong()): InsnList {
+        return when (value) {
+            is Int -> {
+                val actualShiftAmount = shiftAmount % 32
+                val transformedValue = value ushr actualShiftAmount.toInt()
+                buildInstructionList(
+                    integerPushInstruction(transformedValue),
+                    integerPushInstruction(actualShiftAmount),
+                    InsnNode(Opcodes.ISHL)
+                )
+            }
+
+            is Long -> {
+                val actualShiftAmount = shiftAmount % 64
+                val transformedValue = value ushr actualShiftAmount.toInt()
+                buildInstructionList(
+                    longPushInstruction(transformedValue),
+                    integerPushInstruction(actualShiftAmount),
+                    InsnNode(Opcodes.LSHL)
+                )
+            }
+
+            else -> throw IllegalArgumentException("Unsupported type for shift left operation: ${value::class.java.name}. Expected Int or Long.")
+        }
+    }
+
+    fun shiftRightPushInstruction(value: Number, shiftAmount: Long = Random.nextLong()): InsnList {
+        return when (value) {
+            is Int -> {
+                val actualShiftAmount = shiftAmount % 32
+                val transformedValue = value shl actualShiftAmount.toInt()
+                buildInstructionList(
+                    integerPushInstruction(transformedValue),
+                    integerPushInstruction(actualShiftAmount),
+                    InsnNode(Opcodes.ISHR)
+                )
+            }
+
+            is Long -> {
+                val actualShiftAmount = shiftAmount % 64
+                val transformedValue = value shl actualShiftAmount.toInt()
+                buildInstructionList(
+                    longPushInstruction(transformedValue),
+                    integerPushInstruction(actualShiftAmount),
+                    InsnNode(Opcodes.LSHR)
+                )
+            }
+
+            else -> throw IllegalArgumentException("Unsupported type for shift right (restore) operation: ${value::class.java.name}. Expected Int or Long.")
+        }
+    }
+
+    fun complexIntegerPushInstruction(value: Number): InsnList {
+        val restorationSteps = mutableListOf<IntegerDeobfuscationStep>()
+        var currentValue = value.toInt()
+        val instructions = InsnList()
+
+        (0 until Random.nextInt(3, 5)).forEach { layer ->
+            val layerKey = Random.nextInt()
+            when (IntegerObfuscationOpType.entries.toTypedArray().random()) {
+                IntegerObfuscationOpType.XOR -> {
+                    currentValue = currentValue xor layerKey
+                    restorationSteps.add(0, IntegerDeobfuscationStep(layerKey, Opcodes.IXOR))
+                }
+
+                IntegerObfuscationOpType.ADD -> {
+                    currentValue += layerKey
+                    restorationSteps.add(0, IntegerDeobfuscationStep(layerKey, Opcodes.ISUB))
+                }
+
+                IntegerObfuscationOpType.SUB -> {
+                    currentValue -= layerKey
+                    restorationSteps.add(0, IntegerDeobfuscationStep(layerKey, Opcodes.IADD))
+                }
+            }
+        }
+
+        instructions.add(integerPushInstruction(currentValue))
+        for (restorationStep in restorationSteps) {
+            instructions.add(integerPushInstruction(restorationStep.key))
+            instructions.add(InsnNode(restorationStep.reverseOpcode))
+        }
+
+        return instructions
+    }
+
     fun isNumericConstantInstruction(instruction: AbstractInsnNode): Boolean {
         return constNumberOpcodesMap.contains(instruction.opcode) || (instruction is LdcInsnNode && instruction.cst is Number)
     }
@@ -92,9 +205,18 @@ object BytecodeUtils {
         return instructions.filter { isNumericConstantInstruction(it) }.map { Pair(it, extractNumericValue(it)) }
     }
 
-    fun buildInstructionList(vararg instructions: AbstractInsnNode): InsnList {
+    fun buildInstructionList(vararg elements: Any): InsnList {
         return InsnList().apply {
-            instructions.forEach { add(it) }
+            elements.forEach { element ->
+                when (element) {
+                    is AbstractInsnNode -> add(element)
+                    is InsnList -> add(element)
+                    else -> throw IllegalArgumentException(
+                        "Unsupported type in buildInstructionList: ${element::class.java.name}. " +
+                                "Only AbstractInsnNode and InsnList are supported."
+                    )
+                }
+            }
         }
     }
 

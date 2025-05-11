@@ -3,7 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
-class ReflectRenameTransformer : AbstractTransformer<TransformerConfiguration>("ReflectRename", TransformerConfiguration::class.java) {
+class ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("ReflectRename", TransformerConfiguration::class.java) {
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
@@ -28,6 +28,7 @@ class ReflectRenameTransformer : AbstractTransformer<TransformerConfiguration>("
                     val internalName = ((instruction.previous as LdcInsnNode).cst as Type).className.replace(".", "/")
                     instruction.cst = ObfuscatorServices.symbolRemapper.mapFieldName(internalName, string, "")
                 }
+
                 reflectionMethodCall.name == "getDeclaredMethod" && instruction.previous.opcode == Opcodes.LDC -> {
                     val internalName = ((instruction.previous as LdcInsnNode).cst as Type).className.replace(".", "/")
                     if (instruction.next.opcode == Opcodes.ACONST_NULL) {
@@ -43,7 +44,7 @@ class ReflectRenameTransformer : AbstractTransformer<TransformerConfiguration>("
         }
     }
 
-    override fun getPriority(): Int {
+    override fun getExecutionPriority(): Int {
         return TransformerPriority.LOW
     }
 

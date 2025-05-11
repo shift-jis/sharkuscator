@@ -7,12 +7,12 @@ import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
-import dev.sharkuscator.obfuscator.transformers.AbstractTransformer
+import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.ClassNode
 
-class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("MethodRename", RenameConfiguration::class.java) {
+class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRename", RenameConfiguration::class.java) {
     private val badInterfaces = listOf("com.sun.jna.*".toRegex())
     lateinit var dictionary: MappingDictionary<ClassNode>
 
@@ -48,7 +48,7 @@ class MethodRenameTransformer : AbstractTransformer<RenameConfiguration>("Method
         }
     }
 
-    override fun getPriority(): Int {
+    override fun getExecutionPriority(): Int {
         return TransformerPriority.BELOW_MEDIUM
     }
 }
