@@ -1,5 +1,6 @@
 package dev.sharkuscator.obfuscator
 
+import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
@@ -16,7 +17,8 @@ class ObfuscationContext private constructor(
     private val sharkuscator: Sharkuscator,
     val jarContents: JarContents<ClassNode>,
     val classSource: ApplicationClassSource,
-    val analysisContext: AnalysisContext
+    val analysisContext: AnalysisContext,
+    val exclusions: ExclusionRule,
 ) {
     val defaultDictionary = DictionaryFactory.createDefaultDictionary<Any>()
     val isInputRecognizedAsMinecraftMod: Boolean get() = sharkuscator.isInputRecognizedAsMinecraftMod
@@ -41,6 +43,7 @@ class ObfuscationContext private constructor(
         private lateinit var jarContents: JarContents<ClassNode>
         private lateinit var classSource: ApplicationClassSource
         private lateinit var analysisContext: AnalysisContext
+        private lateinit var exclusions: ExclusionRule
 
         fun setSharkuscator(sharkuscator: Sharkuscator) {
             this.sharkuscator = sharkuscator
@@ -58,8 +61,12 @@ class ObfuscationContext private constructor(
             this.analysisContext = analysisContext
         }
 
+        fun setExclusions(exclusions: ExclusionRule) {
+            this.exclusions = exclusions
+        }
+
         fun build(): ObfuscationContext {
-            return ObfuscationContext(sharkuscator, jarContents, classSource, analysisContext)
+            return ObfuscationContext(sharkuscator, jarContents, classSource, analysisContext, exclusions)
         }
     }
 }

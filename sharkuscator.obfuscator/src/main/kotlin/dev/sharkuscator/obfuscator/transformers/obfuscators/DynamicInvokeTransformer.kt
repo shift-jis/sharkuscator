@@ -7,6 +7,7 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
@@ -26,11 +27,12 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
 
     @EventHandler
     @Suppress("unused")
-    private fun onInitialization(event: ObfuscatorEvents.InitializationEvents) {
-        val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
+    private fun onInitialization(event: ObfuscatorEvents.InitializationEvent) {
+        val renameTransformer = event.context.findTransformer(ClassRenameTransformer::class.java) ?: return
         val classDictionary = event.context.resolveDictionary(ClassNode::class.java)
-        invokerClassName = classDictionary.generateNextName(null)
+        invokerClassName = "${renameTransformer.configuration.prefix}${classDictionary.generateNextName(null)}"
 
+        val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
         val invokerMethodNode = createInvokerMethodNode(invokerClassName, methodDictionary.generateNextName(null))
         event.context.jarContents.classContents.add(ClassHelper.create(BytecodeUtils.createClassNode(invokerClassName).apply { methods.add(invokerMethodNode) }))
         invokerHandle = Handle(Opcodes.H_INVOKESTATIC, invokerClassName, invokerMethodNode.name, invokerMethodNode.desc, false)

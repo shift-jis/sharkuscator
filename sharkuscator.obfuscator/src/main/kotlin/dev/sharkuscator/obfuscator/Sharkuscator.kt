@@ -99,7 +99,8 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         }
 
         val analysisContext = createAnalysisContext()
-        val eventContext = createObfuscationContext(analysisContext)
+        val obfuscationContext = createObfuscationContext(analysisContext)
+        registeredTransformers.forEach { it.initialization(configuration) }
         registeredTransformers.sortBy { it.getExecutionPriority() }
 
         ObfuscatorServices.mainEventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
@@ -107,14 +108,13 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         }
 
         val configuredTransformers = registeredTransformers.filter { configuration.transformers.has(it.getTransformerName().toSnakeCase()) }
-        configuredTransformers.forEach { it.initialization(configuration) }
-
         for (transformer in configuredTransformers.filter { it.canTransform() }) {
             ObfuscatorServices.mainEventBus.subscribe(transformer)
-            dispatchTransformEvents(eventContext)
+            dispatchTransformEvents(obfuscationContext)
             transformer.transformed = true
         }
 
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.PostTransformEvent(obfuscationContext, inputJarFile, outputJarFile))
         ObfuscatorServices.sharkLogger.info("Translating SSA IR to standard flavour")
         for ((methodNode, controlFlowGraph) in analysisContext.irCache.entries) {
             controlFlowGraph.verify()
@@ -126,12 +126,12 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         }
 
         ObfuscatorServices.sharkLogger.info("Recompiling Class...")
-        ResolvingDumper(inputJarContents, classSource, exclusions, eventContext).dump(outputJarFile)
-        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.FinalizationEvents(eventContext, inputJarFile, outputJarFile))
+        ResolvingDumper(inputJarContents, classSource, exclusions, obfuscationContext).dump(outputJarFile)
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.FinalizationEvent(obfuscationContext, inputJarFile, outputJarFile))
     }
 
     private fun dispatchTransformEvents(obfuscationContext: ObfuscationContext) {
-        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.InitializationEvents(obfuscationContext, inputJarFile, outputJarFile))
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.InitializationEvent(obfuscationContext, inputJarFile, outputJarFile))
 
         inputJarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
             ObfuscatorServices.mainEventBus.post(TransformerEvents.ResourceTransformEvent(obfuscationContext, it.value.name, it.value.data))
@@ -198,6 +198,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
             setAnalysisContext(analysisContext)
             setClassSource(classSource)
             setJarContents(inputJarContents)
+            setExclusions(exclusions)
         }.build()
     }
 }

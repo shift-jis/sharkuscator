@@ -2,7 +2,9 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.AssemblerEvents
+import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
+import dev.sharkuscator.obfuscator.extensions.isConstructor
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.DESStringObfuscationStrategy
@@ -17,7 +19,7 @@ class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("S
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.eventNode.node
-        if (transformed || methodNode.instructions == null || !BytecodeUtils.containsNonEmptyStrings(methodNode.instructions)) {
+        if (transformed || event.eventNode.isConstructor() || event.eventNode.owner.isEnum || methodNode.instructions == null || !BytecodeUtils.containsNonEmptyStrings(methodNode.instructions)) {
             return
         }
 
@@ -31,8 +33,9 @@ class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("S
 
     @EventHandler
     @Suppress("unused")
-    private fun onClassDump(event: AssemblerEvents.ClassDumpEvent) {
-        obfuscationStrategy.finalizeClass(event.context, event.classNode)
+    private fun onPostTransform(event: ObfuscatorEvents.PostTransformEvent) {
+        event.context.jarContents.classContents.forEach { obfuscationStrategy.finalizeClass(event.context, it) }
+        event.context.jarContents.classContents.forEach { obfuscationStrategy.initializeKeyChunkFields(it) }
     }
 
     override fun getExecutionPriority(): Int {

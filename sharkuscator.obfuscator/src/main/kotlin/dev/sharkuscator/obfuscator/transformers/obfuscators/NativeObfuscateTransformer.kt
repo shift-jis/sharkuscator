@@ -19,9 +19,14 @@ class NativeObfuscateTransformer : BaseTransformer<TransformerConfiguration>("Na
     @EventHandler
     @Suppress("unused")
     @OptIn(ExperimentalPathApi::class)
-    private fun onFinalization(event: ObfuscatorEvents.FinalizationEvents) {
+    private fun onFinalization(event: ObfuscatorEvents.FinalizationEvent) {
         if (!Files.exists(obfuscatorPath)) {
             ObfuscatorServices.sharkLogger.error("native-obfuscator.jar does not exist!")
+            return
+        }
+
+        if (event.context.isInputRecognizedAsMinecraftMod) {
+            ObfuscatorServices.sharkLogger.error("Minecraft mod not supported by NativeObfuscateTransformer")
             return
         }
 
@@ -35,10 +40,11 @@ class NativeObfuscateTransformer : BaseTransformer<TransformerConfiguration>("Na
             nativeLibraryPath.deleteRecursively()
         }
 
-        val obfuscatorProcess = ProcessBuilder("java", "-jar", obfuscatorPath.toString(), event.outputJarFile.name, nativeLibraryPath.toString(), "-p", "std_java", "-b", blackListFilePath.absolutePathString()).start()
-        obfuscatorProcess.inputStream.bufferedReader().use {
-            ObfuscatorServices.sharkLogger.info(it.readText())
-        }
+        val processBuilder = ProcessBuilder("java", "-jar", obfuscatorPath.toString(), event.outputJarFile.name, nativeLibraryPath.toString(), "-p", "std_java", "-b", blackListFilePath.absolutePathString())
+        ObfuscatorServices.sharkLogger.debug("Commandline: ${processBuilder.command().joinToString(" ")}")
+
+        val obfuscatorProcess = processBuilder.start()
+        obfuscatorProcess.inputStream.bufferedReader().use { ObfuscatorServices.sharkLogger.info(it.readText()) }
         obfuscatorProcess.waitFor()
     }
 
