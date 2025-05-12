@@ -7,7 +7,7 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 
 // TODO
-class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfiguration>("LongConstantEncryptionTransformer", TransformerConfiguration::class.java) {
+class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfiguration>("LongConstantEncryption", TransformerConfiguration::class.java) {
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
@@ -15,9 +15,13 @@ class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfigurati
         if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
             return
         }
+
+//        BytecodeUtils.findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
+//            println(value)
+//        }
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOWER
+        return TransformerPriority.MEDIUM
     }
 }

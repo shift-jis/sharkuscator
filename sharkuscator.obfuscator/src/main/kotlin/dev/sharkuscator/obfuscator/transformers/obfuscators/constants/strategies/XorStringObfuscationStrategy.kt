@@ -1,5 +1,6 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
+import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
 import dev.sharkuscator.obfuscator.extensions.xor
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
@@ -18,7 +19,7 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
     private val DECODER_METHOD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
     private val decodeMethodCache = mutableMapOf<ClassNode, MethodNode>()
 
-    override fun prepareDecoderMethod(targetClassNode: ClassNode, decoderMethodName: String): MethodNode {
+    override fun prepareDecoderMethod(context: ObfuscationContext, targetClassNode: ClassNode, decoderMethodName: String): MethodNode {
         if (decodeMethodCache.containsKey(targetClassNode)) {
             return decodeMethodCache.getValue(targetClassNode)
         }
@@ -109,7 +110,7 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
         instructions.remove(targetInstruction)
     }
 
-    override fun finalizeClass(targetClassNode: ClassNode) {
+    override fun finalizeClass(context: ObfuscationContext, targetClassNode: ClassNode) {
         // do nothing
     }
 

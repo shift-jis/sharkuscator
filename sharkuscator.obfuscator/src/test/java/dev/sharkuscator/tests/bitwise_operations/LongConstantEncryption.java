@@ -1,4 +1,4 @@
-package long_constant;
+package dev.sharkuscator.tests.bitwise_operations;
 
 import java.lang.invoke.MethodHandles;
 

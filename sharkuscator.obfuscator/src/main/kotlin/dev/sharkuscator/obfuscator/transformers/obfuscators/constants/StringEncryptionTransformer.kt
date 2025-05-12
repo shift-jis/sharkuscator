@@ -9,6 +9,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
+import org.mapleir.asm.MethodNode
 
 class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
     val obfuscationStrategy = DESStringObfuscationStrategy()
@@ -21,8 +22,8 @@ class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("S
             return
         }
 
-        val renameTransformer = event.context.findTransformer(MethodRenameTransformer::class.java)!!.dictionary
-        val decodeMethodNode = obfuscationStrategy.prepareDecoderMethod(event.eventNode.owner, renameTransformer.generateNextName(event.eventNode.owner))
+        val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
+        val decodeMethodNode = obfuscationStrategy.prepareDecoderMethod(event.context, event.eventNode.owner, methodDictionary.generateNextName(event.eventNode.owner))
 
         BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             obfuscationStrategy.replaceInstructions(decodeMethodNode, methodNode.instructions, instruction, string)
@@ -32,7 +33,7 @@ class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onClassDump(event: AssemblerEvents.ClassDumpEvent) {
-        obfuscationStrategy.finalizeClass(event.classNode)
+        obfuscationStrategy.finalizeClass(event.context, event.classNode)
     }
 
     override fun getExecutionPriority(): Int {

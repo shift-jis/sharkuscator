@@ -53,7 +53,7 @@ class ClassWriter(private val classSource: ApplicationClassSource, flags: Int) :
             return true
         }
 
-        val targetNode = classSource.findClassNode(type1)
+        val targetNode = classSource.findClassNode(type1) ?: return true
         var currentSuperName = targetNode.node.superName
 
         while (currentSuperName != null) {

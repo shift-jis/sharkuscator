@@ -11,6 +11,9 @@ open class GsonConfiguration {
     @get:SerializedName("transformers")
     val transformers: JsonObject = JsonObject()
 
+    @get:SerializedName("libraries")
+    val libraries: Array<String> = emptyArray()
+
     @get:SerializedName("exclusions")
     val exclusions: Array<String> = emptyArray()
 

@@ -35,6 +35,7 @@ class ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Refl
                         instruction.cst = ObfuscatorServices.symbolRemapper.findClosestMethodMapping(internalName, string)
                     }
                 }
+
 //                reflectionMethodCall.name == "getMethod" && instruction.next.type == 0 -> {
 //                    if (instruction.next.opcode == Opcodes.ICONST_0) {
 //                        instruction.cst = ObfuscatorServices.symbolRemapper.findClosestMethodMapping(string, "")

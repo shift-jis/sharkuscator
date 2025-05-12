@@ -7,7 +7,7 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
     private val transformerName: String,
     private val configurationType: Class<T>
 ) : SharkTransformer<T> {
-    protected lateinit var configuration: T
+    lateinit var configuration: T
     var transformed = false
 
     override fun initialization(configuration: GsonConfiguration): T {

@@ -7,6 +7,7 @@ object DictionaryFactory {
 
     fun <T> createDictionary(dictionaryType: String, dictionaryLength: Int = 10): MappingDictionary<T> {
         return when (dictionaryType) {
+            "cjk_unified_ideograph" -> CjkUnifiedIdeographDictionary()
             "space_varying_length" -> SpaceVaryingLengthDictionary()
             "similar_characters" -> SimilarCharacterDictionary(dictionaryLength)
             "zero_width_space" -> ZeroWidthSpaceDictionary()

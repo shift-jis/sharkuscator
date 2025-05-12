@@ -4,10 +4,7 @@ import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.isConstructor
-import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
-import dev.sharkuscator.obfuscator.extensions.isDeclaredAsInterface
-import dev.sharkuscator.obfuscator.extensions.isStaticInitializer
+import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
@@ -16,6 +13,7 @@ import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
 import org.mapleir.asm.ClassHelper
+import org.mapleir.asm.ClassNode
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -31,11 +29,11 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
     @EventHandler
     @Suppress("unused")
     private fun onInitialization(event: ObfuscatorEvents.InitializationEvents) {
-        val classRenameTransformer = event.context.findTransformer(ClassRenameTransformer::class.java)!!
-        val methodRenameTransformer = event.context.findTransformer(MethodRenameTransformer::class.java)!!
-        invokerClassName = classRenameTransformer.dictionary.generateNextName(null)
+        val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
+        val classDictionary = event.context.resolveDictionary(ClassNode::class.java)
+        invokerClassName = classDictionary.generateNextName(null)
 
-        val invokerMethodNode = createInvokerMethodNode(invokerClassName, methodRenameTransformer.dictionary.generateNextName(null))
+        val invokerMethodNode = createInvokerMethodNode(invokerClassName, methodDictionary.generateNextName(null))
         event.context.jarContents.classContents.add(ClassHelper.create(BytecodeUtils.createClassNode(invokerClassName).apply { methods.add(invokerMethodNode) }))
         invokerHandle = Handle(Opcodes.H_INVOKESTATIC, invokerClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
     }
@@ -48,7 +46,7 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
         }
 
         val classNode = event.eventNode.owner
-        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.name == invokerClassName || classNode.name == "StringDecryptor") {
+        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.isSpongeMixin() || classNode.name == invokerClassName) {
             return
         }
 

@@ -24,52 +24,62 @@ Below is an example configuration.json:
 ```json
 {
     "transformers": {
+        "local_variable_rename": {
+            "enabled": false,
+            "dictionary": "cjk_unified_ideograph",
+            "prefix": ""
+        },
         "resource_rename": {
-            "enabled": true,
+            "enabled": false,
             "prefix": ""
         },
         "method_rename": {
-            "enabled": true,
-            "dictionary": "alphabetical",
+            "enabled": false,
+            "dictionary": "cjk_unified_ideograph",
             "prefix": ""
         },
         "class_rename": {
-            "enabled": true,
-            "dictionary": "alphabetical",
+            "enabled": false,
+            "dictionary": "cjk_unified_ideograph",
             "prefix": ""
         },
         "field_rename": {
-            "enabled": true,
-            "dictionary": "alphabetical",
+            "enabled": false,
+            "dictionary": "cjk_unified_ideograph",
             "prefix": ""
         },
         "reflect_rename": {
-            "enabled": true
+            "enabled": false
         },
 
         "local_variable_remove": {
-            "enabled": true
+            "enabled": false
         },
         "source_stripper": {
-            "enabled": true
+            "enabled": false
         },
 
+        "long_constant_encryption": {
+            "enabled": false
+        },
         "string_encryption": {
-            "enabled": true
+            "enabled": false
         },
         "number_complexity": {
-            "enabled": true
+            "enabled": false
         },
         "synthetic_access": {
-            "enabled": true
+            "enabled": false
         },
         "dynamic_invoke": {
-            "enabled": true
+            "enabled": false
         },
         "native_obfuscate": {
-            "enabled": true
+            "enabled": false
         }
     },
+    "libraries": [
+    ],
     "exclusions": [
         "oshi.*",
         "org.*",

@@ -1,20 +1,18 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 
-import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.getQualifiedName
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import meteordevelopment.orbit.EventHandler
-import org.mapleir.asm.ClassNode
+import org.mapleir.asm.MethodNode
 
-class FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRename", RenameConfiguration::class.java) {
-    private val badInterfaces = listOf("com.sun.jna.*".toRegex())
-    lateinit var dictionary: MappingDictionary<ClassNode>
+class LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("LocalVariableRename", RenameConfiguration::class.java) {
+    lateinit var dictionary: MappingDictionary<MethodNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
         dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
@@ -23,16 +21,18 @@ class FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRename
 
     @EventHandler
     @Suppress("unused")
-    private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (transformed || badInterfaces.any { it.matches(event.eventNode.owner.node.superName) }) {
+    private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
+        val removeTransformer = event.context.findTransformer(LocalVariableRemoveTransformer::class.java)
+        if (event.eventNode.node.localVariables == null || (removeTransformer != null && removeTransformer.canTransform())) {
             return
         }
 
-        val fieldMapping = "${configuration.prefix}${dictionary.generateNextName(event.eventNode.owner)}"
-        ObfuscatorServices.symbolRemapper.setMapping(event.eventNode.getQualifiedName(), fieldMapping)
+        event.eventNode.node.localVariables.filter { it.name != "this" }.forEach {
+            it.name = dictionary.generateNextName(event.eventNode)
+        }
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.BELOW_MEDIUM
+        return TransformerPriority.LOW
     }
 }

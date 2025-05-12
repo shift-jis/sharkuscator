@@ -24,11 +24,11 @@ class FloatingPointFromBitsStrategy : NumericConstantObfuscationStrategy {
                 instructions.remove(targetInstruction)
             }
 
-            is Float -> {
-                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Float", "intBitsToFloat", "(J)D"))
-                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
-                instructions.remove(targetInstruction)
-            }
+//            is Float -> {
+//                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Float", "intBitsToFloat", "(J)D"))
+//                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
+//                instructions.remove(targetInstruction)
+//            }
         }
     }
 

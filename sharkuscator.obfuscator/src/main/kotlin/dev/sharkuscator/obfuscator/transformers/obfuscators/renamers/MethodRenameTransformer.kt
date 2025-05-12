@@ -29,6 +29,10 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
         }
 
         val classNode = event.eventNode.owner
+        if (event.context.isInputRecognizedAsMinecraftMod && (classNode.isSpongeMixin() || event.eventNode.name.startsWith("func_"))) {
+            return
+        }
+
         if (classNode.isDeclaredAsAnnotation() || classNode.node.superName != "java/lang/Object" || ObfuscatorServices.symbolRemapper.symbolMappings.containsKey(event.eventNode.getQualifiedName())) {
             return
         }

@@ -9,7 +9,7 @@ object BootstrapSharkuscator {
     @JvmStatic
     fun main(args: Array<String>) {
         ArgParser(args).parseInto(::ObfuscatorArguments).run {
-            val obfuscator = Sharkuscator(Paths.get(configJsonPath), File(inputJarPath), File(outputJarPath))
+            val obfuscator = Sharkuscator(Paths.get(configurationFile), File(inputJarFile), File(outputJarFile))
             obfuscator.obfuscate()
         }
     }

@@ -12,9 +12,6 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-include(":maple-ir.property-framework")
-project(":maple-ir.property-framework").projectDir = file("maple-ir/org.mapleir.property-framework")
-
 include("sharkuscator.annotations")
 include("sharkuscator.obfuscator")
 include("sharkuscator.standalone")

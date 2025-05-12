@@ -1,4 +1,4 @@
-package long_constant;
+package dev.sharkuscator.tests.bitwise_operations;
 
 /**
  * オペレーションまたは状態の対象となるオブジェクトの共通インターフェース。
