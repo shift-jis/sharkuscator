@@ -7,8 +7,6 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
