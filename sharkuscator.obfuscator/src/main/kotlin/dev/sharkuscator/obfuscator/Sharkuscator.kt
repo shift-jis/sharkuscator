@@ -126,7 +126,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         }
 
         ObfuscatorServices.sharkLogger.info("Recompiling Class...")
-        ResolvingDumper(inputJarContents, classSource, exclusions, obfuscationContext).dump(outputJarFile)
+        ResolvingDumper(obfuscationContext, inputJarContents, classSource).dump(outputJarFile)
         ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.FinalizationEvent(obfuscationContext, inputJarFile, outputJarFile))
     }
 
