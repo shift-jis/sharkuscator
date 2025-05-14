@@ -17,6 +17,10 @@ fun MethodNode.isDeclaredSynthetic(): Boolean = (node.access and Opcodes.ACC_SYN
 
 fun MethodNode.isDeclaredBridge(): Boolean = (node.access and Opcodes.ACC_BRIDGE) != 0
 
+fun MethodNode.shouldSkipTransform(): Boolean {
+    return isStaticInitializer() || isConstructor() || hasMainSignature()
+}
+
 fun MethodNode.invokeStatic(): MethodInsnNode {
     return BytecodeUtils.createInvokeStatic(owner.name, name, desc)
 }

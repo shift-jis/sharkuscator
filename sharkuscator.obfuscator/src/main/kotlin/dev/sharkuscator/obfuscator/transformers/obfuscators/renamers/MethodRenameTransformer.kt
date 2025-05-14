@@ -6,7 +6,10 @@ import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguratio
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.*
+import dev.sharkuscator.obfuscator.extensions.getQualifiedName
+import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
+import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
+import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
@@ -24,7 +27,7 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.eventNode.isNative || event.eventNode.isStaticInitializer() || event.eventNode.isConstructor() || event.eventNode.hasMainSignature()) {
+        if (transformed || event.eventNode.isNative || event.eventNode.shouldSkipTransform()) {
             return
         }
 
@@ -37,7 +40,6 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
             return
         }
 
-        // Protect native library calls
         if (classNode.node.interfaces.any { className -> badInterfaces.any { it.matches(className) } }) {
             return
         }

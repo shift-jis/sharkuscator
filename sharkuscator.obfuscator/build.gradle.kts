@@ -22,8 +22,8 @@ dependencies {
 
     implementation("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
     implementation("org.bouncycastle:bcprov-jdk18on:1.80")
-    implementation("meteordevelopment:orbit:0.2.4")
     implementation("com.google.code.gson:gson:2.12.1")
+    implementation("meteordevelopment:orbit:0.2.4")
 
     compileOnly("org.projectlombok:lombok:1.18.36")
     annotationProcessor("org.projectlombok:lombok:1.18.36")
