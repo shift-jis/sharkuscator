@@ -25,57 +25,73 @@ Below is an example configuration.json:
 {
     "transformers": {
         "local_variable_rename": {
-            "enabled": false,
-            "dictionary": "cjk_unified_ideograph",
-            "prefix": ""
+            "enabled": true,
+            "dictionary": "alphabetical",
+            "name_prefix": ""
+        },
+        "parameter_rename": {
+            "enabled": true,
+            "dictionary": "alphabetical",
+            "name_prefix": ""
         },
         "resource_rename": {
             "enabled": false,
-            "prefix": ""
+            "dictionary": "alphabetical",
+            "name_prefix": ""
         },
         "method_rename": {
-            "enabled": false,
-            "dictionary": "cjk_unified_ideograph",
-            "prefix": ""
+            "enabled": true,
+            "dictionary": "alphabetical",
+            "name_prefix": ""
         },
         "class_rename": {
-            "enabled": false,
-            "dictionary": "cjk_unified_ideograph",
-            "prefix": ""
+            "enabled": true,
+            "dictionary": "alphabetical",
+            "name_prefix": "%dictionary%/",
+            "prefix_repetitions": 2
         },
         "field_rename": {
-            "enabled": false,
-            "dictionary": "cjk_unified_ideograph",
-            "prefix": ""
+            "enabled": true,
+            "dictionary": "alphabetical",
+            "name_prefix": ""
         },
         "reflect_rename": {
-            "enabled": false
+            "enabled": true
         },
 
         "local_variable_remove": {
-            "enabled": false
+            "enabled": true
         },
         "source_stripper": {
-            "enabled": false
+            "enabled": true
         },
 
         "long_constant_encryption": {
             "enabled": false
         },
         "string_encryption": {
-            "enabled": false
+            "enabled": true
         },
         "number_complexity": {
             "enabled": false
         },
+        "signature_inflation": {
+            "enabled": true
+        },
         "synthetic_access": {
-            "enabled": false
+            "enabled": true
         },
         "dynamic_invoke": {
             "enabled": false
         },
         "native_obfuscate": {
-            "enabled": false
+            "enabled": true,
+            "exclusions": [
+                "oshi/**",
+                "org/**",
+                "com/**",
+                "cc/**"
+            ]
         }
     },
     "libraries": [
@@ -83,7 +99,8 @@ Below is an example configuration.json:
     "exclusions": [
         "oshi.*",
         "org.*",
-        "com.*"
+        "com.*",
+        "cc.*"
     ]
 }
 ```
