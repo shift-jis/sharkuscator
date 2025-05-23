@@ -58,66 +58,73 @@ class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename
     @Suppress("unused")
     private fun onResourceWrite(event: AssemblerEvents.ResourceWriteEvent) {
         val resourceContentString = event.resourceData.decodeToString()
-        if (event.name == "META-INF/MANIFEST.MF" && resourceContentString.contains("Main-Class")) {
-            ObfuscatorServices.symbolRemapper.symbolMappings.filter { !it.key.contains(".") }.forEach { (previous, newest) ->
-                val mainClassPattern = "(?<=[: ])${previous.replace("/", ".")}".toRegex()
-                event.resourceData = mainClassPattern.replace(event.resourceData.decodeToString(), newest).toByteArray()
-            }
-        } else if (event.name.startsWith("mixins") && event.name.endsWith(".json")) {
-            val mixinConfigJson = ObfuscatorServices.jsonProcessor.fromJson(resourceContentString, JsonObject::class.java)
-
-            if (mixinConfigJson.has("package") && mixinConfigJson.get("package").isJsonPrimitive) {
-                if (mixinConfigJson.has("client")) {
-                    updateClassNamesInMixinArray(mixinConfigJson.get("package").asString, mixinConfigJson.get("client").asJsonArray)
-                }
-
-                if (mixinConfigJson.has("mixins")) {
-                    updateClassNamesInMixinArray(mixinConfigJson.get("package").asString, mixinConfigJson.get("mixins").asJsonArray)
-                }
-
-                var configPrefixAsPackagePath = effectiveClassPrefix.replace("/", ".")
-                if (configPrefixAsPackagePath.endsWith(".")) {
-                    configPrefixAsPackagePath = configPrefixAsPackagePath.dropLast(1)
-                }
-
-                var newMixinPackageDeclaration = generatedMixinPackageSegment
-                if (configPrefixAsPackagePath.isNotEmpty()) {
-                    newMixinPackageDeclaration = "$configPrefixAsPackagePath.$generatedMixinPackageSegment"
-                }
-
-                mixinConfigJson.remove("package")
-                mixinConfigJson.add("package", JsonPrimitive(newMixinPackageDeclaration))
-            }
-
-            if (mixinConfigJson.has("mappings") && mixinConfigJson.get("mappings").isJsonObject) {
-                val classMappingsObject = mixinConfigJson.get("mappings").asJsonObject
-                for (originalClassPathKey in classMappingsObject.keySet().toList()) {
-                    val newClassPathKey = ObfuscatorServices.symbolRemapper.symbolMappings[originalClassPathKey]
-                    if (newClassPathKey == null) {
-                        continue
-                    }
-
-                    val classMappingValue = classMappingsObject.remove(originalClassPathKey)
-                    classMappingsObject.add(newClassPathKey, classMappingValue)
-                }
-            }
-
-            if (mixinConfigJson.has("data") && mixinConfigJson.get("data").isJsonObject) {
-                val referenceDataObject = mixinConfigJson.get("data").asJsonObject
-                val intermediaryObject = referenceDataObject.get("named:intermediary").asJsonObject
-                for (originalClassPathKey in intermediaryObject.keySet().toList()) {
-                    val newClassPathKey = ObfuscatorServices.symbolRemapper.symbolMappings[originalClassPathKey]
-                    if (newClassPathKey == null) {
-                        continue
-                    }
-
-                    val classMappingValue = intermediaryObject.remove(originalClassPathKey)
-                    intermediaryObject.add(newClassPathKey, classMappingValue)
-                }
-            }
-
-            event.resourceData = ObfuscatorServices.jsonProcessor.toJson(mixinConfigJson).toByteArray()
+        when {
+            event.name == "META-INF/MANIFEST.MF" && resourceContentString.contains("Main-Class") -> updateMainClassInManifest(event)
+            event.name.startsWith("mixins") && event.name.endsWith(".json") -> updateClassNamesInMixinConfiguration(event, resourceContentString)
         }
+    }
+
+    private fun updateMainClassInManifest(event: AssemblerEvents.ResourceWriteEvent) {
+        ObfuscatorServices.symbolRemapper.symbolMappings.filter { !it.key.contains(".") }.forEach { (previous, newest) ->
+            val mainClassPattern = "(?<=[: ])${previous.replace("/", ".")}".toRegex()
+            event.resourceData = mainClassPattern.replace(event.resourceData.decodeToString(), newest).toByteArray()
+        }
+    }
+
+    private fun updateClassNamesInMixinConfiguration(event: AssemblerEvents.ResourceWriteEvent, resourceContentString: String) {
+        val mixinConfigJson = ObfuscatorServices.jsonProcessor.fromJson(resourceContentString, JsonObject::class.java)
+
+        if (mixinConfigJson.has("package") && mixinConfigJson.get("package").isJsonPrimitive) {
+            if (mixinConfigJson.has("client")) {
+                updateClassNamesInMixinArray(mixinConfigJson.get("package").asString, mixinConfigJson.get("client").asJsonArray)
+            }
+
+            if (mixinConfigJson.has("mixins")) {
+                updateClassNamesInMixinArray(mixinConfigJson.get("package").asString, mixinConfigJson.get("mixins").asJsonArray)
+            }
+
+            var configPrefixAsPackagePath = effectiveClassPrefix.replace("/", ".")
+            if (configPrefixAsPackagePath.endsWith(".")) {
+                configPrefixAsPackagePath = configPrefixAsPackagePath.dropLast(1)
+            }
+
+            var newMixinPackageDeclaration = generatedMixinPackageSegment
+            if (configPrefixAsPackagePath.isNotEmpty()) {
+                newMixinPackageDeclaration = "$configPrefixAsPackagePath.$generatedMixinPackageSegment"
+            }
+
+            mixinConfigJson.remove("package")
+            mixinConfigJson.add("package", JsonPrimitive(newMixinPackageDeclaration))
+        }
+
+        if (mixinConfigJson.has("mappings") && mixinConfigJson.get("mappings").isJsonObject) {
+            val classMappingsObject = mixinConfigJson.get("mappings").asJsonObject
+            for (originalClassPathKey in classMappingsObject.keySet().toList()) {
+                val newClassPathKey = ObfuscatorServices.symbolRemapper.symbolMappings[originalClassPathKey]
+                if (newClassPathKey == null) {
+                    continue
+                }
+
+                val classMappingValue = classMappingsObject.remove(originalClassPathKey)
+                classMappingsObject.add(newClassPathKey, classMappingValue)
+            }
+        }
+
+        if (mixinConfigJson.has("data") && mixinConfigJson.get("data").isJsonObject) {
+            val referenceDataObject = mixinConfigJson.get("data").asJsonObject
+            val intermediaryObject = referenceDataObject.get("named:intermediary").asJsonObject
+            for (originalClassPathKey in intermediaryObject.keySet().toList()) {
+                val newClassPathKey = ObfuscatorServices.symbolRemapper.symbolMappings[originalClassPathKey]
+                if (newClassPathKey == null) {
+                    continue
+                }
+
+                val classMappingValue = intermediaryObject.remove(originalClassPathKey)
+                intermediaryObject.add(newClassPathKey, classMappingValue)
+            }
+        }
+
+        event.resourceData = ObfuscatorServices.jsonProcessor.toJson(mixinConfigJson).toByteArray()
     }
 
     private fun updateClassNamesInMixinArray(mixinPackageName: String, mixinClassEntriesArray: JsonArray) {
