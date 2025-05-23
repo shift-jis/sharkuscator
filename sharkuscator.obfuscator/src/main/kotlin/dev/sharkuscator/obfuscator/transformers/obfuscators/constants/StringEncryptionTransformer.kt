@@ -17,13 +17,13 @@ class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val methodNode = event.eventNode.node
-        if (transformed || event.eventNode.isConstructor() || event.eventNode.owner.isEnum || methodNode.instructions == null || !BytecodeUtils.containsNonEmptyStrings(methodNode.instructions)) {
+        val methodNode = event.anytypeNode.node
+        if (transformed || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isEnum || methodNode.instructions == null || !BytecodeUtils.containsNonEmptyStrings(methodNode.instructions)) {
             return
         }
 
         val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
-        val decodeMethodNode = obfuscationStrategy.prepareDecoderMethod(event.context, event.eventNode.owner, methodDictionary.generateNextName(event.eventNode.owner))
+        val decodeMethodNode = obfuscationStrategy.prepareDecoderMethod(event.context, event.anytypeNode.owner, methodDictionary.generateNextName(event.anytypeNode.owner))
 
         BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             obfuscationStrategy.replaceInstructions(decodeMethodNode, methodNode.instructions, instruction, string)

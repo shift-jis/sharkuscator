@@ -18,6 +18,9 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.LongConsta
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.*
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.LocalVariableRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ParameterRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ReflectRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import org.clyze.jphantom.ClassMembers
@@ -51,6 +54,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
     val registeredTransformers = mutableListOf(
         // obfuscates
         LocalVariableRenameTransformer(),
+        ParameterRenameTransformer(),
         MethodRenameTransformer(),
         FieldRenameTransformer(),
         ClassRenameTransformer(),

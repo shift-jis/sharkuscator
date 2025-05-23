@@ -14,13 +14,13 @@ class NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("N
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val methodNode = event.eventNode.node
-        if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
+        val methodNode = event.anytypeNode.node
+        if (transformed || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
         BytecodeUtils.findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
-            obfuscationStrategy.replaceInstructions(event.eventNode.owner, methodNode.instructions, instruction, value)
+            obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, methodNode.instructions, instruction, value)
         }
     }
 

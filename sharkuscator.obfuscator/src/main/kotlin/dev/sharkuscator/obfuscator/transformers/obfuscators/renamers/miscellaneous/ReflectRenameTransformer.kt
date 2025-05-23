@@ -1,4 +1,4 @@
-package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
+package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
@@ -17,7 +17,7 @@ class ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Refl
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        BytecodeUtils.findNonEmptyStrings(event.eventNode.node.instructions).forEach { (instruction, string) ->
+        BytecodeUtils.findNonEmptyStrings(event.anytypeNode.node.instructions).forEach { (instruction, string) ->
             if (instruction.previous == null) {
                 return@forEach
             }

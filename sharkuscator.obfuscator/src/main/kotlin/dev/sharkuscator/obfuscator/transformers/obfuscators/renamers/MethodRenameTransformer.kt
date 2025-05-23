@@ -27,16 +27,16 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.eventNode.isNative || event.eventNode.shouldSkipTransform()) {
+        if (transformed || event.anytypeNode.isNative || event.anytypeNode.shouldSkipTransform()) {
             return
         }
 
-        val classNode = event.eventNode.owner
-        if (event.context.isInputRecognizedAsMinecraftMod && (classNode.isSpongeMixin() || event.eventNode.name.startsWith("func_"))) {
+        val classNode = event.anytypeNode.owner
+        if (event.context.isInputRecognizedAsMinecraftMod && (classNode.isSpongeMixin() || event.anytypeNode.name.startsWith("func_"))) {
             return
         }
 
-        if (classNode.isDeclaredAsAnnotation() || classNode.node.superName != "java/lang/Object" || ObfuscatorServices.symbolRemapper.symbolMappings.containsKey(event.eventNode.getQualifiedName())) {
+        if (classNode.isDeclaredAsAnnotation() || classNode.node.superName != "java/lang/Object" || ObfuscatorServices.symbolRemapper.symbolMappings.containsKey(event.anytypeNode.getQualifiedName())) {
             return
         }
 
@@ -44,11 +44,11 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
             return
         }
 
-        val methodMapping = "${configuration.prefix}${dictionary.generateNextName(event.eventNode.owner)}"
-        ObfuscatorServices.symbolRemapper.setMapping(event.eventNode.getQualifiedName(), methodMapping)
+        val methodMapping = "${configuration.prefix}${dictionary.generateNextName(event.anytypeNode.owner)}"
+        ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.getQualifiedName(), methodMapping)
 
         val invocationResolver = event.context.analysisContext.invocationResolver
-        for (methodNode in invocationResolver.getHierarchyMethodChain(classNode, event.eventNode.name, event.eventNode.desc, true)) {
+        for (methodNode in invocationResolver.getHierarchyMethodChain(classNode, event.anytypeNode.name, event.anytypeNode.desc, true)) {
             ObfuscatorServices.symbolRemapper.setMapping(methodNode.getQualifiedName(), methodMapping)
             dictionary.generateNextName(methodNode.owner)
         }

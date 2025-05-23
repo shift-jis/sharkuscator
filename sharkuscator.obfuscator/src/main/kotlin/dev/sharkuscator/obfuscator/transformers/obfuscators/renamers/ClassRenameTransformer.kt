@@ -27,16 +27,16 @@ class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (transformed || event.eventNode.isSpongeMixin() || event.context.classSource.isLibraryClass(event.eventNode.name)) {
+        if (transformed || event.anytypeNode.isSpongeMixin() || event.context.classSource.isLibraryClass(event.anytypeNode.name)) {
             return
         }
 
         var classMapping = dictionary.generateNextName(null)
-        if (dictionary.generatesUnsafeNames() && (event.eventNode.containsMainMethod() || event.eventNode.isDeclaredAsAnnotation())) {
+        if (dictionary.generatesUnsafeNames() && (event.anytypeNode.containsMainMethod() || event.anytypeNode.isDeclaredAsAnnotation())) {
             classMapping = event.context.defaultDictionary.generateNextName(null)
         }
 
-        ObfuscatorServices.symbolRemapper.setMapping(event.eventNode.name, "${configuration.prefix}$classMapping")
+        ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.name, "${configuration.prefix}$classMapping")
     }
 
     @EventHandler

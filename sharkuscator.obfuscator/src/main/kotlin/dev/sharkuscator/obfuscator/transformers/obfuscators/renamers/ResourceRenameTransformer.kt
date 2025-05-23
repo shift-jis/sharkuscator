@@ -29,8 +29,8 @@ class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resource
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val methodNode = event.eventNode.node
-        if (transformed || event.eventNode.isNative || event.eventNode.isAbstract || methodNode.instructions == null) {
+        val methodNode = event.anytypeNode.node
+        if (transformed || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
             return
         }
 

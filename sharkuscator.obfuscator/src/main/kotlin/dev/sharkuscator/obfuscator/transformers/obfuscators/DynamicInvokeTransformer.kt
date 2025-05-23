@@ -40,12 +40,12 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.eventNode.isNative || event.eventNode.isStaticInitializer() || event.eventNode.isConstructor()) {
+        if (transformed || event.anytypeNode.isNative || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
             return
         }
 
-        val methodNode = event.eventNode.node
-        val classNode = event.eventNode.owner
+        val methodNode = event.anytypeNode.node
+        val classNode = event.anytypeNode.owner
         if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.isSpongeMixin() || classNode.name == dynamicInvokerClassName) {
             return
         }

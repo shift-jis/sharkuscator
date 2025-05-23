@@ -14,14 +14,10 @@ dependencies {
     implementation(files("../thirdparty/mapleir-full-with-deps.jar"))
     implementation(project(":sharkuscator.annotations"))
 
-    implementation("com.github.Col-E:jphantom:1.4.3")
-    implementation("com.github.xxDark:SSVM:1.9.0.3")
-
     implementation("net.java.dev.jna:jna-platform:5.17.0")
     implementation("net.java.dev.jna:jna:5.17.0")
 
     implementation("org.apache.logging.log4j:log4j-core:3.0.0-beta3")
-    implementation("org.bouncycastle:bcprov-jdk18on:1.80")
     implementation("com.google.code.gson:gson:2.12.1")
     implementation("meteordevelopment:orbit:0.2.4")
 
@@ -29,6 +25,9 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.36")
 
     implementation(libs.bundles.kotlinxEcosystem)
+    implementation(libs.javaPhantom)
+    implementation(libs.koffee)
+
     testImplementation(kotlin("test"))
 }
 

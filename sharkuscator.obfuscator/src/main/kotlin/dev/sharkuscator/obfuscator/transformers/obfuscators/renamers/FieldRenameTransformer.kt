@@ -24,12 +24,12 @@ class FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRename
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (transformed || badInterfaces.any { it.matches(event.eventNode.owner.node.superName) }) {
+        if (transformed || badInterfaces.any { it.matches(event.anytypeNode.owner.node.superName) }) {
             return
         }
 
-        val fieldMapping = "${configuration.prefix}${dictionary.generateNextName(event.eventNode.owner)}"
-        ObfuscatorServices.symbolRemapper.setMapping(event.eventNode.getQualifiedName(), fieldMapping)
+        val fieldMapping = "${configuration.prefix}${dictionary.generateNextName(event.anytypeNode.owner)}"
+        ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.getQualifiedName(), fieldMapping)
     }
 
     override fun getExecutionPriority(): Int {
