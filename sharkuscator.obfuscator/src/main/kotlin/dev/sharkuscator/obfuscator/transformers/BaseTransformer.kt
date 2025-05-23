@@ -24,7 +24,7 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.MEDIUM
+        return TransformerPriority.ZERO
     }
 
     override fun getTransformerName(): String {

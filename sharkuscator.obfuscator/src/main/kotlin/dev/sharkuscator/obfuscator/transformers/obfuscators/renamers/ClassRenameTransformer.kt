@@ -136,6 +136,6 @@ class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.BELOW_MEDIUM
+        return TransformerPriority.TWENTY_FIVE
     }
 }

@@ -38,6 +38,6 @@ class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("S
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOW
+        return TransformerPriority.FIFTY
     }
 }

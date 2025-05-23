@@ -24,8 +24,4 @@ class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfigurati
 //            println(value)
 //        }
     }
-
-    override fun getExecutionPriority(): Int {
-        return TransformerPriority.MEDIUM
-    }
 }

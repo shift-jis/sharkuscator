@@ -55,6 +55,6 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.BELOW_MEDIUM
+        return TransformerPriority.TWENTY_FIVE
     }
 }

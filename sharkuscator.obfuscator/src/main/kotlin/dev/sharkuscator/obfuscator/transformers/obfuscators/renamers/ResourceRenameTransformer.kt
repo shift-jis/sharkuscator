@@ -47,6 +47,6 @@ class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resource
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.BELOW_MEDIUM
+        return TransformerPriority.TWENTY_FIVE
     }
 }

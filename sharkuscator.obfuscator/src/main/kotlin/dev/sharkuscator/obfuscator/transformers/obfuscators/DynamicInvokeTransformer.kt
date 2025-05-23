@@ -14,14 +14,16 @@ import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import kotlin.random.Random
 
 
 class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("DynamicInvoke", TransformerConfiguration::class.java) {
     private val returnOpcodes = arrayOf(Opcodes.POP, Opcodes.POP2, Opcodes.RETURN, Opcodes.IFNONNULL, Opcodes.IFNULL, Opcodes.CHECKCAST)
     private val invokeOpcodes = arrayOf(Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL, Opcodes.INVOKEINTERFACE)
 
-    private lateinit var dynamicInvokerClassName: String
     private lateinit var dynamicInvokerHandle: Handle
+    lateinit var dynamicInvokerClassName: String
+    lateinit var generatedInvokerMethodName: String
 
     @EventHandler
     @Suppress("unused")
@@ -30,10 +32,11 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
         dynamicInvokerClassName = hostClassNode.name
 
         val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
-        val invokerMethodNode = createInvokerMethodNode(dynamicInvokerClassName, methodDictionary.generateNextName(null))
+        generatedInvokerMethodName = methodDictionary.generateNextName(null)
+
+        val invokerMethodNode = createInvokerMethodNode(dynamicInvokerClassName, generatedInvokerMethodName)
         hostClassNode.addMethod(org.mapleir.asm.MethodNode(invokerMethodNode, hostClassNode))
 
-//        event.context.jarContents.classContents.add(ClassHelper.create(BytecodeUtils.createClassNode(dynamicInvokerClassName).apply { methods.add(invokerMethodNode) }))
         dynamicInvokerHandle = Handle(Opcodes.H_INVOKESTATIC, dynamicInvokerClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
     }
 
@@ -44,14 +47,14 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
             return
         }
 
-        val methodNode = event.anytypeNode.node
         val classNode = event.anytypeNode.owner
-        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.isSpongeMixin() || classNode.name == dynamicInvokerClassName) {
+        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.name == dynamicInvokerClassName) {
             return
         }
 
-        methodNode.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->
-            if (instruction.owner.startsWith("[") || instruction.owner == "java/lang/invoke/MethodHandles") {
+        event.anytypeNode.node.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->
+            val shouldApplyBasedOnChance = Random.nextInt(100) < 80
+            if (instruction.owner.startsWith("[") || instruction.owner == "java/lang/invoke/MethodHandles" || !shouldApplyBasedOnChance) {
                 return@forEach
             }
 
@@ -79,7 +82,7 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
             val descriptionMapping = ObfuscatorServices.symbolRemapper.applyMappingsToText(instruction.desc)
 
             invokeDescriptor = Type.getMethodDescriptor(castedReturnType, *castedArgumentTypes)
-            methodNode.instructions.insertBefore(
+            event.anytypeNode.node.instructions.insertBefore(
                 instruction, InvokeDynamicInsnNode(
                     RandomStringUtils.randomAlphabetic(14), invokeDescriptor, dynamicInvokerHandle,
                     instruction.opcode, classNameMapping, methodNameMapping, descriptionMapping
@@ -89,16 +92,16 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
             if (invokeReturnType.sort == Type.OBJECT) {
                 val checkCastNode = TypeInsnNode(Opcodes.CHECKCAST, invokeReturnType.internalName)
                 if (!returnOpcodes.contains(instruction.next?.opcode) && checkCastNode.desc != Type.getInternalName(Any::class.java)) {
-                    methodNode.instructions.insertBefore(instruction, checkCastNode)
+                    event.anytypeNode.node.instructions.insertBefore(instruction, checkCastNode)
                 }
             }
 
-            methodNode.instructions.remove(instruction)
+            event.anytypeNode.node.instructions.remove(instruction)
         }
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOWER
+        return TransformerPriority.SIXTY_FIVE
     }
 
     private fun createInvokerMethodNode(className: String, methodName: String): MethodNode {

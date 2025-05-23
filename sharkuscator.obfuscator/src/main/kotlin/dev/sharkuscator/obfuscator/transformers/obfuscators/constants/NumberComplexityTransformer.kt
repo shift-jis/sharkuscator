@@ -25,6 +25,6 @@ class NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("N
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOW
+        return TransformerPriority.FIFTY
     }
 }

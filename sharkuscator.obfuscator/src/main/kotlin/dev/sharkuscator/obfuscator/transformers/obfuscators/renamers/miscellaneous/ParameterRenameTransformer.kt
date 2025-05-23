@@ -31,6 +31,6 @@ class ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("Paramet
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOW
+        return TransformerPriority.FIFTY
     }
 }

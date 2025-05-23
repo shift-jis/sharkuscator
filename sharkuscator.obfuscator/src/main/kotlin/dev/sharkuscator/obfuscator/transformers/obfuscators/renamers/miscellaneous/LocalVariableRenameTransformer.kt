@@ -33,6 +33,6 @@ class LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("Loc
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOW
+        return TransformerPriority.FIFTY
     }
 }

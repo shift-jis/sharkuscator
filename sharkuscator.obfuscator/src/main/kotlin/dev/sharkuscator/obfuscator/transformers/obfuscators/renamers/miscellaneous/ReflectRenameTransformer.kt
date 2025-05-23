@@ -46,7 +46,7 @@ class ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Refl
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.LOW
+        return TransformerPriority.FIFTY
     }
 
     private fun findNextInvokeVirtualInstruction(instruction: AbstractInsnNode): MethodInsnNode? {
