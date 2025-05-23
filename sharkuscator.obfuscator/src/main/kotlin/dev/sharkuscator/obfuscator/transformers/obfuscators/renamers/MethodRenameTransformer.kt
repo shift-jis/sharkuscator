@@ -8,7 +8,7 @@ import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.getQualifiedName
 import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
-import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
+import dev.sharkuscator.obfuscator.extensions.isMixinAccessor
 import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
@@ -32,7 +32,7 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
         }
 
         val classNode = event.anytypeNode.owner
-        if (event.context.isInputRecognizedAsMinecraftMod && (classNode.isSpongeMixin() || event.anytypeNode.name.startsWith("func_"))) {
+        if (event.context.isInputRecognizedAsMinecraftMod && (event.anytypeNode.isMixinAccessor() || event.anytypeNode.name.startsWith("func_"))) {
             return
         }
 
@@ -44,7 +44,7 @@ class MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRena
             return
         }
 
-        val methodMapping = "${configuration.prefix}${dictionary.generateNextName(event.anytypeNode.owner)}"
+        val methodMapping = "${configuration.namePrefix}${dictionary.generateNextName(event.anytypeNode.owner)}"
         ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.getQualifiedName(), methodMapping)
 
         val invocationResolver = event.context.analysisContext.invocationResolver

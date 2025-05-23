@@ -4,8 +4,11 @@ import com.google.gson.annotations.SerializedName
 
 class RenameConfiguration : TransformerConfiguration() {
     @field:SerializedName("dictionary")
-    val dictionary: String = "alphabet"
+    val dictionary: String = "alphabetical"
 
-    @field:SerializedName("prefix")
-    val prefix: String = ""
+    @field:SerializedName("name_prefix")
+    val namePrefix: String = ""
+
+    @field:SerializedName("prefix_repetitions")
+    val prefixRepetitions: Int = 1
 }

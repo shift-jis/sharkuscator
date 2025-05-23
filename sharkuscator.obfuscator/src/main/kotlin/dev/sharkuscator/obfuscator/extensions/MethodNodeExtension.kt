@@ -17,6 +17,8 @@ fun MethodNode.isDeclaredSynthetic(): Boolean = (node.access and Opcodes.ACC_SYN
 
 fun MethodNode.isDeclaredBridge(): Boolean = (node.access and Opcodes.ACC_BRIDGE) != 0
 
+fun MethodNode.isMixinAccessor(): Boolean = node.visibleAnnotations?.any { it.desc == "Lorg/spongepowered/asm/mixin/gen/Accessor;" } ?: false
+
 fun MethodNode.shouldSkipTransform(): Boolean {
     return isStaticInitializer() || isConstructor() || hasMainSignature()
 }

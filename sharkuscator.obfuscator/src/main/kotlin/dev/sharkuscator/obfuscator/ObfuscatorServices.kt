@@ -11,7 +11,7 @@ import org.mapleir.ir.cfg.builder.ControlFlowGraphBuilder
 
 object ObfuscatorServices {
     val sharkLogger: Logger = LogManager.getLogger("(Sharkuscator)")
-    val jsonProcessor: Gson = GsonBuilder().create()
+    val jsonProcessor: Gson = GsonBuilder().setPrettyPrinting().create()
 
     val controlFlowGraphCache = IRCache(ControlFlowGraphBuilder::build)
     val mainEventBus = EventBus()

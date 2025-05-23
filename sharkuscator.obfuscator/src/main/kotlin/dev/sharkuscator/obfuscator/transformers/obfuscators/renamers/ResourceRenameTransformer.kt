@@ -37,7 +37,7 @@ class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resource
         BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             if (event.context.jarContents.resourceContents.any { it.name == string }) {
                 if (!resourceNameMappings.containsKey(string)) {
-                    resourceNameMappings[string] = "${configuration.prefix}${dictionary.generateNextName(null)}"
+                    resourceNameMappings[string] = "${configuration.namePrefix}${dictionary.generateNextName(null)}"
                 }
 
                 val leadingSlashIfPresent = if (string.startsWith("/")) "/" else ""
