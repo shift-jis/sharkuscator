@@ -21,23 +21,23 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
     private val returnOpcodes = arrayOf(Opcodes.POP, Opcodes.POP2, Opcodes.RETURN, Opcodes.IFNONNULL, Opcodes.IFNULL, Opcodes.CHECKCAST)
     private val invokeOpcodes = arrayOf(Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL, Opcodes.INVOKEINTERFACE)
 
-    private lateinit var dynamicInvokerHandle: Handle
-    lateinit var dynamicInvokerClassName: String
-    lateinit var generatedInvokerMethodName: String
+    private lateinit var bootstrapMethodHandle: Handle
+    var generatedInvokerMethodName: String = ""
+    var invokerHostClassName: String = ""
 
     @EventHandler
     @Suppress("unused")
     private fun onInitialization(event: ObfuscatorEvents.InitializationEvent) {
         val hostClassNode = event.context.jarContents.classContents.filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
-        dynamicInvokerClassName = hostClassNode.name
+        invokerHostClassName = hostClassNode.name
 
         val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
         generatedInvokerMethodName = methodDictionary.generateNextName(null)
 
-        val invokerMethodNode = createInvokerMethodNode(dynamicInvokerClassName, generatedInvokerMethodName)
+        val invokerMethodNode = createInvokerMethodNode(invokerHostClassName, generatedInvokerMethodName)
         hostClassNode.addMethod(org.mapleir.asm.MethodNode(invokerMethodNode, hostClassNode))
 
-        dynamicInvokerHandle = Handle(Opcodes.H_INVOKESTATIC, dynamicInvokerClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
+        bootstrapMethodHandle = Handle(Opcodes.H_INVOKESTATIC, invokerHostClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
     }
 
     @EventHandler
@@ -48,12 +48,12 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
         }
 
         val classNode = event.anytypeNode.owner
-        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.name == dynamicInvokerClassName) {
+        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.name == invokerHostClassName) {
             return
         }
 
         event.anytypeNode.node.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->
-            val shouldApplyBasedOnChance = Random.nextInt(100) < 80
+            val shouldApplyBasedOnChance = Random.nextInt(0, 100) <= 80
             if (instruction.owner.startsWith("[") || instruction.owner == "java/lang/invoke/MethodHandles" || !shouldApplyBasedOnChance) {
                 return@forEach
             }
@@ -84,7 +84,7 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
             invokeDescriptor = Type.getMethodDescriptor(castedReturnType, *castedArgumentTypes)
             event.anytypeNode.node.instructions.insertBefore(
                 instruction, InvokeDynamicInsnNode(
-                    RandomStringUtils.randomAlphabetic(14), invokeDescriptor, dynamicInvokerHandle,
+                    RandomStringUtils.randomAlphabetic(14), invokeDescriptor, bootstrapMethodHandle,
                     instruction.opcode, classNameMapping, methodNameMapping, descriptionMapping
                 )
             )

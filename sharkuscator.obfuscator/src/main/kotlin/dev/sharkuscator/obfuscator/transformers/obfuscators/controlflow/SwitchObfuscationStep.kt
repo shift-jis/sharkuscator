@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class SwitchObfuscationStep(applicationChancePercentage: Int) : ControlFlowObfuscationStep(applicationChancePercentage) {
+class SwitchObfuscationStep : ControlFlowObfuscationStep {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is LookupSwitchInsnNode && targetInstruction !is TableSwitchInsnNode) {
             return
@@ -49,8 +49,8 @@ class SwitchObfuscationStep(applicationChancePercentage: Int) : ControlFlowObfus
         instructions.remove(targetInstruction)
     }
 
-    override fun isApplicableFor(instruction: AbstractInsnNode): Boolean {
-        val shouldApplyBasedOnChance = Random.nextInt(100) < applicationChancePercentage
+    override fun isApplicableFor(instruction: AbstractInsnNode, applicationChancePercentage: Int): Boolean {
+        val shouldApplyBasedOnChance = Random.nextInt(0, 100) <= applicationChancePercentage
         return (instruction is LookupSwitchInsnNode || instruction is TableSwitchInsnNode) && shouldApplyBasedOnChance
     }
 

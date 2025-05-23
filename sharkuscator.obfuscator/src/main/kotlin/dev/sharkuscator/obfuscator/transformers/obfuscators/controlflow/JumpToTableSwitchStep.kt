@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class JumpToTableSwitchStep(applicationChancePercentage: Int) : ControlFlowObfuscationStep(applicationChancePercentage) {
+class JumpToTableSwitchStep : ControlFlowObfuscationStep {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is JumpInsnNode) {
             ObfuscatorServices.sharkLogger.error("JumpToTableSwitchStep received an instruction it cannot process, despite canProcess being true.")
@@ -38,8 +38,8 @@ class JumpToTableSwitchStep(applicationChancePercentage: Int) : ControlFlowObfus
         instructions.remove(targetInstruction)
     }
 
-    override fun isApplicableFor(instruction: AbstractInsnNode): Boolean {
-        val shouldApplyBasedOnChance = Random.nextInt(100) < applicationChancePercentage
+    override fun isApplicableFor(instruction: AbstractInsnNode, applicationChancePercentage: Int): Boolean {
+        val shouldApplyBasedOnChance = Random.nextInt(0, 100) <= applicationChancePercentage
         return instruction is JumpInsnNode && instruction.opcode != Opcodes.GOTO && shouldApplyBasedOnChance
     }
 }
