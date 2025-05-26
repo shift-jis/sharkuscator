@@ -198,11 +198,11 @@ object BytecodeUtils {
     }
 
     fun findNonEmptyStrings(instructions: InsnList): List<Pair<LdcInsnNode, String>> {
-        return instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.map { Pair(it, it.cst as String) }
+        return instructions.filterIsInstance<LdcInsnNode>().filter { it.cst is String && (it.cst as String).isNotEmpty() }.map { it to it.cst as String }
     }
 
     fun findNumericConstants(instructions: InsnList): List<Pair<AbstractInsnNode, Number>> {
-        return instructions.filter { isNumericConstantInstruction(it) }.map { Pair(it, extractNumericValue(it)) }
+        return instructions.filter { isNumericConstantInstruction(it) }.map { it to extractNumericValue(it) }
     }
 
     fun buildInstructionList(vararg elements: Any): InsnList {

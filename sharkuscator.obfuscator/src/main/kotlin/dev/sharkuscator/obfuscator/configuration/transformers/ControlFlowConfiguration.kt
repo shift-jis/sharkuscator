@@ -1,4 +1,3 @@
 package dev.sharkuscator.obfuscator.configuration.transformers
 
-class ControlFlowConfiguration : TransformerConfiguration() {
-}
+class ControlFlowConfiguration : TransformerConfiguration()

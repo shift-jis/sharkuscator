@@ -4,14 +4,13 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.XorNumericObfuscationStrategy
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNumericConstants
 import meteordevelopment.orbit.EventHandler
-import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.BasicValue
-import org.objectweb.asm.tree.analysis.Frame
-import org.objectweb.asm.tree.analysis.SimpleVerifier
 
-// TODO
 class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfiguration>("LongConstantEncryption", TransformerConfiguration::class.java) {
+    private val obfuscationStrategy = XorNumericObfuscationStrategy()
+
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
@@ -20,8 +19,12 @@ class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfigurati
             return
         }
 
-//        BytecodeUtils.findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
-//            println(value)
-//        }
+        findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
+            obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, methodNode.instructions, instruction, value)
+        }
+    }
+
+    override fun getExecutionPriority(): Int {
+        return TransformerPriority.SIXTY_FIVE
     }
 }

@@ -5,7 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -17,7 +17,7 @@ class ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Refl
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        BytecodeUtils.findNonEmptyStrings(event.anytypeNode.node.instructions).forEach { (instruction, string) ->
+        findNonEmptyStrings(event.anytypeNode.node.instructions).forEach { (instruction, string) ->
             if (instruction.previous == null) {
                 return@forEach
             }

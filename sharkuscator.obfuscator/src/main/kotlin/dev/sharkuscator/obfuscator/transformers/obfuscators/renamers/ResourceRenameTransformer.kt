@@ -8,7 +8,7 @@ import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
 class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
@@ -34,7 +34,7 @@ class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resource
             return
         }
 
-        BytecodeUtils.findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
+        findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             if (event.context.jarContents.resourceContents.any { it.name == string }) {
                 if (!resourceNameMappings.containsKey(string)) {
                     resourceNameMappings[string] = "${configuration.namePrefix}${dictionary.generateNextName(null)}"

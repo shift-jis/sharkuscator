@@ -5,7 +5,7 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.FloatingPointFromBitsStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
 class NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("NumberComplexity", TransformerConfiguration::class.java) {
@@ -19,12 +19,12 @@ class NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("N
             return
         }
 
-        BytecodeUtils.findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
+        findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
             obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, methodNode.instructions, instruction, value)
         }
     }
 
     override fun getExecutionPriority(): Int {
-        return TransformerPriority.FIFTY
+        return TransformerPriority.SEVENTY_FIVE
     }
 }

@@ -1,6 +1,7 @@
 package dev.sharkuscator.obfuscator.extensions
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
 import org.mapleir.asm.MethodNode
@@ -50,8 +51,8 @@ fun ClassNode.getOrCreateStaticInitializer(): MethodNode {
 }
 
 fun ClassNode.addNewStaticInitializer(): MethodNode {
-    val staticInitializer = BytecodeUtils.createMethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V").apply {
-        instructions = BytecodeUtils.buildInstructionList(InsnNode(Opcodes.RETURN))
+    val staticInitializer = createMethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V").apply {
+        instructions = buildInstructionList(InsnNode(Opcodes.RETURN))
     }
     return MethodNode(staticInitializer, this).also {
         this.addMethod(it)

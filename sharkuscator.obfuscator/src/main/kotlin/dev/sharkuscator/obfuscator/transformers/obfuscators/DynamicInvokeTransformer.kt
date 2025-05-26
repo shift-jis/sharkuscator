@@ -7,7 +7,8 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
 import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
 import org.objectweb.asm.Handle
@@ -115,8 +116,8 @@ class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyna
         val labelReturnCallSite = LabelNode()
         val labelUnsupportedOpcode = LabelNode()
 
-        return BytecodeUtils.createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, methodName, invokerDescriptor).apply {
-            instructions = BytecodeUtils.buildInstructionList(
+        return createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, methodName, invokerDescriptor).apply {
+            instructions = buildInstructionList(
                 // Load and resolve method type
                 VarInsnNode(Opcodes.ALOAD, 6),
                 LdcInsnNode(Type.getObjectType(className)),

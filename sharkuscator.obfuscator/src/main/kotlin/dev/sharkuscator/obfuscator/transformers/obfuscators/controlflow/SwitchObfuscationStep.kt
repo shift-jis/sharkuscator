@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.complexIntegerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
@@ -37,7 +37,7 @@ class SwitchObfuscationStep : ControlFlowObfuscationStep {
         newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, originalDefaultTargetLabel))
 
         newInstructionSequence.add(obfuscatedSwitchEntryPoint)
-        newInstructionSequence.add(BytecodeUtils.complexIntegerPushInstruction(xorOperand))
+        newInstructionSequence.add(complexIntegerPushInstruction(xorOperand))
         newInstructionSequence.add(InsnNode(Opcodes.IXOR))
 
         obfuscatedCaseData.forEach { (_, intermediateLabel, originalCaseTargetLabel) ->

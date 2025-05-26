@@ -4,7 +4,8 @@ import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
 import dev.sharkuscator.obfuscator.extensions.xor
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
 import org.apache.commons.lang3.RandomStringUtils
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.MethodNode
@@ -24,11 +25,11 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
             return decodeMethodCache.getValue(targetClassNode)
         }
 
-        val builtMethodNode = BytecodeUtils.createMethodNode(DECODER_METHOD_ACCESS, decoderMethodName, DECODER_METHOD_DESCRIPTOR).apply {
+        val builtMethodNode = createMethodNode(DECODER_METHOD_ACCESS, decoderMethodName, DECODER_METHOD_DESCRIPTOR).apply {
             val forLoopBeginLabelNode = LabelNode()
             val forLoopEndLabelNode = LabelNode()
 
-            instructions = BytecodeUtils.buildInstructionList(
+            instructions = buildInstructionList(
                 // --- Initialization ---
                 VarInsnNode(Opcodes.ALOAD, 0),
                 MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I"),
@@ -100,7 +101,7 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
 
     override fun replaceInstructions(preparedDecoder: MethodNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String) {
         val obfuscatedString = obfuscateString(originalString, RandomStringUtils.randomAlphanumeric(originalString.length))
-        val replacementInstructions = BytecodeUtils.buildInstructionList(
+        val replacementInstructions = buildInstructionList(
             LdcInsnNode(obfuscatedString.first),
             LdcInsnNode(obfuscatedString.second.decodeToString()),
             preparedDecoder.invokeStatic()
@@ -115,6 +116,6 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
     }
 
     override fun obfuscateString(originalString: String, keyBytes: ByteArray): Pair<String, ByteArray> {
-        return Pair(originalString xor keyBytes.decodeToString(), keyBytes)
+        return originalString xor keyBytes.decodeToString() to keyBytes
     }
 }

@@ -1,7 +1,7 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.complexIntegerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
@@ -22,14 +22,14 @@ class JumpToTableSwitchStep : ControlFlowObfuscationStep {
         val newInstructionSequence = InsnList()
 
         newInstructionSequence.add(JumpInsnNode(targetInstruction.opcode, prepareTrueCaseForSwitchLabel))
-        newInstructionSequence.add(BytecodeUtils.complexIntegerPushInstruction(tableSwitchKey - 1))
+        newInstructionSequence.add(complexIntegerPushInstruction(tableSwitchKey - 1))
         newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, actualTableSwitchLabel))
         newInstructionSequence.add(prepareTrueCaseForSwitchLabel)
-        newInstructionSequence.add(BytecodeUtils.complexIntegerPushInstruction(tableSwitchKey))
+        newInstructionSequence.add(complexIntegerPushInstruction(tableSwitchKey))
         newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, actualTableSwitchLabel))
         newInstructionSequence.add(trueCaseToSwitchDefaultLabel)
         newInstructionSequence.add(InsnNode(Opcodes.NOP))
-        newInstructionSequence.add(BytecodeUtils.complexIntegerPushInstruction(tableSwitchKey - 2))
+        newInstructionSequence.add(complexIntegerPushInstruction(tableSwitchKey - 2))
         newInstructionSequence.add(actualTableSwitchLabel)
         newInstructionSequence.add(TableSwitchInsnNode(tableSwitchKey - 1, tableSwitchKey, targetInstruction.label, falseCaseFinalTargetLabel, trueCaseToSwitchDefaultLabel))
         newInstructionSequence.add(falseCaseFinalTargetLabel)

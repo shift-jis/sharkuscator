@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.extensions
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createInvokeStatic
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodInsnNode
@@ -40,5 +40,5 @@ fun MethodNode.shouldSkipTransform(): Boolean {
 }
 
 fun MethodNode.invokeStatic(): MethodInsnNode {
-    return BytecodeUtils.createInvokeStatic(owner.name, name, desc)
+    return createInvokeStatic(owner.name, name, desc)
 }
