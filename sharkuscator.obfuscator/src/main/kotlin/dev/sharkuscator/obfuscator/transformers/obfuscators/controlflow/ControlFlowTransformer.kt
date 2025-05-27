@@ -11,7 +11,8 @@ import meteordevelopment.orbit.EventHandler
 class ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("ControlFlow", ControlFlowConfiguration::class.java) {
     private val controlFlowSteps = mutableListOf(
         SwitchObfuscationStep(),
-        JumpToTableSwitchStep()
+        JumpToTableSwitchStep(),
+        UnconditionalJumpStep()
     )
 
     @EventHandler

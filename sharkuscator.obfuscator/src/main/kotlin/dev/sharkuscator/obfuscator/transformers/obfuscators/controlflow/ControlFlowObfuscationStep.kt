@@ -7,4 +7,6 @@ interface ControlFlowObfuscationStep {
     fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode)
 
     fun isApplicableFor(instruction: AbstractInsnNode, applicationChancePercentage: Int): Boolean
+
+    fun getObfuscationStrength(): ObfuscationStrength
 }

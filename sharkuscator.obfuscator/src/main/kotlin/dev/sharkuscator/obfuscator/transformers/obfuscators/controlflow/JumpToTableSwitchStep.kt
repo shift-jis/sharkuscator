@@ -42,4 +42,8 @@ class JumpToTableSwitchStep : ControlFlowObfuscationStep {
         val shouldApplyBasedOnChance = Random.nextInt(0, 100) <= applicationChancePercentage
         return instruction is JumpInsnNode && instruction.opcode != Opcodes.GOTO && shouldApplyBasedOnChance
     }
+
+    override fun getObfuscationStrength(): ObfuscationStrength {
+        return ObfuscationStrength.MODERATE
+    }
 }

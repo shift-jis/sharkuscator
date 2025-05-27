@@ -71,4 +71,8 @@ class SwitchObfuscationStep : ControlFlowObfuscationStep {
             else -> throw IllegalStateException("Invalid instruction type passed to extractSwitchCases. Expected LookupSwitchInsnNode or TableSwitchInsnNode, got ${switchNode::class.simpleName}")
         }
     }
+
+    override fun getObfuscationStrength(): ObfuscationStrength {
+        return ObfuscationStrength.MODERATE
+    }
 }
