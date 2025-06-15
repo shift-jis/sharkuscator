@@ -2,7 +2,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
-import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
+import dev.sharkuscator.obfuscator.configuration.transformers.FieldRenameConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
@@ -12,13 +12,16 @@ import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.ClassNode
+import org.objectweb.asm.Type
 
-object FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRename", RenameConfiguration::class.java) {
+object FieldRenameTransformer : BaseTransformer<FieldRenameConfiguration>("FieldRename", FieldRenameConfiguration::class.java) {
     private val badInterfaces = listOf("com.sun.jna.*".toRegex())
     lateinit var dictionary: MappingDictionary<ClassNode>
+    lateinit var excludeAnnotations: List<Regex>
 
-    override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
+    override fun initialization(configuration: GsonConfiguration): FieldRenameConfiguration {
         dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
+        excludeAnnotations = this.configuration.excludeAnnotations.map { Regex(it) }
         return this.configuration
     }
 
@@ -34,7 +37,7 @@ object FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRenam
             return
         }
 
-        if (event.anytypeNode.node.visibleAnnotations?.any { it.desc.contains("config") } ?: false) {
+        if (event.anytypeNode.node.visibleAnnotations?.any { annot -> excludeAnnotations.any { it.matches(Type.getType(annot.desc).internalName) } } ?: false) {
             return
         }
 
