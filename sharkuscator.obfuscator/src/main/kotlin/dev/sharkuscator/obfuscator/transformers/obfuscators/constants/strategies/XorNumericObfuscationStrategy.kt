@@ -61,7 +61,7 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
     }
 
     private fun createAndInitializeKeyField(classNode: ClassNode, obfuscationKeyData: ObfuscationKeyData, keyNumber: Number) {
-        classNode.addField(createFieldNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, obfuscationKeyData.fieldName, "I"))
+        classNode.addField(createFieldNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_TRANSIENT, obfuscationKeyData.fieldName, "I"))
 
         val staticInitializer = classNode.getOrCreateStaticInitializer()
         staticInitializer.node.instructions.insert(

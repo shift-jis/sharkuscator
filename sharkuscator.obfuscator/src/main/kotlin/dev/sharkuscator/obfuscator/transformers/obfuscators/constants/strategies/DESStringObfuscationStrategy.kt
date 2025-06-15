@@ -28,10 +28,10 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     private class EncryptionKeyChunk(val classNode: ClassNode, val fieldName: String, val chunkOfIndices: List<Int>)
 
     private val KEY_BYTES_FIELD_DESCRIPTOR = "[B"
-    private val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
+    private val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
 
     private val DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR = "[Ljava/lang/String;"
-    private val DEOBFUSCATED_STRINGS_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
+    private val DEOBFUSCATED_STRINGS_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
 
     private val DECODER_METHOD_DESCRIPTOR = "(I)Ljava/lang/String;"
     private val DECODER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
