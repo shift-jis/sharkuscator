@@ -3,11 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
 class UnconditionalJumpStep : ControlFlowObfuscationStep {

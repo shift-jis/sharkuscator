@@ -8,7 +8,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
-class LongConstantEncryptionTransformer : BaseTransformer<TransformerConfiguration>("LongConstantEncryption", TransformerConfiguration::class.java) {
+object LongConstantEncryptionTransformer : BaseTransformer<TransformerConfiguration>("LongConstantEncryption", TransformerConfiguration::class.java) {
     private val obfuscationStrategy = XorNumericObfuscationStrategy()
 
     @EventHandler

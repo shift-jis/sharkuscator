@@ -17,7 +17,7 @@ import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 
-class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
+object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
     lateinit var dictionary: MappingDictionary<String>
     lateinit var generatedMixinPackageSegment: String
     lateinit var effectiveClassPrefix: String
@@ -72,7 +72,7 @@ class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename
     }
 
     private fun updateClassNamesInMixinConfiguration(event: AssemblerEvents.ResourceWriteEvent, resourceContentString: String) {
-        val mixinConfigJson = ObfuscatorServices.jsonProcessor.fromJson(resourceContentString, JsonObject::class.java)
+        val mixinConfigJson = ObfuscatorServices.prettyGson.fromJson(resourceContentString, JsonObject::class.java)
 
         if (mixinConfigJson.has("package") && mixinConfigJson.get("package").isJsonPrimitive) {
             if (mixinConfigJson.has("client")) {
@@ -124,7 +124,7 @@ class ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename
             }
         }
 
-        event.resourceData = ObfuscatorServices.jsonProcessor.toJson(mixinConfigJson).toByteArray()
+        event.resourceData = ObfuscatorServices.prettyGson.toJson(mixinConfigJson).toByteArray()
     }
 
     private fun updateClassNamesInMixinArray(mixinPackageName: String, mixinClassEntriesArray: JsonArray) {

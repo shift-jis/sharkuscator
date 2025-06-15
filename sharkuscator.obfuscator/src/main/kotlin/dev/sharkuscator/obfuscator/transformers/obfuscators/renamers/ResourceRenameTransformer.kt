@@ -11,7 +11,7 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
-class ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
+object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
     private val resourceNameMappings = mutableMapOf<String, String>()
     private lateinit var dictionary: MappingDictionary<String>
 

@@ -7,7 +7,7 @@ import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
 
-class SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("SyntheticAccess", TransformerConfiguration::class.java) {
+object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("SyntheticAccess", TransformerConfiguration::class.java) {
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {

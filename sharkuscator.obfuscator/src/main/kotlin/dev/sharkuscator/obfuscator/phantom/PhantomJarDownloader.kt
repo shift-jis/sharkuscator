@@ -14,6 +14,8 @@ import org.mapleir.asm.ClassHelper
 import org.mapleir.asm.ClassNode
 import org.objectweb.asm.*
 import org.topdank.byteengineer.commons.asm.ASMFactory
+import org.topdank.byteengineer.commons.data.DataContainer
+import org.topdank.byteengineer.commons.data.JarContents
 import org.topdank.byteengineer.commons.data.JarInfo
 import org.topdank.byteengineer.commons.data.JarResource
 import org.topdank.byteengineer.commons.data.LocateableJarContents
@@ -23,6 +25,7 @@ import java.net.URL
 
 
 class PhantomJarDownloader(private val asmFactory: ASMFactory<ClassNode>, private val jarInfo: JarInfo) : AbstractJarDownloader<ClassNode>(asmFactory) {
+    val generatedClassContent: DataContainer<ClassNode> = JarContents.ClassNodeContainer()
     private val isUsingPhantomFactory: Boolean
         get() = asmFactory is PhantomASMFactory
 
@@ -45,7 +48,7 @@ class PhantomJarDownloader(private val asmFactory: ASMFactory<ClassNode>, privat
                 optionsLoggerField.setAccessible(true)
 
                 val jphantomLogger = optionsLoggerField.get(null) as Logger
-                jphantomLogger.setLevel(Level.OFF)
+                jphantomLogger.level = Level.OFF
             } catch (exception: Exception) {
                 exception.printStackTrace()
             }
@@ -74,7 +77,7 @@ class PhantomJarDownloader(private val asmFactory: ASMFactory<ClassNode>, privat
                 val classNode = org.objectweb.asm.tree.ClassNode()
                 classReader.accept(classNode, ClassReader.SKIP_DEBUG or ClassReader.SKIP_FRAMES)
 
-                contents.classContents.add(ClassHelper.create(classNode))
+                generatedClassContent.add(ClassHelper.create(classNode))
             }
 
             MethodAccessStateMachine.refresh()

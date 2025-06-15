@@ -18,7 +18,7 @@ import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
 
-class DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("DynamicInvoke", TransformerConfiguration::class.java) {
+object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("DynamicInvoke", TransformerConfiguration::class.java) {
     private val returnOpcodes = arrayOf(Opcodes.POP, Opcodes.POP2, Opcodes.RETURN, Opcodes.IFNONNULL, Opcodes.IFNULL, Opcodes.CHECKCAST)
     private val invokeOpcodes = arrayOf(Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL, Opcodes.INVOKEINTERFACE)
 

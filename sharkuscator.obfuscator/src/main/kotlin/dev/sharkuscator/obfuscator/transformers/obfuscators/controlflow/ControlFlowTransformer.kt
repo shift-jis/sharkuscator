@@ -8,7 +8,7 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import meteordevelopment.orbit.EventHandler
 
-class ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("ControlFlow", ControlFlowConfiguration::class.java) {
+object ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("ControlFlow", ControlFlowConfiguration::class.java) {
     private val controlFlowSteps = mutableListOf(
         SwitchObfuscationStep(),
         JumpToTableSwitchStep(),
@@ -22,8 +22,7 @@ class ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("Contro
             return
         }
 
-        val dynamicInvokeTransformer = event.context.findTransformer(DynamicInvokeTransformer::class.java) ?: return
-        val isGeneratedDynamicInvokerMethod = event.anytypeNode.owner.name == dynamicInvokeTransformer.invokerHostClassName && event.anytypeNode.name == dynamicInvokeTransformer.generatedInvokerMethodName
+        val isGeneratedDynamicInvokerMethod = event.anytypeNode.owner.name == DynamicInvokeTransformer.invokerHostClassName && event.anytypeNode.name == DynamicInvokeTransformer.generatedInvokerMethodName
         val applicationChancePercentage = if (event.anytypeNode.isStaticInitializer() || isGeneratedDynamicInvokerMethod) 100 else 80
 
         for (transformationStep in controlFlowSteps) {

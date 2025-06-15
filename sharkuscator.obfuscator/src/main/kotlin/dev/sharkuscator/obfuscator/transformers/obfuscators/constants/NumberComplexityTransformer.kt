@@ -8,7 +8,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
-class NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("NumberComplexity", TransformerConfiguration::class.java) {
+object NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("NumberComplexity", TransformerConfiguration::class.java) {
     private val obfuscationStrategy = FloatingPointFromBitsStrategy()
 
     @EventHandler

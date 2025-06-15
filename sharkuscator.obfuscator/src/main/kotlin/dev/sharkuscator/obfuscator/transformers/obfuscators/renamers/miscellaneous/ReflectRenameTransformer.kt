@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
-class ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("ReflectRename", TransformerConfiguration::class.java) {
+object ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("ReflectRename", TransformerConfiguration::class.java) {
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {

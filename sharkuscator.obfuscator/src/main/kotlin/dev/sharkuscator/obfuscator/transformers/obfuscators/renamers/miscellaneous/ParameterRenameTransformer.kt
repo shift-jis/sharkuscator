@@ -10,7 +10,7 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
-class ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("ParameterRename", RenameConfiguration::class.java) {
+object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("ParameterRename", RenameConfiguration::class.java) {
     lateinit var dictionary: MappingDictionary<MethodNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {

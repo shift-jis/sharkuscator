@@ -12,7 +12,7 @@ import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
-class StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
+object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
     val obfuscationStrategy = DESStringObfuscationStrategy()
 
     @EventHandler

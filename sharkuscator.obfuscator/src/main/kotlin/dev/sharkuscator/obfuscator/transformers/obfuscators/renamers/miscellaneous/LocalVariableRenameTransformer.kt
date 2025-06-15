@@ -11,7 +11,7 @@ import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTra
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
-class LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("LocalVariableRename", RenameConfiguration::class.java) {
+object LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("LocalVariableRename", RenameConfiguration::class.java) {
     lateinit var dictionary: MappingDictionary<MethodNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
@@ -22,8 +22,7 @@ class LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("Loc
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        val removeTransformer = event.context.findTransformer(LocalVariableRemoveTransformer::class.java)
-        if (transformed || event.anytypeNode.node.localVariables == null || (removeTransformer != null && removeTransformer.canTransform())) {
+        if (transformed || event.anytypeNode.node.localVariables == null || LocalVariableRemoveTransformer.canTransform()) {
             return
         }
 

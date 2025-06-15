@@ -6,8 +6,8 @@ import dev.sharkuscator.obfuscator.extensions.isDeclaredVolatile
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import meteordevelopment.orbit.EventHandler
 
-class SignatureInflationTransformer : BaseTransformer<TransformerConfiguration>("SignatureInflation", TransformerConfiguration::class.java) {
-    private val inflationUnitString = "What are you looking at?\n"
+object SignatureInflationTransformer : BaseTransformer<TransformerConfiguration>("SignatureInflation", TransformerConfiguration::class.java) {
+    private val inflationUnitString = "¯\\_(ツ)_/¯\n"
 
     @EventHandler
     @Suppress("unused")
