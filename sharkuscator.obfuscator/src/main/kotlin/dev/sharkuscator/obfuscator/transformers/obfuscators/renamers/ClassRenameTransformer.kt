@@ -33,7 +33,7 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (transformed || event.context.classSource.isLibraryClass(event.anytypeNode.name)) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.context.classSource.isLibraryClass(event.anytypeNode.name)) {
             return
         }
 

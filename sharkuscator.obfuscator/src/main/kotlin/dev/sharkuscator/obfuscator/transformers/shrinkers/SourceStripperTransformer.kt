@@ -9,6 +9,10 @@ object SourceStripperTransformer : BaseTransformer<TransformerConfiguration>("So
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
+        if (exclusions.excluded(event.anytypeNode)) {
+            return
+        }
+
         event.anytypeNode.node.sourceDebug = null
         event.anytypeNode.node.sourceFile = "¯\\_(ツ)_/¯"
     }

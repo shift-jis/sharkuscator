@@ -19,7 +19,7 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (transformed || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isEnum || methodNode.instructions == null || !containsNonEmptyStrings(methodNode.instructions)) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isEnum || methodNode.instructions == null || !containsNonEmptyStrings(methodNode.instructions)) {
             return
         }
 

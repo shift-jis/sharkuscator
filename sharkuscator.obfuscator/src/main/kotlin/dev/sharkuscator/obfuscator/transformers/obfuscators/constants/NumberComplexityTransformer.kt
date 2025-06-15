@@ -15,7 +15,7 @@ object NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (transformed || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
             return
         }
 

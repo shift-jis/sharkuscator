@@ -9,6 +9,10 @@ object LocalVariableRemoveTransformer : BaseTransformer<TransformerConfiguration
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
+        if (exclusions.excluded(event.anytypeNode)) {
+            return
+        }
+
         event.anytypeNode.node.localVariables = null
     }
 }

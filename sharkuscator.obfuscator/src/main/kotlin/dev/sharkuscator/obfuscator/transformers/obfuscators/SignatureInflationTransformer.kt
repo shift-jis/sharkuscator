@@ -12,7 +12,7 @@ object SignatureInflationTransformer : BaseTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.anytypeNode.isNative) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative) {
             return
         }
         event.anytypeNode.node.signature = "L${buildString { repeat(Short.MAX_VALUE / inflationUnitString.length) { append(inflationUnitString) } }};"
@@ -21,7 +21,7 @@ object SignatureInflationTransformer : BaseTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (transformed || event.anytypeNode.isDeclaredVolatile()) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isDeclaredVolatile()) {
             return
         }
         event.anytypeNode.node.signature = "L${buildString { repeat(Short.MAX_VALUE / inflationUnitString.length) { append(inflationUnitString) } }};"

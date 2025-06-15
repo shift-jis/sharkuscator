@@ -17,9 +17,10 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isDeclaredAsInterface()) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isDeclaredAsInterface()) {
             return
         }
+
         event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
         event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_BRIDGE
     }
@@ -27,9 +28,10 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (event.anytypeNode.isDeclaredVolatile() || event.anytypeNode.isDeclaredSynthetic() || event.anytypeNode.isDeclaredBridge()) {
+        if (exclusions.excluded(event.anytypeNode) || event.anytypeNode.isDeclaredVolatile() || event.anytypeNode.isDeclaredSynthetic() || event.anytypeNode.isDeclaredBridge()) {
             return
         }
+
         event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
     }
 }

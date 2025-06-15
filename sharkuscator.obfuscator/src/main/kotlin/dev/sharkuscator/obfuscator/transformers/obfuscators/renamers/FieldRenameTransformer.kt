@@ -25,7 +25,7 @@ object FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRenam
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (transformed || badInterfaces.any { it.matches(event.anytypeNode.owner.node.superName) }) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || badInterfaces.any { it.matches(event.anytypeNode.owner.node.superName) }) {
             return
         }
 

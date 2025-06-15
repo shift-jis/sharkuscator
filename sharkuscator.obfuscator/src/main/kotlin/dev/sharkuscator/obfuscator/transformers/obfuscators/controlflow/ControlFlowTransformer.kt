@@ -18,7 +18,7 @@ object ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("Contr
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.anytypeNode.isNative/* || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()*/) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative/* || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()*/) {
             return
         }
 

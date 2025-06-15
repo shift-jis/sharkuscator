@@ -17,6 +17,10 @@ object ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Ref
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
+        if (transformed || exclusions.excluded(event.anytypeNode)) {
+            return
+        }
+
         findNonEmptyStrings(event.anytypeNode.node.instructions).forEach { (instruction, string) ->
             if (instruction.previous == null) {
                 return@forEach

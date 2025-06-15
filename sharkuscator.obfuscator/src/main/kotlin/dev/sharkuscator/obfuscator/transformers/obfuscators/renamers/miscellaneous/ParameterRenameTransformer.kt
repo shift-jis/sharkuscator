@@ -21,7 +21,7 @@ object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("Parame
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || event.anytypeNode.node.parameters == null) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.parameters == null) {
             return
         }
 
