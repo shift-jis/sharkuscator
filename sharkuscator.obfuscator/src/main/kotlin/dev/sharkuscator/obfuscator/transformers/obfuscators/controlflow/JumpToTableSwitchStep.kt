@@ -1,12 +1,12 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.complexIntegerPushInstruction
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.complexIntegerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class JumpToTableSwitchStep : ControlFlowObfuscationStep {
+object JumpToTableSwitchStep : ControlFlowObfuscationStep {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is JumpInsnNode) {
             ObfuscatorServices.sharkLogger.error("JumpToTableSwitchStep received an instruction it cannot process, despite canProcess being true.")

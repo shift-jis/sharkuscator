@@ -2,7 +2,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
-import dev.sharkuscator.obfuscator.configuration.transformers.FieldRenameConfiguration
+import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
@@ -14,21 +14,19 @@ import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.ClassNode
 import org.objectweb.asm.Type
 
-object FieldRenameTransformer : BaseTransformer<FieldRenameConfiguration>("FieldRename", FieldRenameConfiguration::class.java) {
+object FieldRenameTransformer : BaseTransformer<RenameConfiguration>("FieldRename", RenameConfiguration::class.java) {
     private val disallowedInterfacePatterns = listOf("com.sun.jna.*".toRegex())
     lateinit var fieldMappingDictionary: MappingDictionary<ClassNode>
-    lateinit var excludeAnnotations: List<Regex>
 
-    override fun initialization(configuration: GsonConfiguration): FieldRenameConfiguration {
+    override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
         fieldMappingDictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
-        excludeAnnotations = this.configuration.excludeAnnotations.map { Regex(it) }
         return this.configuration
     }
 
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (transformed || exclusions.excluded(event.anytypeNode) || disallowedInterfacePatterns.any { it.matches(event.anytypeNode.owner.node.superName) }) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || disallowedInterfacePatterns.any { it.matches(event.anytypeNode.owner.node.superName) }) {
             return
         }
 

@@ -12,7 +12,7 @@ private enum class IntegerObfuscationOpType {
     SUB,
 }
 
-object BytecodeUtils {
+object AssemblyHelper {
     private val constNumberOpcodesMap = mapOf<Int, Number>(
         Opcodes.ICONST_M1 to -1,
         Opcodes.ICONST_0 to 0,
@@ -91,58 +91,6 @@ object BytecodeUtils {
             )
 
             else -> buildInstructionList(integerPushInstruction(value))
-        }
-    }
-
-    fun shiftLeftPushInstruction(value: Number, shiftAmount: Long = Random.nextLong()): InsnList {
-        return when (value) {
-            is Int -> {
-                val actualShiftAmount = shiftAmount % 32
-                val transformedValue = value ushr actualShiftAmount.toInt()
-                buildInstructionList(
-                    integerPushInstruction(transformedValue),
-                    integerPushInstruction(actualShiftAmount),
-                    InsnNode(Opcodes.ISHL)
-                )
-            }
-
-            is Long -> {
-                val actualShiftAmount = shiftAmount % 64
-                val transformedValue = value ushr actualShiftAmount.toInt()
-                buildInstructionList(
-                    longPushInstruction(transformedValue),
-                    integerPushInstruction(actualShiftAmount),
-                    InsnNode(Opcodes.LSHL)
-                )
-            }
-
-            else -> throw IllegalArgumentException("Unsupported type for shift left operation: ${value::class.java.name}. Expected Int or Long.")
-        }
-    }
-
-    fun shiftRightPushInstruction(value: Number, shiftAmount: Long = Random.nextLong()): InsnList {
-        return when (value) {
-            is Int -> {
-                val actualShiftAmount = shiftAmount % 32
-                val transformedValue = value shl actualShiftAmount.toInt()
-                buildInstructionList(
-                    integerPushInstruction(transformedValue),
-                    integerPushInstruction(actualShiftAmount),
-                    InsnNode(Opcodes.ISHR)
-                )
-            }
-
-            is Long -> {
-                val actualShiftAmount = shiftAmount % 64
-                val transformedValue = value shl actualShiftAmount.toInt()
-                buildInstructionList(
-                    longPushInstruction(transformedValue),
-                    integerPushInstruction(actualShiftAmount),
-                    InsnNode(Opcodes.LSHR)
-                )
-            }
-
-            else -> throw IllegalArgumentException("Unsupported type for shift right (restore) operation: ${value::class.java.name}. Expected Int or Long.")
         }
     }
 

@@ -7,12 +7,12 @@ import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
 import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.complexIntegerPushInstruction
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createFieldNode
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.integerPushInstruction
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.longPushInstruction
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.complexIntegerPushInstruction
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createFieldNode
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.longPushInstruction
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
 import org.mapleir.asm.MethodNode
@@ -26,16 +26,18 @@ import javax.crypto.spec.IvParameterSpec
 import kotlin.random.Random
 
 class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
+    companion object {
+        private const val KEY_BYTES_FIELD_DESCRIPTOR = "[B"
+        private const val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
+
+        private const val DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR = "[Ljava/lang/String;"
+        private const val DEOBFUSCATED_STRINGS_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
+
+        private const val DECODER_METHOD_DESCRIPTOR = "(I)Ljava/lang/String;"
+        private const val DECODER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+    }
+
     private class EncryptionKeyChunk(val classNode: ClassNode, val fieldName: String, val chunkOfIndices: List<Int>)
-
-    private val KEY_BYTES_FIELD_DESCRIPTOR = "[B"
-    private val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
-
-    private val DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR = "[Ljava/lang/String;"
-    private val DEOBFUSCATED_STRINGS_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
-
-    private val DECODER_METHOD_DESCRIPTOR = "(I)Ljava/lang/String;"
-    private val DECODER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
 
     private val classToKeyChunkList = mutableListOf<Pair<ClassNode, EncryptionKeyChunk>>()
     private val classToEncryptedStrings = mutableMapOf<ClassNode, MutableList<String>>()
@@ -54,7 +56,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         }
 
         val fieldNameGenerator = context.resolveDictionary(FieldNode::class.java)
-        classToStringsFieldName[targetClassNode] = "${stringArrayFieldNameGenerator.generateNextName(targetClassNode)}${fieldNameGenerator.generateNextName(targetClassNode)}"
+        classToStringsFieldName[targetClassNode] = "${stringArrayFieldNameGenerator.generateNextName(targetClassNode)} ${fieldNameGenerator.generateNextName(targetClassNode)}"
         classToEncryptedStrings[targetClassNode] = mutableListOf()
         classToKeyDerivationSeed[targetClassNode] = Random.nextLong()
 

@@ -6,17 +6,17 @@ import dev.sharkuscator.obfuscator.configuration.transformers.ClassEncryptionCon
 import dev.sharkuscator.obfuscator.encryption.ClassEncryptor
 import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
-import dev.sharkuscator.obfuscator.utilities.ResourceUtils
+import dev.sharkuscator.obfuscator.utilities.ResourceLoader
 import meteordevelopment.orbit.EventHandler
 import java.nio.file.Paths
 
 @Deprecated("Deprecated due to inconsistent behavior across different environments")
-class ClassEncryptionTransformer : BaseTransformer<ClassEncryptionConfiguration>("ClassEncryption", ClassEncryptionConfiguration::class.java) {
+object ClassEncryptionTransformer : BaseTransformer<ClassEncryptionConfiguration>("ClassEncryption", ClassEncryptionConfiguration::class.java) {
     override fun initialization(configuration: GsonConfiguration): ClassEncryptionConfiguration {
-        if (!ResourceUtils.loadNativeLibraryFromResources("/class_encryptor.dll")) {
+        if (!ResourceLoader.loadNativeLibraryFromResources("/class_encryptor.dll")) {
             ObfuscatorServices.sharkLogger.error("Failed to load class_encryptor.dll")
         }
-        ResourceUtils.extractResource("/class_decryptor.dll", Paths.get("./class_decryptor.dll"), false)
+        ResourceLoader.extractResource("/class_decryptor.dll", Paths.get("./class_decryptor.dll"), false)
         return super.initialization(configuration)
     }
 

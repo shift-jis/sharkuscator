@@ -14,11 +14,7 @@ import org.mapleir.asm.ClassHelper
 import org.mapleir.asm.ClassNode
 import org.objectweb.asm.*
 import org.topdank.byteengineer.commons.asm.ASMFactory
-import org.topdank.byteengineer.commons.data.DataContainer
-import org.topdank.byteengineer.commons.data.JarContents
-import org.topdank.byteengineer.commons.data.JarInfo
-import org.topdank.byteengineer.commons.data.JarResource
-import org.topdank.byteengineer.commons.data.LocateableJarContents
+import org.topdank.byteengineer.commons.data.*
 import org.topdank.byteio.`in`.AbstractJarDownloader
 import java.net.JarURLConnection
 import java.net.URL

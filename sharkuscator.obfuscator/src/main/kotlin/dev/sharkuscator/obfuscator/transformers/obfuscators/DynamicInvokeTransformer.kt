@@ -7,8 +7,8 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
 import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
 import org.objectweb.asm.Handle
@@ -29,6 +29,10 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
     @EventHandler
     @Suppress("unused")
     private fun onInitialization(event: ObfuscatorEvents.InitializationEvent) {
+        if (!isEligibleForExecution()) {
+            return
+        }
+
         val selectedHostClassNode = event.context.jarContents.classContents.filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
         invokerHostClassName = selectedHostClassNode.name
 
@@ -44,18 +48,19 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
             return
         }
 
-        val classNode = event.anytypeNode.owner
-        if (classNode.isDeclaredAsAnnotation() || classNode.isDeclaredAsInterface() || classNode.name == invokerHostClassName) {
+        val targetClassNode = event.anytypeNode.owner
+        if (targetClassNode.isDeclaredAsAnnotation() || targetClassNode.isDeclaredAsInterface() || targetClassNode.name == invokerHostClassName) {
             return
         }
 
         event.anytypeNode.node.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->
             val shouldApplyBasedOnChance = Random.nextInt(0, 100) <= 80
-            if (instruction.owner.startsWith("[") || instruction.owner == "java/lang/invoke/MethodHandles" || !shouldApplyBasedOnChance) {
+            val isArrayOrInnerOrJavaPackage = instruction.owner.startsWith("[") || instruction.owner.contains("$") || instruction.owner.startsWith("java/")
+            if (event.context.classSource.findClassNode(instruction.owner)?.isSpongeMixin() ?: false || exclusions.excluded(instruction.owner) || isArrayOrInnerOrJavaPackage || !shouldApplyBasedOnChance) {
                 return@forEach
             }
 
@@ -70,6 +75,7 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
 
             val invokeReturnType = Type.getReturnType(invokeDescriptor)
             val castedReturnType = generalizeObjectType(invokeReturnType)
+
             val castedArgumentTypes = Type.getArgumentTypes(invokeDescriptor)
             for (index in castedArgumentTypes.indices) {
                 if (instruction.opcode != Opcodes.INVOKESTATIC && index == 0) {
@@ -78,14 +84,14 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
                 castedArgumentTypes[index] = generalizeObjectType(castedArgumentTypes[index])
             }
 
-            val classNameMapping = ObfuscatorServices.symbolRemapper.symbolMappings[instruction.owner] ?: instruction.owner.replace('/', '.')
+            val classNameMapping = ObfuscatorServices.symbolRemapper.symbolMappings[instruction.owner]?.replace('/', '.') ?: instruction.owner.replace('/', '.')
             val methodNameMapping = ObfuscatorServices.symbolRemapper.mapMethodName(instruction.owner, instruction.name, instruction.desc)
             val descriptionMapping = ObfuscatorServices.symbolRemapper.applyMappingsToText(instruction.desc)
 
             invokeDescriptor = Type.getMethodDescriptor(castedReturnType, *castedArgumentTypes)
             event.anytypeNode.node.instructions.insertBefore(
                 instruction, InvokeDynamicInsnNode(
-                    RandomStringUtils.randomAlphabetic(14), invokeDescriptor, bootstrapMethodHandle,
+                    RandomStringUtils.randomAlphabetic(4), invokeDescriptor, bootstrapMethodHandle,
                     instruction.opcode, classNameMapping, methodNameMapping, descriptionMapping
                 )
             )

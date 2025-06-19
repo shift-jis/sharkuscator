@@ -7,8 +7,8 @@ import dev.sharkuscator.obfuscator.extensions.isConstructor
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.DESStringObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.containsNonEmptyStrings
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNonEmptyStrings
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.containsNonEmptyStrings
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
@@ -19,7 +19,7 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isConstructor() || methodNode.instructions == null || !containsNonEmptyStrings(methodNode.instructions)) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isConstructor() || methodNode.instructions == null || !containsNonEmptyStrings(methodNode.instructions)) {
             return
         }
 
@@ -34,6 +34,10 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
     @EventHandler
     @Suppress("unused")
     private fun onPostTransform(event: ObfuscatorEvents.PostTransformEvent) {
+        if (!isEligibleForExecution()) {
+            return
+        }
+
         event.context.jarContents.classContents.forEach { obfuscationStrategy.finalizeClass(event.context, it) }
         event.context.jarContents.classContents.forEach { obfuscationStrategy.initializeKeyChunkFields(it) }
     }

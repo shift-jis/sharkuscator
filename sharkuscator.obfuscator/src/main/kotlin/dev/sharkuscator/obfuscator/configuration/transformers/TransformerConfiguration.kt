@@ -8,4 +8,7 @@ open class TransformerConfiguration {
 
     @field:SerializedName("exclusions")
     val exclusions: Array<String> = emptyArray()
+
+    @field:SerializedName("exclude_annotations")
+    val excludeAnnotations: Array<String> = emptyArray()
 }

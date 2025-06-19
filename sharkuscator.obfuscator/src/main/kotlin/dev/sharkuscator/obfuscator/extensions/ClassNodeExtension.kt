@@ -1,7 +1,7 @@
 package dev.sharkuscator.obfuscator.extensions
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
 import org.mapleir.asm.MethodNode
@@ -17,6 +17,8 @@ fun ClassNode.isDeclaredAsInterface(): Boolean = (node.access and Opcodes.ACC_IN
 fun ClassNode.isDeclaredAsAnnotation(): Boolean = (node.access and Opcodes.ACC_ANNOTATION) != 0
 
 fun ClassNode.isDeclaredAsAbstract(): Boolean = (node.access and Opcodes.ACC_ABSTRACT) != 0
+
+fun ClassNode.containsConstructor(): Boolean = methods.any { it.isConstructor() }
 
 fun ClassNode.containsMainMethod(): Boolean = methods.any { it.hasMainSignature() }
 

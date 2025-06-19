@@ -10,8 +10,8 @@ class WordListDictionary<T>(
     override fun generateNextName(element: T?): String {
         return "$namePrefix${
             when (generationStyle) {
-                GenerationStyle.CharacterRepeat -> (0..numberOfSegments).joinToString(segmentSeparator) { sourceWordSet.joinToString("") { it.repeat((1..4).random()) } }
-                GenerationStyle.WordConcatenation -> (0..numberOfSegments).joinToString(segmentSeparator) { sourceWordSet.random() }
+                GenerationStyle.CharacterRepeat -> (1..numberOfSegments).joinToString(segmentSeparator) { sourceWordSet.joinToString("") { it.repeat((1..4).random()) } }
+                GenerationStyle.WordConcatenation -> (1..numberOfSegments).joinToString(segmentSeparator) { sourceWordSet.random() }
             }
         }"
     }

@@ -1,12 +1,12 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class UnconditionalJumpStep : ControlFlowObfuscationStep {
+object UnconditionalJumpStep : ControlFlowObfuscationStep {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is JumpInsnNode) {
             ObfuscatorServices.sharkLogger.error("UnconditionalJumpStep received an instruction it cannot process, despite canProcess being true.")
@@ -15,7 +15,7 @@ class UnconditionalJumpStep : ControlFlowObfuscationStep {
 
         val newInstructionSequence = InsnList()
 
-        newInstructionSequence.add(BytecodeUtils.integerPushInstruction(0))
+        newInstructionSequence.add(AssemblyHelper.integerPushInstruction(0))
         newInstructionSequence.add(JumpInsnNode(Opcodes.IFEQ, targetInstruction.label))
         newInstructionSequence.add(LabelNode())
         newInstructionSequence.add(InsnNode(Opcodes.ACONST_NULL))

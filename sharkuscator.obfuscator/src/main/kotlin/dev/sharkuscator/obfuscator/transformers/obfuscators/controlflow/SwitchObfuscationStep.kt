@@ -1,11 +1,11 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.complexIntegerPushInstruction
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.complexIntegerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class SwitchObfuscationStep : ControlFlowObfuscationStep {
+object SwitchObfuscationStep : ControlFlowObfuscationStep {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is LookupSwitchInsnNode && targetInstruction !is TableSwitchInsnNode) {
             return

@@ -4,8 +4,8 @@ import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
 import dev.sharkuscator.obfuscator.extensions.xor
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createMethodNode
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
 import org.apache.commons.lang3.RandomStringUtils
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.MethodNode
@@ -16,8 +16,11 @@ import org.objectweb.asm.tree.*
  * Basic Xor string encryption
  */
 class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
-    private val DECODER_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-    private val DECODER_METHOD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+    companion object {
+        private const val DECODER_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+        private const val DECODER_METHOD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+    }
+
     private val decodeMethodCache = mutableMapOf<ClassNode, MethodNode>()
 
     override fun prepareDecoderMethod(context: ObfuscationContext, targetClassNode: ClassNode, decoderMethodName: String): MethodNode {

@@ -13,6 +13,7 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
 ) : SharkTransformer<T> {
     lateinit var configuration: T
     lateinit var exclusions: ExclusionRule
+    lateinit var excludeAnnotations: List<Regex>
     var transformed = false
 
     override fun initialization(configuration: GsonConfiguration): T {
@@ -23,6 +24,7 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
             })
             add(AnnotationExclusionRule())
         })
+        this.excludeAnnotations = this.configuration.excludeAnnotations.map { Regex(it) }
         return this.configuration
     }
 

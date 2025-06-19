@@ -1,13 +1,13 @@
 package dev.sharkuscator.obfuscator.configuration.exclusions
 
-import dev.sharkuscator.annotations.Exclude
+import dev.sharkuscator.annotations.DoNotObfuscate
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Type
 
 class AnnotationExclusionRule : ExclusionRule {
-    private val excludeDescriptor = Type.getDescriptor(Exclude::class.java)
+    private val excludeDescriptor = Type.getDescriptor(DoNotObfuscate::class.java)
 
     override fun excluded(string: String): Boolean {
         return false

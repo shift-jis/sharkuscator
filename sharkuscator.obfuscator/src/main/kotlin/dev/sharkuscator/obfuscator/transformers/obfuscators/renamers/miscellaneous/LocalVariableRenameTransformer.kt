@@ -22,7 +22,7 @@ object LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("Lo
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.localVariables == null || LocalVariableRemoveTransformer.isEligibleForExecution()) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.localVariables == null || LocalVariableRemoveTransformer.isEligibleForExecution()) {
             return
         }
 

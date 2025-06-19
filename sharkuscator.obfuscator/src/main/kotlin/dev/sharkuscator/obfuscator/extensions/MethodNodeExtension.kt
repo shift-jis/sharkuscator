@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.extensions
 
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createInvokeStatic
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createInvokeStatic
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodInsnNode

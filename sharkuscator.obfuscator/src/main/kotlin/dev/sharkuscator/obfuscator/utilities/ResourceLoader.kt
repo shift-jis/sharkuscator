@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-object ResourceUtils {
+object ResourceLoader {
     fun loadNativeLibraryFromResources(nativeLibraryName: String): Boolean {
         var absolutePath = extractResource(nativeLibraryName, Files.createTempFile(null, ".dll")) ?: return false
         absolutePath = absolutePath.replace("\\", "/")

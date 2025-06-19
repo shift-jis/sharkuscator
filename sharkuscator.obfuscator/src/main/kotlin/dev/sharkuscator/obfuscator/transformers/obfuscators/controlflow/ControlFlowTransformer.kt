@@ -10,15 +10,16 @@ import meteordevelopment.orbit.EventHandler
 
 object ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("ControlFlow", ControlFlowConfiguration::class.java) {
     private val controlFlowSteps = mutableListOf(
-        SwitchObfuscationStep(),
-        JumpToTableSwitchStep(),
-        UnconditionalJumpStep()
+        SwitchObfuscationStep,
+        JumpToTableSwitchStep,
+        UnconditionalJumpStep,
+        JunkInstructionStep,
     )
 
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative/* || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()*/) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative/* || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()*/) {
             return
         }
 
@@ -27,7 +28,7 @@ object ControlFlowTransformer : BaseTransformer<ControlFlowConfiguration>("Contr
 
         for (transformationStep in controlFlowSteps) {
             val instructionsToProcess = event.anytypeNode.node.instructions.toArray().filter { instructionNode ->
-                transformationStep.isApplicableFor(instructionNode, applicationChancePercentage)
+                transformationStep.isApplicableFor(instructionNode, if (transformationStep.getObfuscationStrength() == ObfuscationStrength.LIGHT) 40 else applicationChancePercentage)
             }
 
             instructionsToProcess.forEach { instructionNode ->

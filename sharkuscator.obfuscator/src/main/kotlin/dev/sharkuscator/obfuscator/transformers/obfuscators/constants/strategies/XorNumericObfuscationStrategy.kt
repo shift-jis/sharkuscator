@@ -4,9 +4,9 @@ import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.addField
 import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createFieldNode
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.integerPushInstruction
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createFieldNode
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
 import org.objectweb.asm.Opcodes

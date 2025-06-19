@@ -5,7 +5,7 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.XorNumericObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.findNumericConstants
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
 object LongConstantEncryptionTransformer : BaseTransformer<TransformerConfiguration>("LongConstantEncryption", TransformerConfiguration::class.java) {
@@ -15,7 +15,7 @@ object LongConstantEncryptionTransformer : BaseTransformer<TransformerConfigurat
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
