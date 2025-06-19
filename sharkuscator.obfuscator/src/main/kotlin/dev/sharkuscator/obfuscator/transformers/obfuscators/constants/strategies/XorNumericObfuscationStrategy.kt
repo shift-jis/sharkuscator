@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
-import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
+import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.addField
 import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
@@ -8,6 +8,7 @@ import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.createFieldNode
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.integerPushInstruction
 import org.mapleir.asm.ClassNode
+import org.mapleir.asm.FieldNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.FieldInsnNode
@@ -20,14 +21,13 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
     private data class ObfuscationKeyData(val fieldName: String, val keyNumber: Number)
 
     private val classToObfuscationKey = mutableMapOf<ClassNode, ObfuscationKeyData>()
-    private val dictionary = DictionaryFactory.createDictionary<ClassNode>("alphabetical")
 
-    override fun replaceInstructions(classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
+    override fun replaceInstructions(context: ObfuscationContext, classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         if (targetInstruction.next.opcode == Opcodes.PUTFIELD || targetInstruction.next.opcode == Opcodes.PUTSTATIC) {
             return
         }
 
-        val obfuscationKeyData = getOrCreateObfuscationKey(classNode, Random.nextInt())
+        val obfuscationKeyData = getOrCreateObfuscationKey(context, classNode, Random.nextInt())
         val obfuscatedNumber = obfuscateNumber(originalValue, obfuscationKeyData.keyNumber)
 
         when (originalValue) {
@@ -51,11 +51,12 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
         }
     }
 
-    private fun getOrCreateObfuscationKey(classNode: ClassNode, keyNumber: Number): ObfuscationKeyData {
+    private fun getOrCreateObfuscationKey(context: ObfuscationContext, classNode: ClassNode, keyNumber: Number): ObfuscationKeyData {
         if (classToObfuscationKey.containsKey(classNode)) {
             return classToObfuscationKey.getValue(classNode)
         } else {
-            val obfuscationKeyData = ObfuscationKeyData(dictionary.generateNextName(classNode), keyNumber)
+            val fieldNameGenerator = context.resolveDictionary(FieldNode::class.java)
+            val obfuscationKeyData = ObfuscationKeyData(fieldNameGenerator.generateNextName(classNode), keyNumber)
             createAndInitializeKeyField(classNode, obfuscationKeyData, keyNumber)
             classToObfuscationKey[classNode] = obfuscationKeyData
             return obfuscationKeyData

@@ -44,8 +44,6 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     private val classToStringsFieldName = mutableMapOf<ClassNode, String>()
 
     private val stringArrayFieldNameGenerator = DictionaryFactory.createDictionary<ClassNode>("sample_invalids", 1)
-    private val decoyFieldNameGenerator = DictionaryFactory.createDictionary<ClassNode>("alphabetical")
-
     private val initializationVectorSpec = IvParameterSpec(ByteArray(8))
     private val secretKeyFactory = SecretKeyFactory.getInstance("DES")
     private val cipher = Cipher.getInstance("DES/CBC/PKCS5Padding")
@@ -55,7 +53,8 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             return classToDecoderMethod.getValue(targetClassNode)
         }
 
-        classToStringsFieldName[targetClassNode] = "${stringArrayFieldNameGenerator.generateNextName(targetClassNode)}${decoyFieldNameGenerator.generateNextName(targetClassNode)}"
+        val fieldNameGenerator = context.resolveDictionary(FieldNode::class.java)
+        classToStringsFieldName[targetClassNode] = "${stringArrayFieldNameGenerator.generateNextName(targetClassNode)}${fieldNameGenerator.generateNextName(targetClassNode)}"
         classToEncryptedStrings[targetClassNode] = mutableListOf()
         classToKeyDerivationSeed[targetClassNode] = Random.nextLong()
 
@@ -98,6 +97,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             return
         }
 
+        val decoyFieldNameGenerator = context.resolveDictionary(FieldNode::class.java)
         targetClassNode.addField(createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, currentClassStringFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
         (0..(1..2).random()).forEach { _ ->
             targetClassNode.addField(createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, decoyFieldNameGenerator.generateNextName(targetClassNode), DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))

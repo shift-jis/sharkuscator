@@ -1,5 +1,6 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
+import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
 import dev.sharkuscator.obfuscator.utilities.BytecodeUtils.complexIntegerPushInstruction
 import org.mapleir.asm.ClassNode
@@ -11,7 +12,7 @@ import org.objectweb.asm.tree.MethodInsnNode
 import kotlin.random.Random
 
 class FloatingPointFromBitsStrategy : NumericConstantObfuscationStrategy {
-    override fun replaceInstructions(classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
+    override fun replaceInstructions(context: ObfuscationContext, classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         val obfuscatedNumber = obfuscateNumber(originalValue, Random.nextInt())
         when (originalValue) {
             is Int, is Byte, is Short -> {
