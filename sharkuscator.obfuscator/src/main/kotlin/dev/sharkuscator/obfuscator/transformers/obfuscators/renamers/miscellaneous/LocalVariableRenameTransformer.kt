@@ -12,22 +12,22 @@ import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
 object LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("LocalVariableRename", RenameConfiguration::class.java) {
-    lateinit var dictionary: MappingDictionary<MethodNode>
+    lateinit var variableMappingDictionary: MappingDictionary<MethodNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
-        dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
+        variableMappingDictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
         return this.configuration
     }
 
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.localVariables == null || LocalVariableRemoveTransformer.canTransform()) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.localVariables == null || LocalVariableRemoveTransformer.isEligibleForExecution()) {
             return
         }
 
         event.anytypeNode.node.localVariables.filter { it.name != "this" }.forEach {
-            it.name = dictionary.generateNextName(event.anytypeNode)
+            it.name = variableMappingDictionary.generateNextName(event.anytypeNode)
         }
     }
 

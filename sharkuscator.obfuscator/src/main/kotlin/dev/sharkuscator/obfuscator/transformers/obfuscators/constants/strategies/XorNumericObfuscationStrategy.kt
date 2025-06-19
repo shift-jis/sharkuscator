@@ -1,5 +1,6 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
+import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.extensions.addField
 import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
@@ -19,6 +20,7 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
     private data class ObfuscationKeyData(val fieldName: String, val keyNumber: Number)
 
     private val classToObfuscationKey = mutableMapOf<ClassNode, ObfuscationKeyData>()
+    private val dictionary = DictionaryFactory.createDictionary<ClassNode>("alphabetical")
 
     override fun replaceInstructions(classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         if (targetInstruction.next.opcode == Opcodes.PUTFIELD || targetInstruction.next.opcode == Opcodes.PUTSTATIC) {
@@ -53,7 +55,7 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
         if (classToObfuscationKey.containsKey(classNode)) {
             return classToObfuscationKey.getValue(classNode)
         } else {
-            val obfuscationKeyData = ObfuscationKeyData("tralalero tralala", keyNumber)
+            val obfuscationKeyData = ObfuscationKeyData(dictionary.generateNextName(classNode), keyNumber)
             createAndInitializeKeyField(classNode, obfuscationKeyData, keyNumber)
             classToObfuscationKey[classNode] = obfuscationKeyData
             return obfuscationKeyData

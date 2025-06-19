@@ -18,15 +18,19 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import meteordevelopment.orbit.EventHandler
 
 object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
-    lateinit var dictionary: MappingDictionary<String>
+    lateinit var classMappingDictionary: MappingDictionary<String>
     lateinit var generatedMixinPackageSegment: String
     lateinit var effectiveClassPrefix: String
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
-        val renameConfiguration = super.initialization(configuration)
-        dictionary = DictionaryFactory.createDictionary(renameConfiguration.dictionary)
-        generatedMixinPackageSegment = dictionary.generateNextName(null)
-        effectiveClassPrefix = formatPrefixTemplate(renameConfiguration.namePrefix.repeat(renameConfiguration.prefixRepetitions))
+        val initializedConfiguration = super.initialization(configuration)
+
+        classMappingDictionary = DictionaryFactory.createDictionary(initializedConfiguration.dictionary)
+        generatedMixinPackageSegment = classMappingDictionary.generateNextName(null)
+
+        val lengthOfLastSegmentPlusOne = initializedConfiguration.namePrefix.length - initializedConfiguration.namePrefix.lastIndexOf("/")
+        val trimmedNamePrefix = initializedConfiguration.namePrefix.dropLast(lengthOfLastSegmentPlusOne - 1)
+        effectiveClassPrefix = formatPrefixTemplate(trimmedNamePrefix.repeat(initializedConfiguration.prefixRepetitions))
         return this.configuration
     }
 
@@ -37,21 +41,21 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
             return
         }
 
-        var finalClassPrefix = effectiveClassPrefix
+        var targetPackagePath = effectiveClassPrefix
         if (event.anytypeNode.isSpongeMixin()) {
-            finalClassPrefix = when {
-                finalClassPrefix.isEmpty() -> "$generatedMixinPackageSegment/"
-                finalClassPrefix.endsWith("/") -> "$finalClassPrefix$generatedMixinPackageSegment/"
-                else -> "$finalClassPrefix/$generatedMixinPackageSegment"
+            targetPackagePath = when {
+                targetPackagePath.isEmpty() -> "$generatedMixinPackageSegment/"
+                targetPackagePath.endsWith("/") -> "$targetPackagePath$generatedMixinPackageSegment/"
+                else -> "$targetPackagePath/$generatedMixinPackageSegment"
             }
         }
 
-        var classMapping = dictionary.generateNextName(finalClassPrefix)
-        if (dictionary.generatesUnsafeNames() && (event.anytypeNode.containsMainMethod() || event.anytypeNode.isDeclaredAsAnnotation())) {
-            classMapping = event.context.defaultDictionary.generateNextName(finalClassPrefix)
+        var classMapping = classMappingDictionary.generateNextName(targetPackagePath)
+        if (classMappingDictionary.generatesUnsafeNames() && (event.anytypeNode.containsMainMethod() || event.anytypeNode.isDeclaredAsAnnotation())) {
+            classMapping = event.context.defaultDictionary.generateNextName(targetPackagePath)
         }
 
-        ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.name, "$finalClassPrefix$classMapping")
+        ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.name, "$targetPackagePath${configuration.namePrefix.substringAfterLast("/")}$classMapping")
     }
 
     @EventHandler
@@ -138,7 +142,7 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
     private fun formatPrefixTemplate(template: String): String {
         val dictionaryPlaceholderRegex = "%dictionary%".toRegex()
         return dictionaryPlaceholderRegex.replace(template) {
-            dictionary.generateNextName(null)
+            classMappingDictionary.generateNextName(null)
         }
     }
 

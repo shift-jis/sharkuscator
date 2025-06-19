@@ -19,7 +19,7 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isEnum || methodNode.instructions == null || !containsNonEmptyStrings(methodNode.instructions)) {
+        if (transformed || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isConstructor() || methodNode.instructions == null || !containsNonEmptyStrings(methodNode.instructions)) {
             return
         }
 
@@ -34,10 +34,6 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
     @EventHandler
     @Suppress("unused")
     private fun onPostTransform(event: ObfuscatorEvents.PostTransformEvent) {
-        if (transformed) {
-            return
-        }
-
         event.context.jarContents.classContents.forEach { obfuscationStrategy.finalizeClass(event.context, it) }
         event.context.jarContents.classContents.forEach { obfuscationStrategy.initializeKeyChunkFields(it) }
     }

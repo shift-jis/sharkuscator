@@ -8,6 +8,9 @@ import dev.sharkuscator.obfuscator.extensions.toSnakeCase
 import dev.sharkuscator.obfuscator.transformers.SharkTransformer
 
 open class GsonConfiguration {
+    @field:SerializedName("slash_class_entries")
+    val slashClassEntries: Boolean = false
+
     @get:SerializedName("transformers")
     val transformers: JsonObject = JsonObject()
 

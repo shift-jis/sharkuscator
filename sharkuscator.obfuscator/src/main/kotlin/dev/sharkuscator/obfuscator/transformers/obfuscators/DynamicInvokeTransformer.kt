@@ -29,16 +29,16 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
     @EventHandler
     @Suppress("unused")
     private fun onInitialization(event: ObfuscatorEvents.InitializationEvent) {
-        val hostClassNode = event.context.jarContents.classContents.filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
-        invokerHostClassName = hostClassNode.name
+        val selectedHostClassNode = event.context.jarContents.classContents.filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
+        invokerHostClassName = selectedHostClassNode.name
 
-        val methodDictionary = event.context.resolveDictionary(MethodNode::class.java)
-        generatedInvokerMethodName = methodDictionary.generateNextName(null)
+        val invokerMethodNameGenerator = event.context.resolveDictionary(MethodNode::class.java)
+        generatedInvokerMethodName = invokerMethodNameGenerator.generateNextName(null)
 
-        val invokerMethodNode = createInvokerMethodNode(invokerHostClassName, generatedInvokerMethodName)
-        hostClassNode.addMethod(org.mapleir.asm.MethodNode(invokerMethodNode, hostClassNode))
+        val newInvokerMethodAsmNode = createInvokerMethodNode(invokerHostClassName, generatedInvokerMethodName)
+        selectedHostClassNode.addMethod(org.mapleir.asm.MethodNode(newInvokerMethodAsmNode, selectedHostClassNode))
 
-        bootstrapMethodHandle = Handle(Opcodes.H_INVOKESTATIC, invokerHostClassName, invokerMethodNode.name, invokerMethodNode.desc, false)
+        bootstrapMethodHandle = Handle(Opcodes.H_INVOKESTATIC, invokerHostClassName, newInvokerMethodAsmNode.name, newInvokerMethodAsmNode.desc, false)
     }
 
     @EventHandler

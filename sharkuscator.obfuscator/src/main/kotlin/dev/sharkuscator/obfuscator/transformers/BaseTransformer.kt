@@ -9,14 +9,14 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 
 abstract class BaseTransformer<T : TransformerConfiguration>(
     private val transformerName: String,
-    private val configurationType: Class<T>
+    private val configurationClass: Class<T>
 ) : SharkTransformer<T> {
     lateinit var configuration: T
     lateinit var exclusions: ExclusionRule
     var transformed = false
 
     override fun initialization(configuration: GsonConfiguration): T {
-        this.configuration = configuration.fromTransformer(this, configurationType)
+        this.configuration = configuration.fromTransformer(this, configurationClass)
         this.exclusions = MixedExclusionRule(buildList {
             addAll(this@BaseTransformer.configuration.exclusions.map {
                 StringExclusionRule(it.replace("**", ".*").replace("/", "\\/").toRegex())
@@ -26,11 +26,7 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
         return this.configuration
     }
 
-    override fun getConfiguration(): Class<T> {
-        return configurationType
-    }
-
-    override fun canTransform(): Boolean {
+    override fun isEligibleForExecution(): Boolean {
         return configuration.enabled && !transformed
     }
 

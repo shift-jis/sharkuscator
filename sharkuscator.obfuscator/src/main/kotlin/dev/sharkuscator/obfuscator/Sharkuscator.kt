@@ -15,6 +15,7 @@ import dev.sharkuscator.obfuscator.phantom.PhantomASMFactory
 import dev.sharkuscator.obfuscator.phantom.PhantomJarDownloader
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.JunkInstructionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SignatureInflationTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.LongConstantEncryptionTransformer
@@ -69,6 +70,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         ReflectRenameTransformer,
 
         LongConstantEncryptionTransformer,
+        JunkInstructionTransformer,
         ControlFlowTransformer,
         StringEncryptionTransformer,
         NumberComplexityTransformer,
@@ -126,11 +128,13 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
             lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup
         }
 
-        for (transformer in registeredTransformers.filter { it.canTransform() }) {
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.InitializationEvent(obfuscationContext, inputJarFile, outputJarFile))
+        for (transformer in registeredTransformers.filter { it.isEligibleForExecution() }) {
             ObfuscatorServices.mainEventBus.subscribe(transformer)
             dispatchTransformEvents(obfuscationContext)
             transformer.transformed = true
         }
+        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.PostTransformEvent(obfuscationContext, inputJarFile, outputJarFile))
 
         ObfuscatorServices.sharkLogger.info("Translating SSA IR to standard flavour")
         for ((methodNode, controlFlowGraph) in obfuscationContext.analysisContext.irCache.entries) {
@@ -143,13 +147,11 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         }
 
         ObfuscatorServices.sharkLogger.info("Recompiling Class...")
-        ResolvingDumper(obfuscationContext, inputJarContents, classSource).dump(outputJarFile)
+        ResolvingDumper(obfuscationContext).dump(outputJarFile)
         ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.FinalizationEvent(obfuscationContext, inputJarFile, outputJarFile))
     }
 
     private fun dispatchTransformEvents(obfuscationContext: ObfuscationContext) {
-        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.InitializationEvent(obfuscationContext, inputJarFile, outputJarFile))
-
         inputJarContents.resourceContents.namedMap().filter { !exclusions.excluded(it.key) }.forEach {
             ObfuscatorServices.mainEventBus.post(TransformerEvents.ResourceTransformEvent(obfuscationContext, it.value.name, it.value.data))
         }
@@ -165,8 +167,6 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
                 ObfuscatorServices.mainEventBus.post(TransformerEvents.MethodTransformEvent(obfuscationContext, it))
             }
         }
-
-        ObfuscatorServices.mainEventBus.post(ObfuscatorEvents.PostTransformEvent(obfuscationContext, inputJarFile, outputJarFile))
     }
 
     private fun importConfiguration(): GsonConfiguration {
@@ -226,13 +226,6 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
     }
 
     private fun createObfuscationContext(hierarchyProvider: HierarchyProvider, analysisContext: AnalysisContext): ObfuscationContext {
-        return ObfuscationContext.Builder().apply {
-            setSharkuscator(this@Sharkuscator)
-            setHierarchyProvider(hierarchyProvider)
-            setAnalysisContext(analysisContext)
-            setClassSource(classSource)
-            setJarContents(inputJarContents)
-            setExclusions(exclusions)
-        }.build()
+        return ObfuscationContext(inputJarContents, classSource, hierarchyProvider, analysisContext, configuration, exclusions, isInputRecognizedAsMinecraftMod)
     }
 }

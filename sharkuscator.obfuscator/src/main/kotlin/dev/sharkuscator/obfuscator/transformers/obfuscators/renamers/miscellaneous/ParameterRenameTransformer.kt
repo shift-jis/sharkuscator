@@ -11,10 +11,10 @@ import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
 object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("ParameterRename", RenameConfiguration::class.java) {
-    lateinit var dictionary: MappingDictionary<MethodNode>
+    lateinit var parameterMappingDictionary: MappingDictionary<MethodNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
-        dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
+        parameterMappingDictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
         return this.configuration
     }
 
@@ -26,7 +26,7 @@ object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("Parame
         }
 
         event.anytypeNode.node.parameters.forEach {
-            it.name = dictionary.generateNextName(event.anytypeNode)
+            it.name = parameterMappingDictionary.generateNextName(event.anytypeNode)
         }
     }
 

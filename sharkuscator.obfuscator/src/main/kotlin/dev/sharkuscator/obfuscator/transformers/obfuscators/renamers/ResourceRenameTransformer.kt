@@ -13,10 +13,10 @@ import meteordevelopment.orbit.EventHandler
 
 object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
     private val resourceNameMappings = mutableMapOf<String, String>()
-    private lateinit var dictionary: MappingDictionary<String>
+    private lateinit var resourceMappingDictionary: MappingDictionary<String>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
-        dictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
+        resourceMappingDictionary = DictionaryFactory.createDictionary(super.initialization(configuration).dictionary)
         return this.configuration
     }
 
@@ -37,7 +37,7 @@ object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resourc
         findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
             if (event.context.jarContents.resourceContents.any { it.name == string }) {
                 if (!resourceNameMappings.containsKey(string)) {
-                    resourceNameMappings[string] = "${configuration.namePrefix}${dictionary.generateNextName(null)}"
+                    resourceNameMappings[string] = "${configuration.namePrefix}${resourceMappingDictionary.generateNextName(null)}"
                 }
 
                 val leadingSlashIfPresent = if (string.startsWith("/")) "/" else ""

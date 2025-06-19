@@ -151,7 +151,7 @@ object BytecodeUtils {
         var currentValue = value.toInt()
         val instructions = InsnList()
 
-        (0 until 2).forEach { layer ->
+        (0 until 1).forEach { layer ->
             val layerKey = Random.nextInt(-999, 999)
             when (IntegerObfuscationOpType.entries.toTypedArray().random()) {
                 IntegerObfuscationOpType.XOR -> {

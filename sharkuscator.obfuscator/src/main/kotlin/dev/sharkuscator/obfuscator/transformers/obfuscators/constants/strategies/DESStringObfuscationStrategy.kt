@@ -1,6 +1,7 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
 import dev.sharkuscator.obfuscator.ObfuscationContext
+import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.extensions.addField
 import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.invokeStatic
@@ -40,24 +41,27 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     private val classToEncryptedStrings = mutableMapOf<ClassNode, MutableList<String>>()
     private val classToDecoderMethod = mutableMapOf<ClassNode, MethodNode>()
     private val classToKeyDerivationSeed = mutableMapOf<ClassNode, Long>()
+    private val classToStringsFieldName = mutableMapOf<ClassNode, String>()
+
+    private val stringArrayFieldNameGenerator = DictionaryFactory.createDictionary<ClassNode>("sample_invalids", 1)
+    private val decoyFieldNameGenerator = DictionaryFactory.createDictionary<ClassNode>("alphabetical")
 
     private val initializationVectorSpec = IvParameterSpec(ByteArray(8))
     private val secretKeyFactory = SecretKeyFactory.getInstance("DES")
     private val cipher = Cipher.getInstance("DES/CBC/PKCS5Padding")
-
-    private val stringsFieldName = "tung tung tung sahur"
 
     override fun prepareDecoderMethod(context: ObfuscationContext, targetClassNode: ClassNode, decoderMethodName: String): MethodNode {
         if (classToDecoderMethod.containsKey(targetClassNode)) {
             return classToDecoderMethod.getValue(targetClassNode)
         }
 
+        classToStringsFieldName[targetClassNode] = "${stringArrayFieldNameGenerator.generateNextName(targetClassNode)}${decoyFieldNameGenerator.generateNextName(targetClassNode)}"
         classToEncryptedStrings[targetClassNode] = mutableListOf()
         classToKeyDerivationSeed[targetClassNode] = Random.nextLong()
 
         val builtMethodNode = createMethodNode(DECODER_METHOD_ACCESS, decoderMethodName, DECODER_METHOD_DESCRIPTOR).apply {
             instructions = buildInstructionList(
-                FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR),
+                FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, classToStringsFieldName[targetClassNode], DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR),
                 VarInsnNode(Opcodes.ILOAD, 0),
                 InsnNode(Opcodes.AALOAD),
                 InsnNode(Opcodes.ARETURN),
@@ -88,12 +92,16 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             return
         }
 
+        val currentClassStringFieldName = classToStringsFieldName.getValue(targetClassNode)
         val currentClassEncryptedStrings = classToEncryptedStrings.getValue(targetClassNode)
         if (currentClassEncryptedStrings.isEmpty()) {
             return
         }
 
-        targetClassNode.addField(createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        targetClassNode.addField(createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, currentClassStringFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        (0..(1..2).random()).forEach { _ ->
+            targetClassNode.addField(createFieldNode(DEOBFUSCATED_STRINGS_FIELD_ACCESS, decoyFieldNameGenerator.generateNextName(targetClassNode), DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        }
 
         val fieldDictionary = context.resolveDictionary(FieldNode::class.java)
         val decryptionKeyBytes = deriveKeyFromSeed(classToKeyDerivationSeed.getValue(targetClassNode))
@@ -121,7 +129,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         // Initialize the deobfuscatedStrings array
         initializerInstructions.add(integerPushInstruction(currentClassEncryptedStrings.size))
         initializerInstructions.add(TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"))
-        initializerInstructions.add(FieldInsnNode(Opcodes.PUTSTATIC, targetClassNode.name, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        initializerInstructions.add(FieldInsnNode(Opcodes.PUTSTATIC, targetClassNode.name, currentClassStringFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
 
         // DES Key and Cipher Initialization (original logic)
         initializerInstructions.add(LdcInsnNode("DES"))
@@ -198,7 +206,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         initializerInstructions.add(VarInsnNode(Opcodes.ASTORE, 10))
 
         // Store decrypted string
-        initializerInstructions.add(FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, stringsFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
+        initializerInstructions.add(FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, currentClassStringFieldName, DEOBFUSCATED_STRINGS_FIELD_DESCRIPTOR))
         initializerInstructions.add(VarInsnNode(Opcodes.ILOAD, 8))
         initializerInstructions.add(IincInsnNode(8, 1))
         initializerInstructions.add(TypeInsnNode(Opcodes.NEW, "java/lang/String"))

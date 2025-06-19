@@ -5,9 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 interface SharkTransformer<T> {
     fun initialization(configuration: GsonConfiguration): T
 
-    fun getConfiguration(): Class<T>
-
-    fun canTransform(): Boolean
+    fun isEligibleForExecution(): Boolean
 
     fun getExecutionPriority(): Int
 
