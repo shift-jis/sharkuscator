@@ -8,6 +8,7 @@ import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
@@ -46,7 +47,11 @@ object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resourc
         }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.MODERATE
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.TWENTY_FIVE
     }
 }

@@ -4,6 +4,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.XorNumericObfuscationStrategy
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNumericConstants
 import meteordevelopment.orbit.EventHandler
@@ -15,7 +16,7 @@ object LongConstantEncryptionTransformer : BaseTransformer<TransformerConfigurat
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode) || event.anytypeNode.isAbstract || methodNode.instructions == null) {
             return
         }
 
@@ -24,7 +25,11 @@ object LongConstantEncryptionTransformer : BaseTransformer<TransformerConfigurat
         }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.LIGHT
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.SIXTY_FIVE
     }
 }

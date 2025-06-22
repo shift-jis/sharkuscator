@@ -22,23 +22,21 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
 
     private val classToObfuscationKey = mutableMapOf<ClassNode, ObfuscationKeyData>()
 
-    override fun replaceInstructions(context: ObfuscationContext, classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
+    override fun replaceInstructions(obfuscationContext: ObfuscationContext, classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         if (targetInstruction.next.opcode == Opcodes.PUTFIELD || targetInstruction.next.opcode == Opcodes.PUTSTATIC) {
             return
         }
 
-        val obfuscationKeyData = getOrCreateObfuscationKey(context, classNode, Random.nextInt())
+        val obfuscationKeyData = getOrCreateObfuscationKey(obfuscationContext, classNode, Random.nextInt())
         val obfuscatedNumber = obfuscateNumber(originalValue, obfuscationKeyData.keyNumber)
 
         when (originalValue) {
             is Int, is Byte, is Short -> {
-                instructions.insert(
-                    targetInstruction, buildInstructionList(
-                        FieldInsnNode(Opcodes.GETSTATIC, classNode.name, obfuscationKeyData.fieldName, "I"),
-                        integerPushInstruction(obfuscatedNumber.first),
-                        InsnNode(Opcodes.IXOR),
-                    )
-                )
+                instructions.insert(targetInstruction, buildInstructionList {
+                    add(FieldInsnNode(Opcodes.GETSTATIC, classNode.name, obfuscationKeyData.fieldName, "I"))
+                    add(integerPushInstruction(obfuscatedNumber.first))
+                    add(InsnNode(Opcodes.IXOR))
+                })
                 instructions.remove(targetInstruction)
             }
         }
@@ -55,7 +53,7 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
         if (classToObfuscationKey.containsKey(classNode)) {
             return classToObfuscationKey.getValue(classNode)
         } else {
-            val fieldNameGenerator = context.resolveDictionary(FieldNode::class.java)
+            val fieldNameGenerator = context.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java)
             val obfuscationKeyData = ObfuscationKeyData(fieldNameGenerator.generateNextName(classNode), keyNumber)
             createAndInitializeKeyField(classNode, obfuscationKeyData, keyNumber)
             classToObfuscationKey[classNode] = obfuscationKeyData
@@ -67,11 +65,9 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
         classNode.addField(createFieldNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_TRANSIENT, obfuscationKeyData.fieldName, "I"))
 
         val staticInitializer = classNode.getOrCreateStaticInitializer()
-        staticInitializer.node.instructions.insert(
-            buildInstructionList(
-                integerPushInstruction(keyNumber),
-                FieldInsnNode(Opcodes.PUTSTATIC, classNode.name, obfuscationKeyData.fieldName, "I"),
-            )
-        )
+        staticInitializer.node.instructions.insert(buildInstructionList {
+            add(integerPushInstruction(keyNumber))
+            add(FieldInsnNode(Opcodes.PUTSTATIC, classNode.name, obfuscationKeyData.fieldName, "I"))
+        })
     }
 }

@@ -1,15 +1,13 @@
 package dev.sharkuscator.obfuscator.extensions
 
-private val humps = "(?<=.)(?=\\p{Upper})".toRegex()
+private val CAMEL_CASE_REGEX = "(?<=.)(?=\\p{Upper})".toRegex()
 
-fun String.toSnakeCase() = replace(humps, "_").lowercase()
+fun String.asSnakeCase() = replace(CAMEL_CASE_REGEX, "_").lowercase()
 
-fun String.unicodify(): String {
-    return toCharArray().joinToString("") { "\\u${String.format("%04x", it.code)}" }
+fun String.toUnicodeEscapes(): String {
+    return this.map { char -> "\\u%04x".format(char.code) }.joinToString("")
 }
 
-infix fun String.xor(that: String) = mapIndexed { index, char ->
-    that[index].code.xor(char.code)
-}.joinToString(separator = "") {
-    it.toChar().toString()
+infix fun String.xor(that: String): String {
+    return this.zip(that) { char1, char2 -> char1.code.xor(char2.code).toChar() }.joinToString("")
 }

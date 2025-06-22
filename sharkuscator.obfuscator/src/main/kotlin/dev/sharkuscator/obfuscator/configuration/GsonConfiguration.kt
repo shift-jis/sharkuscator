@@ -4,7 +4,7 @@ import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
-import dev.sharkuscator.obfuscator.extensions.toSnakeCase
+import dev.sharkuscator.obfuscator.extensions.asSnakeCase
 import dev.sharkuscator.obfuscator.transformers.SharkTransformer
 
 open class GsonConfiguration {
@@ -21,6 +21,6 @@ open class GsonConfiguration {
     val exclusions: Array<String> = emptyArray()
 
     fun <T : TransformerConfiguration> fromTransformer(transformer: SharkTransformer<T>, clazz: Class<T>): T {
-        return ObfuscatorServices.prettyGson.fromJson(transformers.getAsJsonObject(transformer.getTransformerName().toSnakeCase()), clazz)
+        return ObfuscatorServices.prettyGson.fromJson(transformers.getAsJsonObject(transformer.transformerName().asSnakeCase()), clazz)
     }
 }

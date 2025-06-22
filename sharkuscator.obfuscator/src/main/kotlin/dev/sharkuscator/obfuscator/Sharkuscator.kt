@@ -20,12 +20,12 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTrans
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.LongConstantEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowMangleTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.LocalVariableRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.VariableRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ParameterRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ReflectRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
@@ -60,7 +60,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
     var isInputRecognizedAsMinecraftMod by Delegates.notNull<Boolean>()
     val registeredTransformers = mutableListOf(
         // obfuscates
-        LocalVariableRenameTransformer,
+        VariableRenameTransformer,
         ParameterRenameTransformer,
         MethodRenameTransformer,
         FieldRenameTransformer,
@@ -69,7 +69,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         ReflectRenameTransformer,
 
         LongConstantEncryptionTransformer,
-        ControlFlowTransformer,
+        ControlFlowMangleTransformer,
         StringEncryptionTransformer,
         NumberComplexityTransformer,
         SignatureInflationTransformer,
@@ -122,7 +122,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
 
         val obfuscationContext = createObfuscationContext(hierarchyProvider, createAnalysisContext())
         registeredTransformers.forEach { it.initialization(configuration) }
-        registeredTransformers.sortBy { it.getExecutionPriority() }
+        registeredTransformers.sortBy { it.executionPriority() }
 
         ObfuscatorServices.mainEventBus.registerLambdaFactory("dev.sharkuscator") { lookupInMethod, klass ->
             lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup

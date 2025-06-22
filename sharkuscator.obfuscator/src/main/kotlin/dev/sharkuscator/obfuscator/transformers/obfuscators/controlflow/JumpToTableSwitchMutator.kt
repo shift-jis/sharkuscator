@@ -1,15 +1,16 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.complexIntegerPushInstruction
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-object JumpToTableSwitchStep : ControlFlowObfuscationStep {
+object JumpToTableSwitchMutator : ControlFlowMangleMutator {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is JumpInsnNode) {
-            ObfuscatorServices.sharkLogger.error("JumpToTableSwitchStep received an instruction it cannot process, despite canProcess being true.")
+            ObfuscatorServices.sharkLogger.error("JumpToTableSwitchMutator received an instruction it cannot process, despite canProcess being true.")
             return
         }
 
@@ -22,14 +23,14 @@ object JumpToTableSwitchStep : ControlFlowObfuscationStep {
         val newInstructionSequence = InsnList()
 
         newInstructionSequence.add(JumpInsnNode(targetInstruction.opcode, prepareTrueCaseForSwitchLabel))
-        newInstructionSequence.add(complexIntegerPushInstruction(tableSwitchKey - 1))
+        newInstructionSequence.add(integerPushInstruction(tableSwitchKey - 1))
         newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, actualTableSwitchLabel))
         newInstructionSequence.add(prepareTrueCaseForSwitchLabel)
-        newInstructionSequence.add(complexIntegerPushInstruction(tableSwitchKey))
+        newInstructionSequence.add(integerPushInstruction(tableSwitchKey))
         newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, actualTableSwitchLabel))
         newInstructionSequence.add(trueCaseToSwitchDefaultLabel)
         newInstructionSequence.add(InsnNode(Opcodes.NOP))
-        newInstructionSequence.add(complexIntegerPushInstruction(tableSwitchKey - 2))
+        newInstructionSequence.add(integerPushInstruction(tableSwitchKey - 2))
         newInstructionSequence.add(actualTableSwitchLabel)
         newInstructionSequence.add(TableSwitchInsnNode(tableSwitchKey - 1, tableSwitchKey, targetInstruction.label, falseCaseFinalTargetLabel, trueCaseToSwitchDefaultLabel))
         newInstructionSequence.add(falseCaseFinalTargetLabel)
@@ -43,7 +44,7 @@ object JumpToTableSwitchStep : ControlFlowObfuscationStep {
         return instruction is JumpInsnNode && instruction.opcode != Opcodes.GOTO && shouldApplyBasedOnChance
     }
 
-    override fun getObfuscationStrength(): ObfuscationStrength {
-        return ObfuscationStrength.MODERATE
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.MODERATE
     }
 }

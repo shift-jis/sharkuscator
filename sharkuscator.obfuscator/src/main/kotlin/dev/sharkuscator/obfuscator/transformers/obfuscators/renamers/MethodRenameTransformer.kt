@@ -9,6 +9,7 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.ClassNode
 
@@ -66,7 +67,11 @@ object MethodRenameTransformer : BaseTransformer<RenameConfiguration>("MethodRen
         }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.MODERATE
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.TWENTY_FIVE
     }
 }

@@ -5,6 +5,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
@@ -17,7 +18,7 @@ object ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Ref
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
             return
         }
 
@@ -49,7 +50,11 @@ object ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Ref
         }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.MODERATE
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.FIFTY
     }
 

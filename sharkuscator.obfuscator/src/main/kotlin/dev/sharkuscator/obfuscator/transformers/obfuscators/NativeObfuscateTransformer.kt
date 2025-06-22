@@ -9,6 +9,7 @@ import dev.sharkuscator.obfuscator.extensions.isDeclaredAsInterface
 import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import meteordevelopment.orbit.EventHandler
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -66,7 +67,11 @@ object NativeObfuscateTransformer : BaseTransformer<TransformerConfiguration>("N
 //        nativeObfuscatorProcess.waitFor(1, TimeUnit.MINUTES)
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.STRONG
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.ONE_HUNDRED
     }
 }

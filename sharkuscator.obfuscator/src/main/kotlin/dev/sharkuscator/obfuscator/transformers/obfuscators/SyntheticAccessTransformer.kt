@@ -4,6 +4,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
@@ -13,7 +14,7 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!isEligibleForExecution()) {
+        if (!isEligibleForExecution() || !shouldTransformClass(event.context, event.anytypeNode) || event.anytypeNode.isSpongeMixin()) {
             return
         }
 
@@ -23,7 +24,12 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor() || event.anytypeNode.owner.isDeclaredAsInterface()) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
+            return
+        }
+
+        val targetClassNode = event.anytypeNode.owner
+        if (event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor() || targetClassNode.isSpongeMixin() || targetClassNode.isDeclaredAsInterface()) {
             return
         }
 
@@ -34,14 +40,14 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isDeclaredVolatile() || event.anytypeNode.isDeclaredSynthetic() || event.anytypeNode.isDeclaredBridge()) {
-            return
-        }
-
-        if (event.anytypeNode.node.visibleAnnotations?.any { annot -> FieldRenameTransformer.excludeAnnotations.any { it.matches(Type.getType(annot.desc).internalName) } } ?: false) {
+        if (!isEligibleForExecution() || !shouldTransformField(event.context, event.anytypeNode)) {
             return
         }
 
         event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
+    }
+
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.LIGHT
     }
 }

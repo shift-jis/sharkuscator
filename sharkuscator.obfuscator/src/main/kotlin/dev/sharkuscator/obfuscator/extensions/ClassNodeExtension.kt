@@ -54,7 +54,7 @@ fun ClassNode.getOrCreateStaticInitializer(): MethodNode {
 
 fun ClassNode.addNewStaticInitializer(): MethodNode {
     val staticInitializer = createMethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V").apply {
-        instructions = buildInstructionList(InsnNode(Opcodes.RETURN))
+        instructions = buildInstructionList { add(InsnNode(Opcodes.RETURN)) }
     }
     return MethodNode(staticInitializer, this).also {
         this.addMethod(it)

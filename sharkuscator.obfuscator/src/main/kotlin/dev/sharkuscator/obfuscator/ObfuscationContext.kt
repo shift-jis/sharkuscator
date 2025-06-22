@@ -22,12 +22,12 @@ class ObfuscationContext(
     val defaultDictionary = DictionaryFactory.createDefaultDictionary<Any>()
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> resolveDictionary(targetType: Class<T>): MappingDictionary<Any> {
+    fun <T, E> resolveDictionary(targetType: Class<T>): MappingDictionary<E> {
         return when (targetType.name) {
             "org.mapleir.asm.MethodNode" -> MethodRenameTransformer.methodMappingDictionary
             "org.mapleir.asm.FieldNode" -> FieldRenameTransformer.fieldMappingDictionary
             "org.mapleir.asm.ClassNode" -> ClassRenameTransformer.classMappingDictionary
             else -> defaultDictionary
-        } as MappingDictionary<Any>
+        } as MappingDictionary<E>
     }
 }

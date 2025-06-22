@@ -7,6 +7,7 @@ import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
@@ -21,16 +22,18 @@ object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("Parame
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.parameters == null) {
+        if (!isEligibleForExecution() || shouldTransformMethod(event.context, event.anytypeNode)) {
             return
         }
 
-        event.anytypeNode.node.parameters.forEach {
-            it.name = parameterMappingDictionary.generateNextName(event.anytypeNode)
-        }
+        event.anytypeNode.node.parameters?.forEach { it.name = parameterMappingDictionary.generateNextName(event.anytypeNode) }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.LIGHT
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.FIFTY
     }
 }

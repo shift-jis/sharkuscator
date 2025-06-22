@@ -6,6 +6,7 @@ import dev.sharkuscator.obfuscator.configuration.transformers.ClassEncryptionCon
 import dev.sharkuscator.obfuscator.encryption.ClassEncryptor
 import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.utilities.ResourceLoader
 import meteordevelopment.orbit.EventHandler
 import java.nio.file.Paths
@@ -30,5 +31,9 @@ object ClassEncryptionTransformer : BaseTransformer<ClassEncryptionConfiguration
 
         event.classData = ClassEncryptor.encrypt(event.classData, configuration.password.encodeToByteArray())
         ObfuscatorServices.sharkLogger.debug("Encrypted ${event.classNode.name}")
+    }
+
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.STRONG
     }
 }

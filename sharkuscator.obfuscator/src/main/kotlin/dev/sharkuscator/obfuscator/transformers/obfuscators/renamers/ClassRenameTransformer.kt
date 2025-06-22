@@ -15,6 +15,7 @@ import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
 import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import meteordevelopment.orbit.EventHandler
 
 object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRename", RenameConfiguration::class.java) {
@@ -37,7 +38,7 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.context.classSource.isLibraryClass(event.anytypeNode.name)) {
+        if (!isEligibleForExecution() || !shouldTransformClass(event.context, event.anytypeNode)) {
             return
         }
 
@@ -66,6 +67,14 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
             event.name == "META-INF/MANIFEST.MF" && resourceContentString.contains("Main-Class") -> updateMainClassInManifest(event)
             event.name.startsWith("mixins") && event.name.endsWith(".json") -> updateClassNamesInMixinConfiguration(event, resourceContentString)
         }
+    }
+
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.MODERATE
+    }
+
+    override fun executionPriority(): Int {
+        return TransformerPriority.TWENTY_FIVE
     }
 
     private fun updateMainClassInManifest(event: AssemblerEvents.ResourceWriteEvent) {
@@ -144,9 +153,5 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
         return dictionaryPlaceholderRegex.replace(template) {
             classMappingDictionary.generateNextName(null)
         }
-    }
-
-    override fun getExecutionPriority(): Int {
-        return TransformerPriority.TWENTY_FIVE
     }
 }

@@ -7,11 +7,12 @@ import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import meteordevelopment.orbit.EventHandler
 import org.mapleir.asm.MethodNode
 
-object LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("LocalVariableRename", RenameConfiguration::class.java) {
+object VariableRenameTransformer : BaseTransformer<RenameConfiguration>("VariableRename", RenameConfiguration::class.java) {
     lateinit var variableMappingDictionary: MappingDictionary<MethodNode>
 
     override fun initialization(configuration: GsonConfiguration): RenameConfiguration {
@@ -22,16 +23,20 @@ object LocalVariableRenameTransformer : BaseTransformer<RenameConfiguration>("Lo
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.node.localVariables == null || LocalVariableRemoveTransformer.isEligibleForExecution()) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode) || LocalVariableRemoveTransformer.configuration.enabled) {
             return
         }
 
-        event.anytypeNode.node.localVariables.filter { it.name != "this" }.forEach {
+        event.anytypeNode.node.localVariables?.filter { it.name != "this" }?.forEach {
             it.name = variableMappingDictionary.generateNextName(event.anytypeNode)
         }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.LIGHT
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.FIFTY
     }
 }

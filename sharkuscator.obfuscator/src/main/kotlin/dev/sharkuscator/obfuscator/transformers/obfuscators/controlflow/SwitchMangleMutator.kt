@@ -1,11 +1,12 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.complexIntegerPushInstruction
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-object SwitchObfuscationStep : ControlFlowObfuscationStep {
+object SwitchMangleMutator : ControlFlowMangleMutator {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is LookupSwitchInsnNode && targetInstruction !is TableSwitchInsnNode) {
             return
@@ -37,7 +38,7 @@ object SwitchObfuscationStep : ControlFlowObfuscationStep {
         newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, originalDefaultTargetLabel))
 
         newInstructionSequence.add(obfuscatedSwitchEntryPoint)
-        newInstructionSequence.add(complexIntegerPushInstruction(xorOperand))
+        newInstructionSequence.add(integerPushInstruction(xorOperand))
         newInstructionSequence.add(InsnNode(Opcodes.IXOR))
 
         obfuscatedCaseData.forEach { (_, intermediateLabel, originalCaseTargetLabel) ->
@@ -72,7 +73,7 @@ object SwitchObfuscationStep : ControlFlowObfuscationStep {
         }
     }
 
-    override fun getObfuscationStrength(): ObfuscationStrength {
-        return ObfuscationStrength.MODERATE
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.MODERATE
     }
 }

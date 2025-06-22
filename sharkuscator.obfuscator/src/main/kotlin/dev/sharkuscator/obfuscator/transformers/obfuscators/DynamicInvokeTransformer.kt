@@ -7,10 +7,12 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.extensions.*
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
+import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
 import meteordevelopment.orbit.EventHandler
 import org.apache.commons.lang3.RandomStringUtils
+import org.mapleir.asm.ClassNode
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -33,10 +35,10 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
             return
         }
 
-        val selectedHostClassNode = event.context.jarContents.classContents.filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
+        val selectedHostClassNode = event.context.classSource.iterate().filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
         invokerHostClassName = selectedHostClassNode.name
 
-        val invokerMethodNameGenerator = event.context.resolveDictionary(MethodNode::class.java)
+        val invokerMethodNameGenerator = event.context.resolveDictionary<org.mapleir.asm.MethodNode, ClassNode>(org.mapleir.asm.MethodNode::class.java)
         generatedInvokerMethodName = invokerMethodNameGenerator.generateNextName(null)
 
         val newInvokerMethodAsmNode = createInvokerMethodNode(invokerHostClassName, generatedInvokerMethodName)
@@ -48,7 +50,7 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode) || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
             return
         }
 
@@ -107,7 +109,11 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
         }
     }
 
-    override fun getExecutionPriority(): Int {
+    override fun transformerStrength(): TransformerStrength {
+        return TransformerStrength.STRONG
+    }
+
+    override fun executionPriority(): Int {
         return TransformerPriority.SIXTY_FIVE
     }
 
@@ -123,81 +129,81 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
         val labelUnsupportedOpcode = LabelNode()
 
         return createMethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, methodName, invokerDescriptor).apply {
-            instructions = buildInstructionList(
+            instructions = buildInstructionList {
                 // Load and resolve method type
-                VarInsnNode(Opcodes.ALOAD, 6),
-                LdcInsnNode(Type.getObjectType(className)),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false),
-                MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodType", "fromMethodDescriptorString", methodTypeDescriptor, false),
-                VarInsnNode(Opcodes.ASTORE, 7),
+                add(VarInsnNode(Opcodes.ALOAD, 6))
+                add(LdcInsnNode(Type.getObjectType(className)))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false))
+                add(MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodType", "fromMethodDescriptorString", methodTypeDescriptor, false))
+                add(VarInsnNode(Opcodes.ASTORE, 7))
 
                 // Load target class
-                VarInsnNode(Opcodes.ALOAD, 4),
-                MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false),
-                VarInsnNode(Opcodes.ASTORE, 8),
+                add(VarInsnNode(Opcodes.ALOAD, 4))
+                add(MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false))
+                add(VarInsnNode(Opcodes.ASTORE, 8))
 
                 // Check for static method opcode (184)
-                VarInsnNode(Opcodes.ILOAD, 3),
-                IntInsnNode(Opcodes.SIPUSH, 184),
-                JumpInsnNode(Opcodes.IF_ICMPNE, labelCheckVirtual),
-                VarInsnNode(Opcodes.ALOAD, 0),
-                VarInsnNode(Opcodes.ALOAD, 8),
-                VarInsnNode(Opcodes.ALOAD, 5),
-                VarInsnNode(Opcodes.ALOAD, 7),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles\$Lookup", "findStatic", methodHandleDescriptor, false),
-                VarInsnNode(Opcodes.ASTORE, 9),
-                JumpInsnNode(Opcodes.GOTO, labelReturnCallSite),
+                add(VarInsnNode(Opcodes.ILOAD, 3))
+                add(IntInsnNode(Opcodes.SIPUSH, 184))
+                add(JumpInsnNode(Opcodes.IF_ICMPNE, labelCheckVirtual))
+                add(VarInsnNode(Opcodes.ALOAD, 0))
+                add(VarInsnNode(Opcodes.ALOAD, 8))
+                add(VarInsnNode(Opcodes.ALOAD, 5))
+                add(VarInsnNode(Opcodes.ALOAD, 7))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles\$Lookup", "findStatic", methodHandleDescriptor, false))
+                add(VarInsnNode(Opcodes.ASTORE, 9))
+                add(JumpInsnNode(Opcodes.GOTO, labelReturnCallSite))
 
                 // Check for virtual method opcode (182)
-                labelCheckVirtual,
-                VarInsnNode(Opcodes.ILOAD, 3),
-                IntInsnNode(Opcodes.SIPUSH, 182),
-                JumpInsnNode(Opcodes.IF_ICMPNE, labelCheckInterface),
-                VarInsnNode(Opcodes.ALOAD, 0),
-                VarInsnNode(Opcodes.ALOAD, 8),
-                VarInsnNode(Opcodes.ALOAD, 5),
-                VarInsnNode(Opcodes.ALOAD, 7),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles\$Lookup", "findVirtual", methodHandleDescriptor, false),
-                VarInsnNode(Opcodes.ASTORE, 9),
-                JumpInsnNode(Opcodes.GOTO, labelReturnCallSite),
+                add(labelCheckVirtual)
+                add(VarInsnNode(Opcodes.ILOAD, 3))
+                add(IntInsnNode(Opcodes.SIPUSH, 182))
+                add(JumpInsnNode(Opcodes.IF_ICMPNE, labelCheckInterface))
+                add(VarInsnNode(Opcodes.ALOAD, 0))
+                add(VarInsnNode(Opcodes.ALOAD, 8))
+                add(VarInsnNode(Opcodes.ALOAD, 5))
+                add(VarInsnNode(Opcodes.ALOAD, 7))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles\$Lookup", "findVirtual", methodHandleDescriptor, false))
+                add(VarInsnNode(Opcodes.ASTORE, 9))
+                add(JumpInsnNode(Opcodes.GOTO, labelReturnCallSite))
 
                 // Check for interface method opcode (185)
-                labelCheckInterface,
-                VarInsnNode(Opcodes.ILOAD, 3),
-                IntInsnNode(Opcodes.SIPUSH, 185),
-                JumpInsnNode(Opcodes.IF_ICMPNE, labelUnsupportedOpcode),
-                VarInsnNode(Opcodes.ALOAD, 0),
-                VarInsnNode(Opcodes.ALOAD, 8),
-                VarInsnNode(Opcodes.ALOAD, 5),
-                VarInsnNode(Opcodes.ALOAD, 7),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles\$Lookup", "findVirtual", methodHandleDescriptor, false),
-                VarInsnNode(Opcodes.ASTORE, 9),
+                add(labelCheckInterface)
+                add(VarInsnNode(Opcodes.ILOAD, 3))
+                add(IntInsnNode(Opcodes.SIPUSH, 185))
+                add(JumpInsnNode(Opcodes.IF_ICMPNE, labelUnsupportedOpcode))
+                add(VarInsnNode(Opcodes.ALOAD, 0))
+                add(VarInsnNode(Opcodes.ALOAD, 8))
+                add(VarInsnNode(Opcodes.ALOAD, 5))
+                add(VarInsnNode(Opcodes.ALOAD, 7))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles\$Lookup", "findVirtual", methodHandleDescriptor, false))
+                add(VarInsnNode(Opcodes.ASTORE, 9))
 
                 // Return ConstantCallSite
-                labelReturnCallSite,
-                TypeInsnNode(Opcodes.NEW, "java/lang/invoke/ConstantCallSite"),
-                InsnNode(Opcodes.DUP),
-                VarInsnNode(Opcodes.ALOAD, 9),
-                VarInsnNode(Opcodes.ALOAD, 2),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle", "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false),
-                MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false),
-                InsnNode(Opcodes.ARETURN),
+                add(labelReturnCallSite)
+                add(TypeInsnNode(Opcodes.NEW, "java/lang/invoke/ConstantCallSite"))
+                add(InsnNode(Opcodes.DUP))
+                add(VarInsnNode(Opcodes.ALOAD, 9))
+                add(VarInsnNode(Opcodes.ALOAD, 2))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandle", "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false))
+                add(MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false))
+                add(InsnNode(Opcodes.ARETURN))
 
                 // Unsupported opcode handling
-                labelUnsupportedOpcode,
-                TypeInsnNode(Opcodes.NEW, "java/lang/IllegalArgumentException"),
-                InsnNode(Opcodes.DUP),
-                TypeInsnNode(Opcodes.NEW, "java/lang/StringBuilder"),
-                InsnNode(Opcodes.DUP),
-                MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false),
-                LdcInsnNode("Unsupported opcode: "),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false),
-                VarInsnNode(Opcodes.ILOAD, 3),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false),
-                MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false),
-                MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/IllegalArgumentException", "<init>", "(Ljava/lang/String;)V", false),
-                InsnNode(Opcodes.ATHROW)
-            )
+                add(labelUnsupportedOpcode)
+                add(TypeInsnNode(Opcodes.NEW, "java/lang/IllegalArgumentException"))
+                add(InsnNode(Opcodes.DUP))
+                add(TypeInsnNode(Opcodes.NEW, "java/lang/StringBuilder"))
+                add(InsnNode(Opcodes.DUP))
+                add(MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false))
+                add(LdcInsnNode("Unsupported opcode: "))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false))
+                add(VarInsnNode(Opcodes.ILOAD, 3))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false))
+                add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false))
+                add(MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/IllegalArgumentException", "<init>", "(Ljava/lang/String;)V", false))
+                add(InsnNode(Opcodes.ATHROW))
+            }
         }
     }
 

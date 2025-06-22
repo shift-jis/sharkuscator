@@ -3,21 +3,23 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
+import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.isConstructor
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
-import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.DESStringObfuscationStrategy
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.containsNonEmptyStrings
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
-object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
-    val obfuscationStrategy = DESStringObfuscationStrategy()
+// This is debug transformer
+object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfiguration>("ArrayedStringGenerate", TransformerConfiguration::class.java) {
+    private val constantArrayGenerator = ConstantArrayGenerator(String::class.java)
 
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
+        val targetClassNode = event.anytypeNode.owner
         val targetMethodNode = event.anytypeNode.node
         if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
             return
@@ -27,9 +29,13 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
             return
         }
 
-        obfuscationStrategy.initialization(event.context, event.anytypeNode.owner)
+        constantArrayGenerator.createAndAddArrayField(event.context, targetClassNode)
         findNonEmptyStrings(targetMethodNode.instructions).forEach { (instruction, string) ->
-            obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, targetMethodNode.instructions, instruction, string)
+            val instructionString = constantArrayGenerator.addValueToRandomArray(targetClassNode, instruction, string) {
+                return@addValueToRandomArray this
+            }
+            targetMethodNode.instructions.insert(instruction, constantArrayGenerator.createGetterInvocation(targetClassNode, instructionString))
+            targetMethodNode.instructions.remove(instruction)
         }
     }
 
@@ -40,19 +46,15 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
             return
         }
 
-        event.context.classSource.iterate().filter { shouldTransformClass(event.context, it) }.forEach { classNode ->
-            obfuscationStrategy.buildDecryptionRoutine(event.context, classNode)
-        }
-        event.context.classSource.iterate().filter { shouldTransformClass(event.context, it) }.forEach { classNode ->
-            obfuscationStrategy.initializeKeyChunkFields(classNode)
+        event.context.classSource.iterate().filter { !event.context.exclusions.excluded(it) && !exclusions.excluded(it) }.forEach { classNode ->
+            val staticInitializer = classNode.getOrCreateStaticInitializer()
+            staticInitializer.node.instructions.insert(constantArrayGenerator.createInitializationInstructions(classNode) { arrayFieldMetadataList ->
+            })
+            constantArrayGenerator.createAndAddArrayGetterMethod(classNode)
         }
     }
 
     override fun transformerStrength(): TransformerStrength {
         return TransformerStrength.MODERATE
-    }
-
-    override fun executionPriority(): Int {
-        return TransformerPriority.FIFTY
     }
 }

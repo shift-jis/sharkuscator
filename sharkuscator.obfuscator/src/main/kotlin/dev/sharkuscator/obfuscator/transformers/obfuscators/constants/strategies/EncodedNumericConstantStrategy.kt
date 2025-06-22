@@ -2,31 +2,26 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategie
 
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.longPushInstruction
-import dev.sharkuscator.obfuscator.utilities.Mathematics
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.obfuscatedNumericPushInstructions
 import org.mapleir.asm.ClassNode
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.InsnList
+import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
 import kotlin.random.Random
 
 class EncodedNumericConstantStrategy : NumericConstantObfuscationStrategy {
-    override fun replaceInstructions(context: ObfuscationContext, classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
+    override fun replaceInstructions(obfuscationContext: ObfuscationContext, classNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         val obfuscatedNumber = obfuscateNumber(originalValue, Random.nextInt())
         when (originalValue) {
             is Int, is Byte, is Short -> {
-                val (operandA, operandB) = Mathematics.generateOperandsForAnd(obfuscatedNumber.first.toInt())
-                instructions.insert(targetInstruction, InsnNode(Opcodes.IAND))
-                instructions.insert(targetInstruction, integerPushInstruction(operandB.toInt()))
-                instructions.insert(targetInstruction, integerPushInstruction(operandA.toInt()))
+                instructions.insert(targetInstruction, obfuscatedNumericPushInstructions(obfuscatedNumber.first.toInt()))
                 instructions.remove(targetInstruction)
             }
 
             is Long -> {
-                val (operandA, operandB) = Mathematics.generateOperandsForAnd(obfuscatedNumber.first.toLong())
-                instructions.insert(targetInstruction, InsnNode(Opcodes.LAND))
-                instructions.insert(targetInstruction, longPushInstruction(operandB.toLong()))
-                instructions.insert(targetInstruction, longPushInstruction(operandA.toLong()))
+                instructions.insert(targetInstruction, obfuscatedNumericPushInstructions(obfuscatedNumber.first.toLong()))
                 instructions.remove(targetInstruction)
             }
 

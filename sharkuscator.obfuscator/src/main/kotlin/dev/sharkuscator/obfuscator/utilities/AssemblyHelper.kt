@@ -4,15 +4,8 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-private data class IntegerDeobfuscationStep(val key: Int, val reverseOpcode: Int)
-
-private enum class IntegerObfuscationOpType {
-    XOR,
-    ADD,
-    SUB,
-}
-
 object AssemblyHelper {
+    private const val MAX_OBFUSCATION_RECURSION_DEPTH = 1
     private val constNumberOpcodesMap = mapOf<Int, Number>(
         Opcodes.ICONST_M1 to -1,
         Opcodes.ICONST_0 to 0,
@@ -78,53 +71,93 @@ object AssemblyHelper {
 
     fun xorPushInstruction(value: Number, operand: Long = Random.nextLong()): InsnList {
         return when (value) {
-            is Int, is Byte, is Short -> buildInstructionList(
-                integerPushInstruction(value.toInt() xor operand.toInt()),
-                integerPushInstruction(operand.toInt()),
-                InsnNode(Opcodes.IXOR)
-            )
+            is Int, is Byte, is Short -> buildInstructionList {
+                add(integerPushInstruction(value.toInt() xor operand.toInt()))
+                add(integerPushInstruction(operand.toInt()))
+                add(InsnNode(Opcodes.IXOR))
+            }
 
-            is Long -> buildInstructionList(
-                longPushInstruction(value xor operand),
-                longPushInstruction(operand),
-                InsnNode(Opcodes.LXOR)
-            )
+            is Long -> buildInstructionList {
+                add(longPushInstruction(value xor operand))
+                add(longPushInstruction(operand))
+                add(InsnNode(Opcodes.LXOR))
+            }
 
-            else -> buildInstructionList(integerPushInstruction(value))
+            else -> buildInstructionList {
+                add(integerPushInstruction(value))
+            }
         }
     }
 
-    fun complexIntegerPushInstruction(value: Number): InsnList {
-        val restorationSteps = mutableListOf<IntegerDeobfuscationStep>()
-        var currentValue = value.toInt()
+    fun obfuscatedNumericPushInstructions(value: Number, recursionDepth: Int = 0): InsnList {
         val instructions = InsnList()
 
-        (0 until 1).forEach { layer ->
-            val layerKey = Random.nextInt(-999, 999)
-            when (IntegerObfuscationOpType.entries.toTypedArray().random()) {
-                IntegerObfuscationOpType.XOR -> {
-                    currentValue = currentValue xor layerKey
-                    restorationSteps.add(0, IntegerDeobfuscationStep(layerKey, Opcodes.IXOR))
-                }
+        val isIntegerFamily = value is Int || value is Byte || value is Short
+        val isLongFamily = value is Long
 
-                IntegerObfuscationOpType.ADD -> {
-                    currentValue += layerKey
-                    restorationSteps.add(0, IntegerDeobfuscationStep(layerKey, Opcodes.ISUB))
-                }
+        if ((isIntegerFamily || isLongFamily) && Random.nextBoolean()) {
+            val allowFurtherRecursion = recursionDepth < MAX_OBFUSCATION_RECURSION_DEPTH
 
-                IntegerObfuscationOpType.SUB -> {
-                    currentValue -= layerKey
-                    restorationSteps.add(0, IntegerDeobfuscationStep(layerKey, Opcodes.IADD))
+            if (Random.nextBoolean()) {
+                if (isIntegerFamily) {
+                    val intValue = value.toInt()
+                    val (operandA, operandB) = Mathematics.generateOperandsForAnd(intValue)
+
+                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                        instructions.add(obfuscatedNumericPushInstructions(operandA.toInt(), recursionDepth + 1))
+                    } else {
+                        instructions.add(integerPushInstruction(operandA.toInt()))
+                    }
+
+                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                        instructions.add(obfuscatedNumericPushInstructions(operandB.toInt(), recursionDepth + 1))
+                    } else {
+                        instructions.add(integerPushInstruction(operandB.toInt()))
+                    }
+
+                    instructions.add(InsnNode(Opcodes.IAND))
+                } else {
+                    val longValue = value.toLong()
+                    val (operandA, operandB) = Mathematics.generateOperandsForAnd(longValue)
+
+                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                        instructions.add(obfuscatedNumericPushInstructions(operandA.toLong(), recursionDepth + 1))
+                    } else {
+                        instructions.add(longPushInstruction(operandA.toLong()))
+                    }
+
+                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                        instructions.add(obfuscatedNumericPushInstructions(operandB.toLong(), recursionDepth + 1))
+                    } else {
+                        instructions.add(longPushInstruction(operandB.toLong()))
+                    }
+
+                    instructions.add(InsnNode(Opcodes.LAND))
+                }
+            } else {
+                if (isIntegerFamily) {
+                    val intValue = value.toInt()
+                    val randomXorOperand = Random.nextInt()
+                    instructions.add(integerPushInstruction(intValue xor randomXorOperand))
+                    instructions.add(integerPushInstruction(randomXorOperand))
+                    instructions.add(InsnNode(Opcodes.IXOR))
+                } else {
+                    val longValue = value.toLong()
+                    val randomXorOperand = Random.nextLong()
+                    instructions.add(longPushInstruction(longValue xor randomXorOperand))
+                    instructions.add(longPushInstruction(randomXorOperand))
+                    instructions.add(InsnNode(Opcodes.LXOR))
                 }
             }
+        } else {
+            instructions.add(
+                when (value) {
+                    is Int, is Byte, is Short -> integerPushInstruction(value)
+                    is Long -> longPushInstruction(value)
+                    else -> LdcInsnNode(value)
+                }
+            )
         }
-
-        instructions.add(integerPushInstruction(currentValue))
-        for (restorationStep in restorationSteps) {
-            instructions.add(integerPushInstruction(restorationStep.key))
-            instructions.add(InsnNode(restorationStep.reverseOpcode))
-        }
-
         return instructions
     }
 
@@ -153,19 +186,8 @@ object AssemblyHelper {
         return instructions.filter { isNumericConstantInstruction(it) }.map { it to extractNumericValue(it) }
     }
 
-    fun buildInstructionList(vararg elements: Any): InsnList {
-        return InsnList().apply {
-            elements.forEach { element ->
-                when (element) {
-                    is AbstractInsnNode -> add(element)
-                    is InsnList -> add(element)
-                    else -> throw IllegalArgumentException(
-                        "Unsupported type in buildInstructionList: ${element::class.java.name}. " +
-                                "Only AbstractInsnNode and InsnList are supported."
-                    )
-                }
-            }
-        }
+    fun buildInstructionList(builder: InsnList.() -> Unit): InsnList {
+        return InsnList().apply(builder)
     }
 
     fun createClassNode(name: String): ClassNode {
