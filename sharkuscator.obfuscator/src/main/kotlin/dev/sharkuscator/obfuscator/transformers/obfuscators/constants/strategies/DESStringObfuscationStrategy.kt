@@ -23,7 +23,7 @@ import kotlin.random.Random
 
 class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     companion object {
-        private const val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
+        private const val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
         private const val KEY_BYTES_FIELD_DESCRIPTOR = "[B"
         private const val INSTRUCTION_CHAR_OFFSET = 0xAB00
     }

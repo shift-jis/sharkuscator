@@ -34,7 +34,6 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
         }
 
         event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
-        event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_BRIDGE
     }
 
     @EventHandler

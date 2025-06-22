@@ -16,10 +16,10 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private val maxFieldsPerClass: Int = 2) {
+class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private val maxFieldsPerClass: Int = 10) {
     companion object {
-        private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC + Opcodes.ACC_TRANSIENT
-        private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+        private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
+        private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
         private const val INSTRUCTION_CHAR_OFFSET = 0xAB00
     }
 
@@ -150,7 +150,8 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
     }
 
     fun addValueToRandomArray(targetClassNode: ClassNode, instruction: AbstractInsnNode, element: T, chunkCount: Int = 1, transformer: T.() -> T): String {
-        val instructionString = StringBuilder()
+        val instructionString = StringBuilder().appendJunk(0..10)
+
         when (element) {
             is String -> {
                 if (chunkCount <= 1 || element.length < chunkCount) {
@@ -159,7 +160,11 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                     randomFieldMetadata.computeIfAbsent(element).add(instruction to element.transformer())
                     instructionString.append((randomFieldMetadata.fieldIndex + INSTRUCTION_CHAR_OFFSET).toChar())
                     instructionString.append((arrayElementIndex + INSTRUCTION_CHAR_OFFSET).toChar())
-                    return instructionString.toString()
+                    (0..Random.nextInt(0, 10)).forEach { it ->
+                        instructionString.append((Random.nextInt(0, 20) + INSTRUCTION_CHAR_OFFSET).toChar())
+                        instructionString.append((Random.nextInt(5000, 9999) + INSTRUCTION_CHAR_OFFSET).toChar())
+                    }
+                    return instructionString.appendJunk(0..10).toString()
                 }
 
                 var remainder = element.length % chunkCount
@@ -187,7 +192,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                     randomFieldMetadata.computeIfAbsent(element).add(instruction to element.transformer())
                     instructionString.append((randomFieldMetadata.fieldIndex + INSTRUCTION_CHAR_OFFSET).toChar())
                     instructionString.append((arrayElementIndex + INSTRUCTION_CHAR_OFFSET).toChar())
-                    return instructionString.toString()
+                    return instructionString.appendJunk(0..10).toString()
                 }
 
                 var remainder = element.toInt() % chunkCount
@@ -209,7 +214,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
             }
         }
 
-        return instructionString.toString()
+        return instructionString.appendJunk(0..10).toString()
     }
 
     fun createGetterInvocation(targetClassNode: ClassNode, instructionString: String): InsnList {
@@ -224,7 +229,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
         return buildInstructionList {
             val arrayFieldMetadataList = generatedArrayFieldsByClass[targetClassNode] ?: return@buildInstructionList
             arrayFieldMetadataList.forEach { arrayFieldMetadata ->
-                add(integerPushInstruction(Random.nextInt(1000, 9999)))
+                add(integerPushInstruction(Random.nextInt(1000, 4000)))
                 if (arrayJvmTypeDescriptor.startsWith("L")) {
                     add(TypeInsnNode(Opcodes.ANEWARRAY, arrayJvmTypeDescriptor.substring(1, arrayJvmTypeDescriptor.length - 1)))
                 } else {
@@ -241,5 +246,14 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
             }
             this.builder(arrayFieldMetadataList)
         }
+    }
+
+    private fun StringBuilder.appendJunk(countRange: IntRange): StringBuilder {
+        repeat(Random.nextInt(countRange.first, countRange.last + 1)) {
+            // Use character values that are unlikely to collide with real field/chunk indices
+            append((Random.nextInt(21, 100) + INSTRUCTION_CHAR_OFFSET).toChar())
+            append((Random.nextInt(10000, 20000) + INSTRUCTION_CHAR_OFFSET).toChar())
+        }
+        return this
     }
 }
