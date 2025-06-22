@@ -12,7 +12,10 @@ import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.containsNonEmptyStri
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
-// This is debug transformer
+@Deprecated(
+    message = "This transformer is for debugging purposes only and will be removed in future versions. " +
+            "For production string obfuscation, use DESStringObfuscationStrategy instead."
+)
 object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfiguration>("ArrayedStringGenerate", TransformerConfiguration::class.java) {
     private val constantArrayGenerator = ConstantArrayGenerator(String::class.java)
 
