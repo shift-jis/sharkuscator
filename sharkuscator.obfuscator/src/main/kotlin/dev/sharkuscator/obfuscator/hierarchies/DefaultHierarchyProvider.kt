@@ -42,7 +42,9 @@ class DefaultHierarchyProvider(private val classSource: ApplicationClassSource) 
     }
 
     private fun getRootMethodNode(classNode: ClassNode, methodNode: MethodNode): MethodNode? {
-        if (methodNode.name == "<init>" || methodNode.name == "<clinit>") return null
+        if (methodNode.name == "<init>" || methodNode.name == "<clinit>") {
+            return null
+        }
 
         for (parentClassNode in getClassParents(classNode)) {
             for (parentMethodNode in parentClassNode.methods) {

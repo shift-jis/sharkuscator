@@ -3,6 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategie
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.addField
 import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
+import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
@@ -23,7 +24,7 @@ import kotlin.random.Random
 
 class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     companion object {
-        private const val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
+        private const val KEY_BYTES_FIELD_ACCESS = Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC + Opcodes.ACC_TRANSIENT
         private const val KEY_BYTES_FIELD_DESCRIPTOR = "[B"
         private const val INSTRUCTION_CHAR_OFFSET = 0xAB00
     }
@@ -65,7 +66,11 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         keyByteIndexChunks.forEach { chunkOfIndices ->
             val selectedHostClassNode = obfuscationContext.classSource.iterate().filter { !it.shouldSkipTransform() && classEligibilityPredicate(it) }.random() ?: return@forEach
             val generatedKeyFieldName = keyFieldNameGenerator.generateNextName(selectedHostClassNode)
-            selectedHostClassNode.addField(createFieldNode(KEY_BYTES_FIELD_ACCESS, generatedKeyFieldName, KEY_BYTES_FIELD_DESCRIPTOR))
+            selectedHostClassNode.addField(createFieldNode(KEY_BYTES_FIELD_ACCESS, generatedKeyFieldName, KEY_BYTES_FIELD_DESCRIPTOR).apply {
+                if (selectedHostClassNode.isSpongeMixin()) {
+                    visibleAnnotations = mutableListOf(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
+                }
+            })
             keyChunkListByClass.computeIfAbsent(targetClassNode) { mutableListOf() }.add(EncryptionKeyChunk(selectedHostClassNode, generatedKeyFieldName, chunkOfIndices))
         }
 

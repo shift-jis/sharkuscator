@@ -15,10 +15,7 @@ import org.mapleir.asm.FieldNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Type
 
-abstract class BaseTransformer<T : TransformerConfiguration>(
-    private val transformerName: String,
-    private val configurationClass: Class<T>
-) : SharkTransformer<T> {
+abstract class BaseTransformer<T : TransformerConfiguration>(private val transformerName: String, private val configurationClass: Class<T>) : SharkTransformer<T> {
     lateinit var configuration: T
     lateinit var exclusions: ExclusionRule
     lateinit var excludeAnnotations: List<Regex>
@@ -27,15 +24,10 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
     override fun initialization(configuration: GsonConfiguration): T {
         this.configuration = configuration.fromTransformer(this, configurationClass)
         this.exclusions = MixedExclusionRule(buildList {
-            addAll(this@BaseTransformer.configuration.exclusions.map {
-                StringExclusionRule(it.replace("**", ".*").replace("/", "\\/").toRegex())
-            })
+            addAll(this@BaseTransformer.configuration.exclusions.map { StringExclusionRule(it.toExclusionRegexPattern()) })
             add(AnnotationExclusionRule())
         })
-        this.excludeAnnotations = this.configuration.excludeAnnotations.map {
-            println(it)
-            it.replace("**", ".*").replace("/", "\\/").toRegex()
-        }
+        this.excludeAnnotations = this.configuration.excludeAnnotations.map { it.toExclusionRegexPattern() }
         return this.configuration
     }
 
@@ -82,5 +74,12 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
             return transformerStrength() == TransformerStrength.LIGHT
         }
         return !obfuscationContext.exclusions.excluded(fieldNode) && !exclusions.excluded(fieldNode) && !fieldNode.isDeclaredVolatile() && !fieldNode.isDeclaredSynthetic()
+    }
+
+    private fun String.toExclusionRegexPattern(): Regex {
+        return this.replace("**", ".*") // Match any characters (0 or more)
+            .replace("$", "\\$")     // Escape '$' as it's a regex metacharacter
+            .replace("/", "\\/")     // Escape '/' as it's a regex metacharacter
+            .toRegex()
     }
 }

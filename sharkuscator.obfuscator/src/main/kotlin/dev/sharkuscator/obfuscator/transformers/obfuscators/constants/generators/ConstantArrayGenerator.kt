@@ -4,6 +4,7 @@ import dev.sharkuscator.annotations.LightObfuscation
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.extensions.addField
+import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createFieldNode
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
@@ -18,13 +19,13 @@ import kotlin.random.Random
 
 class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private val maxFieldsPerClass: Int = 10) {
     companion object {
-        private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
-        private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
+        private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_TRANSIENT
+        private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC
         private const val INSTRUCTION_CHAR_OFFSET = 0xAB00
     }
 
-    class ArrayFieldMetadata<T>(sourceFieldNode: FieldNode, val fieldIndex: Int, val valueChunks: MutableMap<T, MutableList<Pair<AbstractInsnNode, T>>>) {
-        val fieldDescriptor: String = sourceFieldNode.node.desc
+    class ArrayFieldMetadata<T>(sourceFieldNode: org.objectweb.asm.tree.FieldNode, val fieldIndex: Int, val valueChunks: MutableMap<T, MutableList<Pair<AbstractInsnNode, T>>>) {
+        val fieldDescriptor: String = sourceFieldNode.desc
         val fieldName: String = sourceFieldNode.name
 
         val totalChunkCount: Int
@@ -59,17 +60,19 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
         val generatedFieldsForClass = generatedArrayFieldsByClass.computeIfAbsent(targetClassNode) { mutableListOf() }
         (1..requestedFieldCount.coerceIn(1, maxFieldsPerClass)).forEach { fieldIndex ->
             val arrayFieldName = obfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java).generateNextName(targetClassNode)
-            FieldNode(createFieldNode(CONSTANT_ARRAY_FIELD_ACCESS, arrayFieldName, "[$arrayJvmTypeDescriptor"), targetClassNode).also {
-                generatedFieldsForClass.add(ArrayFieldMetadata(it, fieldIndex - 1, mutableMapOf()))
-                targetClassNode.addField(it.node)
-            }
+            targetClassNode.addField(FieldNode(createFieldNode(CONSTANT_ARRAY_FIELD_ACCESS, arrayFieldName, "[$arrayJvmTypeDescriptor").apply {
+                generatedFieldsForClass.add(ArrayFieldMetadata(this, fieldIndex - 1, mutableMapOf()))
+                if (targetClassNode.isSpongeMixin()) {
+                    visibleAnnotations = mutableListOf(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
+                }
+            }, targetClassNode))
         }
     }
 
     fun createAndAddArrayGetterMethod(targetClassNode: ClassNode) {
         val arrayGetterMethodName = arrayGetterMethodNameByClass[targetClassNode] ?: return
         val arrayFieldMetadataList = generatedArrayFieldsByClass[targetClassNode] ?: return
-        MethodNode(createMethodNode(CONSTANT_GETTER_METHOD_ACCESS, arrayGetterMethodName, getterMethodDescriptor), targetClassNode).also {
+        targetClassNode.addMethod(MethodNode(createMethodNode(CONSTANT_GETTER_METHOD_ACCESS, arrayGetterMethodName, getterMethodDescriptor).apply {
             val loopBeginLabelNode = LabelNode()
             val loopEndLabelNode = LabelNode()
 
@@ -80,9 +83,13 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
 
             val switchDefaultLabel = LabelNode()
 
-            it.node.tryCatchBlocks.add(TryCatchBlockNode(blockStartLabel, blockEndLabel, catchHandlerLabel, "java/lang/IndexOutOfBoundsException"))
-            it.node.visibleAnnotations = listOf(AnnotationNode(Type.getDescriptor(LightObfuscation::class.java)))
-            it.node.instructions = buildInstructionList {
+            visibleAnnotations = mutableListOf(AnnotationNode(Type.getDescriptor(LightObfuscation::class.java)))
+            if (targetClassNode.isSpongeMixin()) {
+                visibleAnnotations.add(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
+            }
+
+            tryCatchBlocks.add(TryCatchBlockNode(blockStartLabel, blockEndLabel, catchHandlerLabel, "java/lang/IndexOutOfBoundsException"))
+            instructions = buildInstructionList {
                 add(TypeInsnNode(Opcodes.NEW, "java/lang/StringBuilder"))
                 add(InsnNode(Opcodes.DUP))
                 add(MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V"))
@@ -145,8 +152,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                 add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;"))
                 add(InsnNode(Opcodes.ARETURN))
             }
-            targetClassNode.addMethod(it)
-        }
+        }, targetClassNode))
     }
 
     fun addValueToRandomArray(targetClassNode: ClassNode, instruction: AbstractInsnNode, element: T, chunkCount: Int = 1, transformer: T.() -> T): String {
