@@ -152,6 +152,6 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
         val dictionaryPlaceholderRegex = "%dictionary%".toRegex()
         return dictionaryPlaceholderRegex.replace(template) {
             classMappingDictionary.generateNextName(null)
-        }
+        }.replace(Regex("/{2,}"), "/")
     }
 }

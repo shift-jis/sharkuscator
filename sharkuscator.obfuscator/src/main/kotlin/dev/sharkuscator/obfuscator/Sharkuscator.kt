@@ -30,6 +30,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneo
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ReflectRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
+import dev.sharkuscator.obfuscator.utilities.LoggerConfigurator
 import org.clyze.jphantom.ClassMembers
 import org.clyze.jphantom.hier.ClassHierarchies
 import org.mapleir.DefaultInvocationResolver
@@ -90,6 +91,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
     private lateinit var hierarchyProvider: HierarchyProvider
 
     fun obfuscate() {
+        LoggerConfigurator.disableExternalLogging()
         if (!inputJarFile.exists()) {
             ObfuscatorServices.sharkLogger.error("Input jar does not exist!")
             return

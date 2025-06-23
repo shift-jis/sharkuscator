@@ -3,6 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
@@ -14,15 +15,13 @@ object UnconditionalJumpMutator : ControlFlowMangleMutator {
             return
         }
 
-        val newInstructionSequence = InsnList()
-
-        newInstructionSequence.add(AssemblyHelper.integerPushInstruction(0))
-        newInstructionSequence.add(JumpInsnNode(Opcodes.IFEQ, targetInstruction.label))
-        newInstructionSequence.add(LabelNode())
-        newInstructionSequence.add(InsnNode(Opcodes.ACONST_NULL))
-        newInstructionSequence.add(InsnNode(Opcodes.ATHROW))
-
-        instructions.insert(targetInstruction, newInstructionSequence)
+        instructions.insert(targetInstruction, buildInstructionList {
+            add(AssemblyHelper.integerPushInstruction(0))
+            add(JumpInsnNode(Opcodes.IFEQ, targetInstruction.label))
+            add(LabelNode())
+            add(InsnNode(Opcodes.ACONST_NULL))
+            add(InsnNode(Opcodes.ATHROW))
+        })
         instructions.remove(targetInstruction)
     }
 

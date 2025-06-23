@@ -2,6 +2,8 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
@@ -14,28 +16,26 @@ object JumpToTableSwitchMutator : ControlFlowMangleMutator {
             return
         }
 
-        val prepareTrueCaseForSwitchLabel = LabelNode()
-        val falseCaseFinalTargetLabel = LabelNode()
-        val trueCaseToSwitchDefaultLabel = LabelNode()
-        val actualTableSwitchLabel = LabelNode()
-
         val tableSwitchKey = Random.nextInt(0xF, 0xFFFF)
-        val newInstructionSequence = InsnList()
+        val trueBranchTargetLabel = LabelNode()
+        val falseBranchTargetLabel = LabelNode()
+        val switchTrueCaseTargetLabel = LabelNode()
+        val switchEvaluationLabel = LabelNode()
 
-        newInstructionSequence.add(JumpInsnNode(targetInstruction.opcode, prepareTrueCaseForSwitchLabel))
-        newInstructionSequence.add(integerPushInstruction(tableSwitchKey - 1))
-        newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, actualTableSwitchLabel))
-        newInstructionSequence.add(prepareTrueCaseForSwitchLabel)
-        newInstructionSequence.add(integerPushInstruction(tableSwitchKey))
-        newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, actualTableSwitchLabel))
-        newInstructionSequence.add(trueCaseToSwitchDefaultLabel)
-        newInstructionSequence.add(InsnNode(Opcodes.NOP))
-        newInstructionSequence.add(integerPushInstruction(tableSwitchKey - 2))
-        newInstructionSequence.add(actualTableSwitchLabel)
-        newInstructionSequence.add(TableSwitchInsnNode(tableSwitchKey - 1, tableSwitchKey, targetInstruction.label, falseCaseFinalTargetLabel, trueCaseToSwitchDefaultLabel))
-        newInstructionSequence.add(falseCaseFinalTargetLabel)
-
-        instructions.insert(targetInstruction, newInstructionSequence)
+        instructions.insert(targetInstruction, buildInstructionList {
+            add(JumpInsnNode(targetInstruction.opcode, trueBranchTargetLabel))
+            add(integerPushInstruction(tableSwitchKey - 1))
+            add(JumpInsnNode(Opcodes.GOTO, switchEvaluationLabel))
+            add(trueBranchTargetLabel)
+            add(integerPushInstruction(tableSwitchKey))
+            add(JumpInsnNode(Opcodes.GOTO, switchEvaluationLabel))
+            add(switchTrueCaseTargetLabel)
+            add(InsnNode(Opcodes.NOP))
+            add(integerPushInstruction(tableSwitchKey - 2))
+            add(switchEvaluationLabel)
+            add(TableSwitchInsnNode(tableSwitchKey - 1, tableSwitchKey, targetInstruction.label, falseBranchTargetLabel, switchTrueCaseTargetLabel))
+            add(falseBranchTargetLabel)
+        })
         instructions.remove(targetInstruction)
     }
 

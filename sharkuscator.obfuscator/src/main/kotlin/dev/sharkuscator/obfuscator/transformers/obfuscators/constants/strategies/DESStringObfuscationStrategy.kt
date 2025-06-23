@@ -51,7 +51,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         instructions.remove(targetInstruction)
     }
 
-    override fun buildDecryptionRoutine(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
+    override fun buildDecryptionRoutine(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode, classEligibilityPredicate: (classNode: ClassNode) -> Boolean) {
         if (!keyDerivationSeedByClass.containsKey(targetClassNode)) {
             return
         }
@@ -63,7 +63,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
 
         val keyByteIndexChunks = (0..decryptionKeyBytes.size - 1).chunked((1..decryptionKeyBytes.size - 1).random())
         keyByteIndexChunks.forEach { chunkOfIndices ->
-            val selectedHostClassNode = obfuscationContext.classSource.iterate().filter { !it.shouldSkipTransform() && !obfuscationContext.exclusions.excluded(it) }.random() ?: return@forEach
+            val selectedHostClassNode = obfuscationContext.classSource.iterate().filter { !it.shouldSkipTransform() && classEligibilityPredicate(it) }.random() ?: return@forEach
             val generatedKeyFieldName = keyFieldNameGenerator.generateNextName(selectedHostClassNode)
             selectedHostClassNode.addField(createFieldNode(KEY_BYTES_FIELD_ACCESS, generatedKeyFieldName, KEY_BYTES_FIELD_DESCRIPTOR))
             keyChunkListByClass.computeIfAbsent(targetClassNode) { mutableListOf() }.add(EncryptionKeyChunk(selectedHostClassNode, generatedKeyFieldName, chunkOfIndices))

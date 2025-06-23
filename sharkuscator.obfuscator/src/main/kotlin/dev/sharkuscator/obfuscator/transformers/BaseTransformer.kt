@@ -32,7 +32,10 @@ abstract class BaseTransformer<T : TransformerConfiguration>(
             })
             add(AnnotationExclusionRule())
         })
-        this.excludeAnnotations = this.configuration.excludeAnnotations.map { Regex(it) }
+        this.excludeAnnotations = this.configuration.excludeAnnotations.map {
+            println(it)
+            it.replace("**", ".*").replace("/", "\\/").toRegex()
+        }
         return this.configuration
     }
 

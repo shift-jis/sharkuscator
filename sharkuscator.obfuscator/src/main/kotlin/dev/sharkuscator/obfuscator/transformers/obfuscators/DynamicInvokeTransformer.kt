@@ -35,7 +35,7 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
             return
         }
 
-        val selectedHostClassNode = event.context.classSource.iterate().filter { !it.shouldSkipTransform() && !event.context.exclusions.excluded(it) }.random() ?: return
+        val selectedHostClassNode = event.context.classSource.iterate().filter { !it.shouldSkipTransform() && shouldTransformClass(event.context, it) }.random() ?: return
         invokerHostClassName = selectedHostClassNode.name
 
         val invokerMethodNameGenerator = event.context.resolveDictionary<org.mapleir.asm.MethodNode, ClassNode>(org.mapleir.asm.MethodNode::class.java)

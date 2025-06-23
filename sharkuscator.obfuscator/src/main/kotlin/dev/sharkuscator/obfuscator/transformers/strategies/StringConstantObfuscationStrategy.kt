@@ -10,7 +10,7 @@ interface StringConstantObfuscationStrategy {
 
     fun replaceInstructions(targetClassNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalString: String)
 
-    fun buildDecryptionRoutine(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode)
+    fun buildDecryptionRoutine(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode, classEligibilityPredicate: (classNode: ClassNode) -> Boolean)
 
     fun obfuscateString(originalString: String, keyBytes: ByteArray): Pair<String, ByteArray>
 }

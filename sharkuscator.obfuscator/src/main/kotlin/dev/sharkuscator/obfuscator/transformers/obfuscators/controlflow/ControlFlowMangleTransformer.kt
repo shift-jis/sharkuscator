@@ -11,7 +11,7 @@ import meteordevelopment.orbit.EventHandler
 
 object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfiguration>("ControlFlowMangle", ControlFlowMangleConfiguration::class.java) {
     private val mangleMutators = mutableListOf(
-        SwitchMangleMutator,
+//        SwitchMangleMutator,
         JumpToTableSwitchMutator,
         UnconditionalJumpMutator,
     )

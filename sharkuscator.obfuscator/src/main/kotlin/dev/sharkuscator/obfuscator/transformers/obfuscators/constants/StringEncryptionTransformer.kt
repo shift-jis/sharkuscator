@@ -41,7 +41,9 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
         }
 
         event.context.classSource.iterate().filter { shouldTransformClass(event.context, it) }.forEach { classNode ->
-            obfuscationStrategy.buildDecryptionRoutine(event.context, classNode)
+            obfuscationStrategy.buildDecryptionRoutine(event.context, classNode) {
+                return@buildDecryptionRoutine shouldTransformClass(event.context, it)
+            }
         }
         event.context.classSource.iterate().filter { shouldTransformClass(event.context, it) }.forEach { classNode ->
             obfuscationStrategy.initializeKeyChunkFields(classNode)

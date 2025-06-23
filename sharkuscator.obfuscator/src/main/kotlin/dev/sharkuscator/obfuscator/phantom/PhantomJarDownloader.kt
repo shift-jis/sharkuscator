@@ -3,12 +3,14 @@ package dev.sharkuscator.obfuscator.phantom
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import com.google.common.io.ByteStreams
+import org.clyze.jphantom.Driver
 import org.clyze.jphantom.JPhantom
 import org.clyze.jphantom.Options
 import org.clyze.jphantom.Phantoms
 import org.clyze.jphantom.access.ClassAccessStateMachine
 import org.clyze.jphantom.access.FieldAccessStateMachine
 import org.clyze.jphantom.access.MethodAccessStateMachine
+import org.clyze.jphantom.adapters.PhantomAdder
 import org.clyze.jphantom.constraints.Constraint
 import org.mapleir.asm.ClassHelper
 import org.mapleir.asm.ClassNode
@@ -21,9 +23,10 @@ import java.net.URL
 
 
 class PhantomJarDownloader(private val asmFactory: ASMFactory<ClassNode>, private val jarInfo: JarInfo) : AbstractJarDownloader<ClassNode>(asmFactory) {
-    val generatedClassContent: DataContainer<ClassNode> = JarContents.ClassNodeContainer()
     private val isUsingPhantomFactory: Boolean
         get() = asmFactory is PhantomASMFactory
+
+    val generatedClassContent: DataContainer<ClassNode> = JarContents.ClassNodeContainer()
 
     override fun download() {
         contents = LocateableJarContents(URL(jarInfo.formattedURL()))
@@ -39,16 +42,6 @@ class PhantomJarDownloader(private val asmFactory: ASMFactory<ClassNode>, privat
         }
 
         if (isUsingPhantomFactory) {
-            try {
-                val optionsLoggerField = Options::class.java.getDeclaredField("logger")
-                optionsLoggerField.setAccessible(true)
-
-                val jphantomLogger = optionsLoggerField.get(null) as Logger
-                jphantomLogger.level = Level.OFF
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-            }
-
             Options.V().setLogLevel(Level.OFF)
             Options.V().isSoftFail = true
             Options.V().javaVersion = 8
