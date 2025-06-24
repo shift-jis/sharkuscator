@@ -1,5 +1,6 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators
 
+import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
@@ -38,7 +39,7 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
         val selectedHostClassNode = event.context.classSource.iterate().filter { !it.shouldSkipTransform() && shouldTransformClass(event.context, it) }.random() ?: return
         invokerHostClassName = selectedHostClassNode.name
 
-        val invokerMethodNameGenerator = event.context.resolveDictionary<org.mapleir.asm.MethodNode, ClassNode>(org.mapleir.asm.MethodNode::class.java)
+        val invokerMethodNameGenerator = ObfuscationContext.resolveDictionary<org.mapleir.asm.MethodNode, ClassNode>(org.mapleir.asm.MethodNode::class.java)
         generatedInvokerMethodName = invokerMethodNameGenerator.generateNextName(null)
 
         val newInvokerMethodAsmNode = createInvokerMethodNode(invokerHostClassName, generatedInvokerMethodName)

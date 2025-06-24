@@ -2,7 +2,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategie
 
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.addField
-import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
+import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
@@ -40,7 +40,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
     private val cipher = Cipher.getInstance("DES/CBC/PKCS5Padding")
 
     override fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
-        constantArrayGenerator.createAndAddArrayField(obfuscationContext, targetClassNode)
+        constantArrayGenerator.createAndAddArrayField(targetClassNode)
         keyDerivationSeedByClass.computeIfAbsent(targetClassNode) { Random.nextLong() }
     }
 
@@ -59,7 +59,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
 
         constantArrayGenerator.createAndAddArrayGetterMethod(targetClassNode)
 
-        val keyFieldNameGenerator = obfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java)
+        val keyFieldNameGenerator = ObfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java)
         val decryptionKeyBytes = deriveKeyFromSeed(keyDerivationSeedByClass.getValue(targetClassNode))
 
         val keyByteIndexChunks = (0..decryptionKeyBytes.size - 1).chunked((1..decryptionKeyBytes.size - 1).random())
@@ -78,7 +78,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         val decryptionLoopStartLabel = LabelNode()
         val switchDefaultLabel = LabelNode()
 
-        val staticInitializer = targetClassNode.getOrCreateStaticInitializer()
+        val staticInitializer = targetClassNode.resolveStaticInitializer()
         staticInitializer.node.instructions.insert(buildInstructionList {
             add(constantArrayGenerator.createInitializationInstructions(targetClassNode) { arrayFieldMetadataList ->
                 val initialChunkLength = arrayFieldMetadataList.firstNotNullOfOrNull {
@@ -253,7 +253,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             val loopBeginLabelNode = LabelNode()
             val loopEndLabelNode = LabelNode()
 
-            val staticInitializer = keyChunk.classNode.getOrCreateStaticInitializer()
+            val staticInitializer = keyChunk.classNode.resolveStaticInitializer()
             staticInitializer.node.instructions.insert(buildInstructionList {
                 // 1. long j = keyDerivationSeed;
                 add(longPushInstruction(keyDerivationSeed))

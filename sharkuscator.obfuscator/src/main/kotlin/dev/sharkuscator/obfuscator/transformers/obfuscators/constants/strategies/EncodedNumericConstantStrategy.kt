@@ -12,7 +12,10 @@ import org.objectweb.asm.tree.MethodInsnNode
 import kotlin.random.Random
 
 class EncodedNumericConstantStrategy : NumericConstantObfuscationStrategy {
-    override fun replaceInstructions(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
+    override fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
+    }
+
+    override fun replaceInstructions(targetClassNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
         val obfuscatedNumber = obfuscateNumber(originalValue, Random.nextInt())
         when (originalValue) {
             is Int, is Byte, is Short -> {

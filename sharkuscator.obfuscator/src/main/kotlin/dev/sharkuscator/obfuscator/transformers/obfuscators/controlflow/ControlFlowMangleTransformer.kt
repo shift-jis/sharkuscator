@@ -13,7 +13,7 @@ object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfigura
     private val mangleMutators = mutableListOf(
 //        SwitchMangleMutator,
         JumpToTableSwitchMutator,
-        UnconditionalJumpMutator,
+//        UnconditionalJumpMutator,
     )
 
     @EventHandler

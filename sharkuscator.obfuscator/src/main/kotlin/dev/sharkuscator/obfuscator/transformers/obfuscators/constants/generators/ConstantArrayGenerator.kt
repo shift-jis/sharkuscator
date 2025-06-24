@@ -49,17 +49,17 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
     }
     private val getterMethodDescriptor = "(Ljava/lang/String;)$arrayJvmTypeDescriptor"
 
-    fun createAndAddArrayField(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode, requestedFieldCount: Int = maxFieldsPerClass) {
+    fun createAndAddArrayField(targetClassNode: ClassNode, requestedFieldCount: Int = maxFieldsPerClass) {
         if (generatedArrayFieldsByClass.containsKey(targetClassNode) && generatedArrayFieldsByClass.getValue(targetClassNode).size >= maxFieldsPerClass) {
             return
         }
 
-        val arrayGetterMethodName = obfuscationContext.resolveDictionary<MethodNode, ClassNode>(MethodNode::class.java).generateNextName(targetClassNode)
+        val arrayGetterMethodName = ObfuscationContext.resolveDictionary<MethodNode, ClassNode>(MethodNode::class.java).generateNextName(targetClassNode)
         arrayGetterMethodNameByClass.computeIfAbsent(targetClassNode) { arrayGetterMethodName }
 
         val generatedFieldsForClass = generatedArrayFieldsByClass.computeIfAbsent(targetClassNode) { mutableListOf() }
         (1..requestedFieldCount.coerceIn(1, maxFieldsPerClass)).forEach { fieldIndex ->
-            val arrayFieldName = obfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java).generateNextName(targetClassNode)
+            val arrayFieldName = ObfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java).generateNextName(targetClassNode)
             targetClassNode.addField(FieldNode(createFieldNode(CONSTANT_ARRAY_FIELD_ACCESS, arrayFieldName, "[$arrayJvmTypeDescriptor").apply {
                 generatedFieldsForClass.add(ArrayFieldMetadata(this, fieldIndex - 1, mutableMapOf()))
                 if (targetClassNode.isSpongeMixin()) {

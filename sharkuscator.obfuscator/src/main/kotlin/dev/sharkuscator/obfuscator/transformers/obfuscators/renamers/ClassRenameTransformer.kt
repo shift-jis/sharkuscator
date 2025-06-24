@@ -3,6 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
+import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
@@ -53,7 +54,7 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
 
         var classMapping = classMappingDictionary.generateNextName(targetPackagePath)
         if (classMappingDictionary.generatesUnsafeNames() && (event.anytypeNode.containsMainMethod() || event.anytypeNode.isDeclaredAsAnnotation())) {
-            classMapping = event.context.defaultDictionary.generateNextName(targetPackagePath)
+            classMapping = ObfuscationContext.defaultDictionary.generateNextName(targetPackagePath)
         }
 
         ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.name, "$targetPackagePath${configuration.namePrefix.substringAfterLast("/")}$classMapping")

@@ -19,15 +19,17 @@ class ObfuscationContext(
     val configuration: GsonConfiguration, val exclusions: ExclusionRule,
     val isInputRecognizedAsMinecraftMod: Boolean
 ) {
-    val defaultDictionary = DictionaryFactory.createDefaultDictionary<Any>()
+    companion object {
+        val defaultDictionary = DictionaryFactory.createDefaultDictionary<Any>()
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T, E> resolveDictionary(targetType: Class<T>): MappingDictionary<E> {
-        return when (targetType.name) {
-            "org.mapleir.asm.MethodNode" -> MethodRenameTransformer.methodMappingDictionary
-            "org.mapleir.asm.FieldNode" -> FieldRenameTransformer.fieldMappingDictionary
-            "org.mapleir.asm.ClassNode" -> ClassRenameTransformer.classMappingDictionary
-            else -> defaultDictionary
-        } as MappingDictionary<E>
+        @Suppress("UNCHECKED_CAST")
+        fun <T, E> resolveDictionary(targetType: Class<T>): MappingDictionary<E> {
+            return when (targetType.name) {
+                "org.mapleir.asm.MethodNode" -> MethodRenameTransformer.methodMappingDictionary
+                "org.mapleir.asm.FieldNode" -> FieldRenameTransformer.fieldMappingDictionary
+                "org.mapleir.asm.ClassNode" -> ClassRenameTransformer.classMappingDictionary
+                else -> defaultDictionary
+            } as MappingDictionary<E>
+        }
     }
 }

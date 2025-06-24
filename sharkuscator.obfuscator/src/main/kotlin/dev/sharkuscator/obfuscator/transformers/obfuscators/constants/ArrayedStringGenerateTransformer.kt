@@ -3,7 +3,7 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.getOrCreateStaticInitializer
+import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.isConstructor
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
@@ -32,7 +32,7 @@ object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfigurati
             return
         }
 
-        constantArrayGenerator.createAndAddArrayField(event.context, targetClassNode)
+        constantArrayGenerator.createAndAddArrayField(targetClassNode)
         findNonEmptyStrings(targetMethodNode.instructions).forEach { (instruction, string) ->
             val instructionString = constantArrayGenerator.addValueToRandomArray(targetClassNode, instruction, string) {
                 return@addValueToRandomArray this
@@ -50,7 +50,7 @@ object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfigurati
         }
 
         event.context.classSource.iterate().filter { !event.context.exclusions.excluded(it) && !exclusions.excluded(it) }.forEach { classNode ->
-            val staticInitializer = classNode.getOrCreateStaticInitializer()
+            val staticInitializer = classNode.resolveStaticInitializer()
             staticInitializer.node.instructions.insert(constantArrayGenerator.createInitializationInstructions(classNode) { arrayFieldMetadataList ->
             })
             constantArrayGenerator.createAndAddArrayGetterMethod(classNode)

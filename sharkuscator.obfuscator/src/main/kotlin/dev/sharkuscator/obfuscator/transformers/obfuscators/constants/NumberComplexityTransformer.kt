@@ -21,7 +21,7 @@ object NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("
         }
 
         findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
-            obfuscationStrategy.replaceInstructions(event.context, event.anytypeNode.owner, methodNode.instructions, instruction, value)
+            obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, methodNode.instructions, instruction, value)
         }
     }
 

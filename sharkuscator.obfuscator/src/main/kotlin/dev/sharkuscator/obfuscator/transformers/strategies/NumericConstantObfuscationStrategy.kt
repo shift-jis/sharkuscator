@@ -6,7 +6,9 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 
 interface NumericConstantObfuscationStrategy {
-    fun replaceInstructions(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number)
+    fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode)
+
+    fun replaceInstructions(targetClassNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number)
 
     fun obfuscateNumber(originalValue: Number, keyNumber: Number = 0): Pair<Number, Number>
 }
