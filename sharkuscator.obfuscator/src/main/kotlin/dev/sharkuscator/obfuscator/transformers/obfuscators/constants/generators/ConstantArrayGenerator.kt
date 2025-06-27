@@ -1,6 +1,5 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators
 
-import dev.sharkuscator.annotations.LightObfuscation
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.extensions.addField
@@ -13,11 +12,10 @@ import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private val maxFieldsPerClass: Int = 10) {
+class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private val maxFieldsPerClass: Int = 5) {
     companion object {
         private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_TRANSIENT
         private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC
@@ -83,9 +81,10 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
 
             val switchDefaultLabel = LabelNode()
 
-            visibleAnnotations = mutableListOf(AnnotationNode(Type.getDescriptor(LightObfuscation::class.java)))
+//            visibleAnnotations = mutableListOf(AnnotationNode(Type.getDescriptor(LightObfuscation::class.java)))
             if (targetClassNode.isSpongeMixin()) {
-                visibleAnnotations.add(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
+                visibleAnnotations = mutableListOf(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
+//                visibleAnnotations.add(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
             }
 
             tryCatchBlocks.add(TryCatchBlockNode(blockStartLabel, blockEndLabel, catchHandlerLabel, "java/lang/IndexOutOfBoundsException"))
@@ -242,7 +241,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                     val typeOperand = when {
                         arrayElementType.isAssignableFrom(Int::class.java) -> Opcodes.T_INT
                         arrayElementType.isAssignableFrom(Long::class.java) -> Opcodes.T_LONG
-                        arrayElementType.isAssignableFrom(Byte::class.java)-> Opcodes.T_BYTE
+                        arrayElementType.isAssignableFrom(Byte::class.java) -> Opcodes.T_BYTE
                         arrayElementType.isAssignableFrom(Short::class.java) -> Opcodes.T_SHORT
                         else -> throw IllegalStateException("Unsupported array element type")
                     }

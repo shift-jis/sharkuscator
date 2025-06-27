@@ -2,19 +2,20 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.*
+import dev.sharkuscator.obfuscator.extensions.isConstructor
+import dev.sharkuscator.obfuscator.extensions.isDeclaredAsInterface
+import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
+import dev.sharkuscator.obfuscator.extensions.isStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
 
 object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("SyntheticAccess", TransformerConfiguration::class.java) {
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformClass(event.context, event.anytypeNode) || event.anytypeNode.isSpongeMixin()) {
+        if (!isEligibleForExecution() || !shouldTransformClass(event.obfuscationContext, event.anytypeNode) || event.anytypeNode.isSpongeMixin()) {
             return
         }
 
@@ -24,7 +25,7 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 
@@ -39,7 +40,7 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformField(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformField(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 

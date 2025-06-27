@@ -11,15 +11,16 @@ import meteordevelopment.orbit.EventHandler
 
 object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfiguration>("ControlFlowMangle", ControlFlowMangleConfiguration::class.java) {
     private val mangleMutators = mutableListOf(
-//        SwitchMangleMutator,
+        ConditionalJumpInversionMutator,
         JumpToTableSwitchMutator,
-//        UnconditionalJumpMutator,
+        SwitchKeyEncryptionMutator
     )
 
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
+        val targetMethodNode = event.anytypeNode.node
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 
@@ -27,12 +28,12 @@ object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfigura
         val applicationChancePercentage = if (event.anytypeNode.isStaticInitializer() || isGeneratedDynamicInvokerMethod) 100 else 60
 
         for (mangleMutator in mangleMutators) {
-            val instructionsToProcess = event.anytypeNode.node.instructions.toArray().filter { instructionNode ->
+            val instructionsToProcess = targetMethodNode.instructions.toArray().filter { instructionNode ->
                 mangleMutator.isApplicableFor(instructionNode, if (mangleMutator.transformerStrength() == TransformerStrength.LIGHT) 40 else applicationChancePercentage)
             }
 
             instructionsToProcess.forEach { instructionNode ->
-                mangleMutator.processInstruction(event.anytypeNode.node.instructions, instructionNode)
+                mangleMutator.processInstruction(targetMethodNode.instructions, instructionNode)
             }
         }
     }

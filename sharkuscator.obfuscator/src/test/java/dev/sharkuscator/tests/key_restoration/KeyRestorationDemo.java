@@ -2,7 +2,7 @@ package dev.sharkuscator.tests.key_restoration;
 
 import java.util.Random;
 
-public class KeyRestoration {
+public class KeyRestorationDemo {
     private static final Random RANDOM_INSTANCE = new Random();
 
     private static final String[] PRIMARY_STRINGS;

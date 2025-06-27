@@ -1,12 +1,13 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-object SwitchMangleMutator : ControlFlowMangleMutator {
+object SwitchKeyEncryptionMutator : ControlFlowMangleMutator {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is LookupSwitchInsnNode && targetInstruction !is TableSwitchInsnNode) {
             return
@@ -22,9 +23,6 @@ object SwitchMangleMutator : ControlFlowMangleMutator {
         }
         obfuscatedCaseData.sortBy { it.first }
 
-        val newInstructionSequence = InsnList()
-
-        val obfuscatedSwitchEntryPoint = LabelNode()
         val newSwitchDefaultHandlerLabel = LabelNode()
         val originalDefaultTargetLabel = when (targetInstruction) {
             is LookupSwitchInsnNode -> targetInstruction.dflt
@@ -32,21 +30,20 @@ object SwitchMangleMutator : ControlFlowMangleMutator {
             else -> throw IllegalStateException("Unreachable: originalSwitchNode type already checked")
         }
 
-        newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, obfuscatedSwitchEntryPoint))
+        val newSwitchLabels = obfuscatedCaseData.map { it.second }.toTypedArray()
+        val newSwitchKeys = obfuscatedCaseData.map { it.first }.toIntArray()
 
-        newInstructionSequence.add(newSwitchDefaultHandlerLabel)
-        newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, originalDefaultTargetLabel))
-
-        newInstructionSequence.add(obfuscatedSwitchEntryPoint)
-        newInstructionSequence.add(integerPushInstruction(xorOperand))
-        newInstructionSequence.add(InsnNode(Opcodes.IXOR))
-
-        obfuscatedCaseData.forEach { (_, intermediateLabel, originalCaseTargetLabel) ->
-            newInstructionSequence.add(intermediateLabel)
-            newInstructionSequence.add(JumpInsnNode(Opcodes.GOTO, originalCaseTargetLabel))
-        }
-
-        instructions.insert(targetInstruction, newInstructionSequence)
+        instructions.insert(targetInstruction, buildInstructionList {
+            add(integerPushInstruction(xorOperand))
+            add(InsnNode(Opcodes.IXOR))
+            add(LookupSwitchInsnNode(newSwitchDefaultHandlerLabel, newSwitchKeys, newSwitchLabels))
+            obfuscatedCaseData.forEach { (_, intermediateLabel, originalCaseTargetLabel) ->
+                add(intermediateLabel)
+                add(JumpInsnNode(Opcodes.GOTO, originalCaseTargetLabel))
+            }
+            add(newSwitchDefaultHandlerLabel)
+            add(JumpInsnNode(Opcodes.GOTO, originalDefaultTargetLabel))
+        })
         instructions.remove(targetInstruction)
     }
 
@@ -58,8 +55,8 @@ object SwitchMangleMutator : ControlFlowMangleMutator {
     private fun extractSwitchCases(switchNode: AbstractInsnNode): MutableList<Pair<Int, LabelNode>> {
         return when (switchNode) {
             is LookupSwitchInsnNode -> {
-                switchNode.keys.indices.mapTo(mutableListOf()) { i ->
-                    switchNode.keys[i] to switchNode.labels[i]
+                switchNode.keys.indices.mapTo(mutableListOf()) { index ->
+                    switchNode.keys[index] to switchNode.labels[index]
                 }
             }
 

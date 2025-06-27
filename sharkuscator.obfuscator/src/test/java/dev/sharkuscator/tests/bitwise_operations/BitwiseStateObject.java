@@ -3,17 +3,15 @@ package dev.sharkuscator.tests.bitwise_operations;
 import java.util.Vector;
 
 public class BitwiseStateObject implements OperationTarget {
-
-    private static final Object poolLock = new Object();
     private static final int SHIFT_LIMIT_H = 51;
     private static final int SORT_DEPTH_N = 17;
     private static final int POOL_BATCH_L = 128;
 
-    public static int[] staticShiftMap;
     private static final Vector<BitwiseStateObject> instancePool;
     private static final Vector<Object> associatedObjects;
-    private static int initialPoolSize;
+
     private static final long[] staticBitMasks = new long[64];
+    public static int[] staticShiftMap;
 
     static {
         long bit = 1L;
@@ -21,10 +19,11 @@ public class BitwiseStateObject implements OperationTarget {
             staticBitMasks[i] = bit;
             bit <<= 1;
         }
+
         associatedObjects = new Vector<>();
         instancePool = new Vector<>();
+
         populateInitialPool();
-        initialPoolSize = instancePool.size();
         sortInstancePool();
     }
 
@@ -69,7 +68,6 @@ public class BitwiseStateObject implements OperationTarget {
     }
 
     static void setupInitialPoolAndConfigurator(StateConfigurator configurator) {
-        initialPoolSize = instancePool.size();
         sortInstancePool();
         configurator.applyConfiguratorSettingsPhase1();
     }

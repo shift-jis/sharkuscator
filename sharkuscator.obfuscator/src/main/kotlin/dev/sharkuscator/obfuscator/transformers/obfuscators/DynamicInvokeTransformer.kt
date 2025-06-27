@@ -51,7 +51,7 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode) || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode) || event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor()) {
             return
         }
 
@@ -63,7 +63,7 @@ object DynamicInvokeTransformer : BaseTransformer<TransformerConfiguration>("Dyn
         event.anytypeNode.node.instructions.filterIsInstance<MethodInsnNode>().filter { invokeOpcodes.contains(it.opcode) }.forEach { instruction ->
             val shouldApplyBasedOnChance = Random.nextInt(0, 100) <= 80
             val isArrayOrInnerOrJavaPackage = instruction.owner.startsWith("[") || instruction.owner.contains("$") || instruction.owner.startsWith("java/")
-            if (event.context.classSource.findClassNode(instruction.owner)?.isSpongeMixin() ?: false || exclusions.excluded(instruction.owner) || isArrayOrInnerOrJavaPackage || !shouldApplyBasedOnChance) {
+            if (event.obfuscationContext.classSource.findClassNode(instruction.owner)?.isSpongeMixin() ?: false || exclusions.excluded(instruction.owner) || isArrayOrInnerOrJavaPackage || !shouldApplyBasedOnChance) {
                 return@forEach
             }
 

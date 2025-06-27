@@ -19,7 +19,7 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val targetMethodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 
@@ -27,7 +27,7 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
             return
         }
 
-        obfuscationStrategy.initialization(event.context, event.anytypeNode.owner)
+        obfuscationStrategy.initialization(event.obfuscationContext, event.anytypeNode.owner)
         findNonEmptyStrings(targetMethodNode.instructions).forEach { (instruction, string) ->
             obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, targetMethodNode.instructions, instruction, string)
         }

@@ -2,7 +2,6 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
 import org.objectweb.asm.Opcodes

@@ -3,8 +3,8 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.isConstructor
+import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
@@ -24,7 +24,7 @@ object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfigurati
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val targetClassNode = event.anytypeNode.owner
         val targetMethodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 

@@ -2,10 +2,15 @@ package dev.sharkuscator.obfuscator.utilities
 
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.analysis.Analyzer
+import org.objectweb.asm.tree.analysis.BasicValue
+import org.objectweb.asm.tree.analysis.Frame
 import kotlin.random.Random
 
 object AssemblyHelper {
     private const val MAX_OBFUSCATION_RECURSION_DEPTH = 1
+    private const val STACK_ANALYSIS_BUFFER = 50
+
     private val constNumberOpcodesMap = mapOf<Int, Number>(
         Opcodes.ICONST_M1 to -1,
         Opcodes.ICONST_0 to 0,
@@ -28,6 +33,22 @@ object AssemblyHelper {
         Opcodes.BIPUSH to -1,
         Opcodes.SIPUSH to -1,
     )
+
+    fun analyzeStackFrames(classNode: ClassNode, methodNode: MethodNode): Array<Frame<BasicValue>?> {
+        val methodToAnalyze = MethodNode(Opcodes.ASM9, methodNode.access, methodNode.name, methodNode.desc, methodNode.signature, methodNode.exceptions?.toTypedArray())
+        methodNode.accept(methodToAnalyze)
+
+        methodToAnalyze.maxStack += STACK_ANALYSIS_BUFFER
+        val analyzer = Analyzer(SimpleMergeInterpreter)
+
+        try {
+            analyzer.analyze(classNode.name, methodToAnalyze)
+        } finally {
+            methodToAnalyze.maxStack -= STACK_ANALYSIS_BUFFER
+        }
+
+        return analyzer.frames
+    }
 
     fun integerPushInstruction(value: Number): AbstractInsnNode {
         return when (value) {

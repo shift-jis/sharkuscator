@@ -14,20 +14,22 @@ import dev.sharkuscator.obfuscator.hierarchies.HierarchyProvider
 import dev.sharkuscator.obfuscator.phantom.PhantomASMFactory
 import dev.sharkuscator.obfuscator.phantom.PhantomJarDownloader
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.GotoChainOptimizeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SignatureInflationTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.LongConstantEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberMaskingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowMangleTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowShuffleTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.FieldRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.MethodRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRenameTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.VariableRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ParameterRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ReflectRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.VariableRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import dev.sharkuscator.obfuscator.utilities.LoggerConfigurator
@@ -69,7 +71,9 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         ResourceRenameTransformer,
         ReflectRenameTransformer,
 
-        LongConstantEncryptionTransformer,
+        NumberMaskingTransformer,
+        GotoChainOptimizeTransformer,
+        ControlFlowShuffleTransformer,
         ControlFlowMangleTransformer,
         StringEncryptionTransformer,
         NumberComplexityTransformer,

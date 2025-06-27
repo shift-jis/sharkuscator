@@ -4,14 +4,11 @@ import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.obfuscatedNumericPushInstructions
 import org.mapleir.asm.ClassNode
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
 import kotlin.random.Random
 
-class EncodedNumericConstantStrategy : NumericConstantObfuscationStrategy {
+class EncodedNumberConstantStrategy : NumericConstantObfuscationStrategy {
     override fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
     }
 
@@ -28,11 +25,11 @@ class EncodedNumericConstantStrategy : NumericConstantObfuscationStrategy {
                 instructions.remove(targetInstruction)
             }
 
-            is Double -> {
-                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Double", "longBitsToDouble", "(J)D"))
-                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
-                instructions.remove(targetInstruction)
-            }
+//            is Double -> {
+//                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Double", "longBitsToDouble", "(J)D"))
+//                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
+//                instructions.remove(targetInstruction)
+//            }
 
 //            is Float -> {
 //                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Float", "intBitsToFloat", "(J)D"))

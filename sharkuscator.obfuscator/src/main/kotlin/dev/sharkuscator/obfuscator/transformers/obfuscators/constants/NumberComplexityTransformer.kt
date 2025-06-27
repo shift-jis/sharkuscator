@@ -5,18 +5,18 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.EncodedNumericConstantStrategy
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.EncodedNumberConstantStrategy
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
 object NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("NumberComplexity", TransformerConfiguration::class.java) {
-    private val obfuscationStrategy = EncodedNumericConstantStrategy()
+    private val obfuscationStrategy = EncodedNumberConstantStrategy()
 
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
         val methodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode) || event.anytypeNode.isAbstract || methodNode.instructions == null) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode) || event.anytypeNode.isAbstract || methodNode.instructions == null) {
             return
         }
 

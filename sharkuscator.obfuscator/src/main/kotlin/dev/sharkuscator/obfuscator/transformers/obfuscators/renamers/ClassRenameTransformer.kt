@@ -39,7 +39,7 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformClass(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformClass(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 

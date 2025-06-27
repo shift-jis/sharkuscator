@@ -1,16 +1,13 @@
 package dev.sharkuscator.obfuscator.phantom
 
 import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
 import com.google.common.io.ByteStreams
-import org.clyze.jphantom.Driver
 import org.clyze.jphantom.JPhantom
 import org.clyze.jphantom.Options
 import org.clyze.jphantom.Phantoms
 import org.clyze.jphantom.access.ClassAccessStateMachine
 import org.clyze.jphantom.access.FieldAccessStateMachine
 import org.clyze.jphantom.access.MethodAccessStateMachine
-import org.clyze.jphantom.adapters.PhantomAdder
 import org.clyze.jphantom.constraints.Constraint
 import org.mapleir.asm.ClassHelper
 import org.mapleir.asm.ClassNode

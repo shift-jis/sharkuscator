@@ -4,6 +4,7 @@ import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.addField
 import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.MaskingNumberGenerator
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createFieldNode
@@ -15,13 +16,14 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
 
-class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
+class MaskingNumberObfuscationStrategy : NumericConstantObfuscationStrategy {
     private data class XorKeyMetadata(val keyFieldName: String, val keyOperand: Number, var isInitialized: Boolean)
 
     private val keyMetadataByClass = mutableMapOf<ClassNode, MutableMap<Class<out Number>, XorKeyMetadata>>()
+    private val maskingNumberGenerator = MaskingNumberGenerator()
 
     override fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
-        // No-op. Key generation is now done on-demand to improve efficiency.
+        maskingNumberGenerator.generateMaskingClasses(obfuscationContext)
     }
 
     override fun replaceInstructions(targetClassNode: ClassNode, instructions: InsnList, targetInstruction: AbstractInsnNode, originalValue: Number) {
@@ -30,21 +32,17 @@ class XorNumericObfuscationStrategy : NumericConstantObfuscationStrategy {
         }
 
         val keyFieldNameGenerator = ObfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java)
-        val xorKeyMetadata = keyMetadataByClass.computeIfAbsent(targetClassNode) { mutableMapOf() }.computeIfAbsent(originalValue::class.java) {
-            val keyOperand = when (originalValue) {
-                is Int, is Byte, is Short -> Random.nextInt()
-                is Long -> Random.nextLong()
-                else -> 0
-            }
-            XorKeyMetadata(keyFieldNameGenerator.generateNextName(targetClassNode), keyOperand, false)
+        val xorKeyMetadata = keyMetadataByClass.computeIfAbsent(targetClassNode) { mutableMapOf() }.computeIfAbsent(Long::class.java) {
+            XorKeyMetadata(keyFieldNameGenerator.generateNextName(targetClassNode), Random.nextLong(), false)
         }
         val obfuscatedNumber = obfuscateNumber(originalValue, xorKeyMetadata.keyOperand)
 
         when (originalValue) {
             is Int, is Byte, is Short -> {
-                createAndInitializeKeyField(targetClassNode, xorKeyMetadata, "I")
+                createAndInitializeKeyField(targetClassNode, xorKeyMetadata, "J")
                 instructions.insert(targetInstruction, buildInstructionList {
-                    add(FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, xorKeyMetadata.keyFieldName, "I"))
+                    add(FieldInsnNode(Opcodes.GETSTATIC, targetClassNode.name, xorKeyMetadata.keyFieldName, "J"))
+                    add(InsnNode(Opcodes.L2I))
                     add(integerPushInstruction(obfuscatedNumber.first.toInt()))
                     add(InsnNode(Opcodes.IXOR))
                 })

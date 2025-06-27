@@ -10,7 +10,7 @@ object SourceStripperTransformer : BaseTransformer<TransformerConfiguration>("So
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!shouldTransformClass(event.context, event.anytypeNode)) {
+        if (!shouldTransformClass(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 

@@ -36,7 +36,7 @@ object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resourc
         }
 
         findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
-            if (event.context.jarContents.resourceContents.any { it.name == string }) {
+            if (event.obfuscationContext.jarContents.resourceContents.any { it.name == string }) {
                 if (!resourceNameMappings.containsKey(string)) {
                     resourceNameMappings[string] = "${configuration.namePrefix}${resourceMappingDictionary.generateNextName(null)}"
                 }

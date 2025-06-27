@@ -2,7 +2,6 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.isDeclaredVolatile
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import meteordevelopment.orbit.EventHandler
@@ -58,7 +57,7 @@ object SignatureInflationTransformer : BaseTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 
@@ -75,7 +74,7 @@ object SignatureInflationTransformer : BaseTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     private fun onFieldTransform(event: TransformerEvents.FieldTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformField(event.context, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformField(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 

@@ -2,8 +2,8 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategie
 
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.extensions.addField
-import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
+import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
