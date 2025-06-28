@@ -11,9 +11,10 @@ import meteordevelopment.orbit.EventHandler
 
 object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfiguration>("ControlFlowMangle", ControlFlowMangleConfiguration::class.java) {
     private val mangleMutators = mutableListOf(
+        GotoChainOptimizeMutator,
         ConditionalJumpInversionMutator,
         JumpToTableSwitchMutator,
-        SwitchKeyEncryptionMutator
+        SwitchKeyEncryptionMutator,
     )
 
     @EventHandler
@@ -29,7 +30,7 @@ object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfigura
 
         for (mangleMutator in mangleMutators) {
             val instructionsToProcess = targetMethodNode.instructions.toArray().filter { instructionNode ->
-                mangleMutator.isApplicableFor(instructionNode, if (mangleMutator.transformerStrength() == TransformerStrength.LIGHT) 40 else applicationChancePercentage)
+                mangleMutator.isApplicableFor(instructionNode, applicationChancePercentage)
             }
 
             instructionsToProcess.forEach { instructionNode ->

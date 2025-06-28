@@ -24,7 +24,7 @@ object ControlFlowShuffleTransformer : BaseTransformer<TransformerConfiguration>
     }
 
     override fun transformerStrength(): TransformerStrength {
-        return TransformerStrength.MODERATE
+        return TransformerStrength.LIGHT
     }
 
     private fun shuffleControlFlow(targetMethodNode: MethodNode, recursionDepth: Int = 0) {

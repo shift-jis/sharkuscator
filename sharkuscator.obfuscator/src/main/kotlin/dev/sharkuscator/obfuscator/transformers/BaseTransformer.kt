@@ -73,7 +73,7 @@ abstract class BaseTransformer<T : TransformerConfiguration>(private val transfo
         if (visibleAnnotations?.any { annotationNode -> Type.getInternalName(LightObfuscation::class.java) == Type.getType(annotationNode.desc).internalName } ?: false) {
             return transformerStrength() == TransformerStrength.LIGHT
         }
-        return !obfuscationContext.exclusions.excluded(fieldNode) && !exclusions.excluded(fieldNode) && !fieldNode.isDeclaredVolatile() && !fieldNode.isDeclaredSynthetic()
+        return !obfuscationContext.exclusions.excluded(fieldNode) && !exclusions.excluded(fieldNode) && !fieldNode.isDeclaredVolatile()
     }
 
     private fun String.toExclusionRegexPattern(): Regex {

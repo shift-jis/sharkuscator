@@ -22,7 +22,7 @@ object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("Parame
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 

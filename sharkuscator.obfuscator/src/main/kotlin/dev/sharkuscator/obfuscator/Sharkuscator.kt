@@ -14,7 +14,6 @@ import dev.sharkuscator.obfuscator.hierarchies.HierarchyProvider
 import dev.sharkuscator.obfuscator.phantom.PhantomASMFactory
 import dev.sharkuscator.obfuscator.phantom.PhantomJarDownloader
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.GotoChainOptimizeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SignatureInflationTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
@@ -71,11 +70,10 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         ResourceRenameTransformer,
         ReflectRenameTransformer,
 
-        NumberMaskingTransformer,
-        GotoChainOptimizeTransformer,
         ControlFlowShuffleTransformer,
         ControlFlowMangleTransformer,
         StringEncryptionTransformer,
+        NumberMaskingTransformer,
         NumberComplexityTransformer,
         SignatureInflationTransformer,
         SyntheticAccessTransformer,

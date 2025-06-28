@@ -13,7 +13,7 @@ import org.objectweb.asm.tree.LabelNode
 object ConditionalJumpInversionMutator : ControlFlowMangleMutator {
     override fun processInstruction(instructions: InsnList, targetInstruction: AbstractInsnNode) {
         if (targetInstruction !is JumpInsnNode) {
-            ObfuscatorServices.sharkLogger.error("ReverseJumpMutator received an instruction it cannot process, despite canProcess being true.")
+            ObfuscatorServices.sharkLogger.error("ConditionalJumpInversionMutator received an instruction it cannot process, despite canProcess being true.")
             return
         }
 

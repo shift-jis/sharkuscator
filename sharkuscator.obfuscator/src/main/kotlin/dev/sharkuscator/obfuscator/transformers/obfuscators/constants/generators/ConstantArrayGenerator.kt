@@ -17,8 +17,8 @@ import kotlin.random.Random
 
 class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private val maxFieldsPerClass: Int = 5) {
     companion object {
-        private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_TRANSIENT
-        private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC
+        private const val CONSTANT_GETTER_METHOD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_BRIDGE + Opcodes.ACC_SYNTHETIC
+        private const val CONSTANT_ARRAY_FIELD_ACCESS = Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC
         private const val INSTRUCTION_CHAR_OFFSET = 0xAB00
     }
 
@@ -155,7 +155,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
     }
 
     fun addValueToRandomArray(targetClassNode: ClassNode, instruction: AbstractInsnNode, element: T, chunkCount: Int = 1, transformer: T.() -> T): String {
-        val instructionString = StringBuilder().appendJunk(0..10)
+        val instructionString = StringBuilder().appendJunk(0..5)
 
         when (element) {
             is String -> {
@@ -165,11 +165,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                     randomFieldMetadata.computeIfAbsent(element).add(instruction to element.transformer())
                     instructionString.append((randomFieldMetadata.fieldIndex + INSTRUCTION_CHAR_OFFSET).toChar())
                     instructionString.append((arrayElementIndex + INSTRUCTION_CHAR_OFFSET).toChar())
-                    (0..Random.nextInt(0, 10)).forEach { it ->
-                        instructionString.append((Random.nextInt(0, 20) + INSTRUCTION_CHAR_OFFSET).toChar())
-                        instructionString.append((Random.nextInt(5000, 9999) + INSTRUCTION_CHAR_OFFSET).toChar())
-                    }
-                    return instructionString.appendJunk(0..10).toString()
+                    return instructionString.appendJunk(0..5).toString()
                 }
 
                 var remainder = element.length % chunkCount
@@ -183,6 +179,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                     randomFieldMetadata.computeIfAbsent(element).add(instruction to chunkValue.transformer())
                     instructionString.append((randomFieldMetadata.fieldIndex + INSTRUCTION_CHAR_OFFSET).toChar())
                     instructionString.append((arrayElementIndex + INSTRUCTION_CHAR_OFFSET).toChar())
+                    instructionString.appendJunk((0..2))
                     currentPosition += currentChunkSize
                     if (remainder > 0) {
                         remainder--
@@ -219,7 +216,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
             }
         }
 
-        return instructionString.appendJunk(0..10).toString()
+        return instructionString.appendJunk(0..5).toString()
     }
 
     fun createGetterInvocation(targetClassNode: ClassNode, instructionString: String): InsnList {

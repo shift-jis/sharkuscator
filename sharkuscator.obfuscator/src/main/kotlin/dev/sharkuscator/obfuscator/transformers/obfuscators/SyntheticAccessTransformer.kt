@@ -12,15 +12,15 @@ import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
 
 object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("SyntheticAccess", TransformerConfiguration::class.java) {
-    @EventHandler
-    @Suppress("unused")
-    private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformClass(event.obfuscationContext, event.anytypeNode) || event.anytypeNode.isSpongeMixin()) {
-            return
-        }
-
-        event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
-    }
+//    @EventHandler
+//    @Suppress("unused")
+//    private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
+//        if (!isEligibleForExecution() || !shouldTransformClass(event.obfuscationContext, event.anytypeNode) || event.anytypeNode.isSpongeMixin()) {
+//            return
+//        }
+//
+//        event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
+//    }
 
     @EventHandler
     @Suppress("unused")
@@ -30,10 +30,11 @@ object SyntheticAccessTransformer : BaseTransformer<TransformerConfiguration>("S
         }
 
         val targetClassNode = event.anytypeNode.owner
-        if (event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor() || targetClassNode.isSpongeMixin() || targetClassNode.isDeclaredAsInterface()) {
+        if (event.anytypeNode.isStaticInitializer() || event.anytypeNode.isConstructor() || targetClassNode.isDeclaredAsInterface()) {
             return
         }
 
+        event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_BRIDGE
         event.anytypeNode.node.access = event.anytypeNode.node.access or Opcodes.ACC_SYNTHETIC
     }
 

@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import kotlin.random.Random
 
-class EncodedNumberConstantStrategy : NumericConstantObfuscationStrategy {
+class CombineNumberObfuscationStrategy : NumericConstantObfuscationStrategy {
     override fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
     }
 
@@ -24,27 +24,13 @@ class EncodedNumberConstantStrategy : NumericConstantObfuscationStrategy {
                 instructions.insert(targetInstruction, obfuscatedNumericPushInstructions(obfuscatedNumber.first.toLong()))
                 instructions.remove(targetInstruction)
             }
-
-//            is Double -> {
-//                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Double", "longBitsToDouble", "(J)D"))
-//                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
-//                instructions.remove(targetInstruction)
-//            }
-
-//            is Float -> {
-//                instructions.insert(targetInstruction, MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Float", "intBitsToFloat", "(J)D"))
-//                instructions.insert(targetInstruction, LdcInsnNode(obfuscatedNumber.first))
-//                instructions.remove(targetInstruction)
-//            }
         }
     }
 
     override fun obfuscateNumber(originalValue: Number, keyNumber: Number): Pair<Number, Number> {
         return when (originalValue) {
             is Long, is Int, is Byte, is Short -> originalValue.toLong() to keyNumber
-            is Double -> java.lang.Double.doubleToLongBits(originalValue) to keyNumber
-            is Float -> java.lang.Float.floatToIntBits(originalValue) to keyNumber
-            else -> throw IllegalStateException("obfuscateNumber cannot handle type ${originalValue::class.simpleName} (value: $originalValue)")
+            else -> originalValue to keyNumber
         }
     }
 }
