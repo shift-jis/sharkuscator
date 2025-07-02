@@ -1,14 +1,17 @@
 package dev.sharkuscator.obfuscator.utilities
 
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 import org.objectweb.asm.tree.analysis.Analyzer
 import org.objectweb.asm.tree.analysis.BasicValue
 import org.objectweb.asm.tree.analysis.Frame
 import kotlin.random.Random
 
+
 object AssemblyHelper {
     private const val MAX_OBFUSCATION_RECURSION_DEPTH = 1
+    private const val INJECTION_SAFETY_PADDING = 5
     private const val STACK_ANALYSIS_BUFFER = 50
 
     private val constNumberOpcodesMap = mapOf<Int, Number>(
@@ -33,6 +36,65 @@ object AssemblyHelper {
         Opcodes.BIPUSH to -1,
         Opcodes.SIPUSH to -1,
     )
+
+    fun invertJumpCondition(opcode: Int): Int {
+        return when (opcode) {
+            Opcodes.IFNE -> Opcodes.IFEQ
+            Opcodes.IFEQ -> Opcodes.IFNE
+            Opcodes.IFGE -> Opcodes.IFLT
+            Opcodes.IFGT -> Opcodes.IFLE
+            Opcodes.IFLE -> Opcodes.IFGT
+            Opcodes.IFLT -> Opcodes.IFGE
+            Opcodes.IFNONNULL -> Opcodes.IFNULL
+            Opcodes.IFNULL -> Opcodes.IFNONNULL
+            Opcodes.IF_ACMPEQ -> Opcodes.IF_ACMPNE
+            Opcodes.IF_ACMPNE -> Opcodes.IF_ACMPEQ
+            Opcodes.IF_ICMPEQ -> Opcodes.IF_ICMPNE
+            Opcodes.IF_ICMPNE -> Opcodes.IF_ICMPEQ
+            Opcodes.IF_ICMPGE -> Opcodes.IF_ICMPLT
+            Opcodes.IF_ICMPGT -> Opcodes.IF_ICMPLE
+            Opcodes.IF_ICMPLE -> Opcodes.IF_ICMPGT
+            Opcodes.IF_ICMPLT -> Opcodes.IF_ICMPGE
+            else -> throw IllegalStateException(String.format("Unable to reverse jump opcode: %d", opcode))
+        }
+    }
+
+    private fun getFirstAvailableLocalVarIndex(methodNode: MethodNode): Int {
+        var nextIndex = if ((methodNode.access and Opcodes.ACC_STATIC) != 0) 0 else 1
+        Type.getArgumentTypes(methodNode.desc).forEach { argType ->
+            nextIndex += argType.size
+        }
+        return nextIndex
+    }
+
+    fun isMethodScopedLocalVar(methodNode: MethodNode, varIndex: Int): Boolean {
+        return varIndex >= getFirstAvailableLocalVarIndex(methodNode)
+    }
+
+    fun isIndexSafeForInjection(localVarUsageRanges: Map<Int, IntRange>, instructionIndex: Int): Boolean {
+        return localVarUsageRanges.values.none { usageRange ->
+            instructionIndex in (usageRange.first - INJECTION_SAFETY_PADDING)..(usageRange.last + INJECTION_SAFETY_PADDING)
+        }
+    }
+
+    fun findLocalVarUsageRanges(methodNode: MethodNode): Map<Int, IntRange> {
+        val localVarRanges = mutableMapOf<Int, IntRange>()
+        methodNode.instructions.filter { it is VarInsnNode }.forEachIndexed { index, instruction ->
+            val varIndex = (instruction as VarInsnNode).`var`
+            if (!isMethodScopedLocalVar(methodNode, varIndex)) {
+                return@forEachIndexed
+            }
+
+            localVarRanges.compute(varIndex) { _, currentRange ->
+                if (currentRange == null) {
+                    IntRange(index, index)
+                } else {
+                    IntRange(minOf(currentRange.first, index), maxOf(currentRange.last, index))
+                }
+            }
+        }
+        return localVarRanges
+    }
 
     fun analyzeStackFrames(classNode: ClassNode, methodNode: MethodNode): Array<Frame<BasicValue>?> {
         val methodToAnalyze = MethodNode(Opcodes.ASM9, methodNode.access, methodNode.name, methodNode.desc, methodNode.signature, methodNode.exceptions?.toTypedArray())

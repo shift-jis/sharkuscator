@@ -20,6 +20,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTrans
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberMaskingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
+import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowFlatteningTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowMangleTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowShuffleTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
@@ -30,6 +31,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneo
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ReflectRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.VariableRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.NopOperationRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
 import dev.sharkuscator.obfuscator.utilities.LoggerConfigurator
 import org.clyze.jphantom.ClassMembers
@@ -70,8 +72,9 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         ResourceRenameTransformer,
         ReflectRenameTransformer,
 
-        ControlFlowShuffleTransformer,
+        ControlFlowFlatteningTransformer,
         ControlFlowMangleTransformer,
+        ControlFlowShuffleTransformer,
         StringEncryptionTransformer,
         NumberMaskingTransformer,
         NumberComplexityTransformer,
@@ -82,6 +85,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
 
         // shrinks
         LocalVariableRemoveTransformer,
+        NopOperationRemoveTransformer,
         SourceStripperTransformer,
     )
 

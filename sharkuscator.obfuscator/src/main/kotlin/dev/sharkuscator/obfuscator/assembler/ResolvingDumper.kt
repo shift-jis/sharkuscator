@@ -64,7 +64,7 @@ class ResolvingDumper(private val obfuscationContext: ObfuscationContext) : Comp
         outputStream.putNextEntry(classEntry)
 
         try {
-            val classWriter = buildClassWriter(obfuscationContext.classSource.classTree, ClassWriter.COMPUTE_FRAMES)
+            val classWriter = buildClassWriter(obfuscationContext.classSource.classTree, ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)
             originalNode.accept(classWriter)
 
             val classWriteEvent = AssemblerEvents.ClassWriteEvent(obfuscationContext, classNode, classWriter.toByteArray())

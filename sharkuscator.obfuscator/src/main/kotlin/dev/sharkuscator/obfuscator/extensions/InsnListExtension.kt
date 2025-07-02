@@ -6,14 +6,14 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 
 
-fun InsnList.chunkedRandomly(sizeRange: IntRange): MutableList<MutableList<AbstractInsnNode>> {
-    val instructionChunks = mutableListOf<MutableList<AbstractInsnNode>>()
+fun InsnList.chunkedRandomly(sizeRange: IntRange): MutableList<InsnList> {
+    val instructionChunks = mutableListOf<InsnList>()
     var nextChunkSize = Random.nextInt(sizeRange)
 
     for (instruction in this) {
         val instructionChunk = instructionChunks.lastOrNull()
-        if (instructionChunk == null || instructionChunk.size >= nextChunkSize) {
-            instructionChunks.add(mutableListOf(instruction))
+        if (instructionChunk == null || instructionChunk.size() >= nextChunkSize) {
+            instructionChunks.add(InsnList().apply { add(instruction) })
             nextChunkSize = Random.nextInt(sizeRange)
         } else {
             instructionChunk.add(instruction)
@@ -23,7 +23,7 @@ fun InsnList.chunkedRandomly(sizeRange: IntRange): MutableList<MutableList<Abstr
     return instructionChunks
 }
 
-fun InsnList.partitionIntoBasicBlocks(): MutableList<MutableList<AbstractInsnNode>> {
+fun InsnList.partitionIntoBasicBlocks(): MutableList<InsnList> {
     val leaders = mutableSetOf(first)
     for (instruction in this) {
         when (instruction) {
@@ -51,13 +51,13 @@ fun InsnList.partitionIntoBasicBlocks(): MutableList<MutableList<AbstractInsnNod
         }
     }
 
-    val basicBlocks = mutableListOf<MutableList<AbstractInsnNode>>()
-    var currentBlock = mutableListOf<AbstractInsnNode>()
+    val basicBlocks = mutableListOf<InsnList>()
+    var currentBlock = InsnList()
 
     for (instruction in this) {
         if (leaders.contains(instruction) && currentBlock.isNotEmpty()) {
             basicBlocks.add(currentBlock)
-            currentBlock = mutableListOf()
+            currentBlock = InsnList()
         }
         currentBlock.add(instruction)
     }
@@ -68,3 +68,5 @@ fun InsnList.partitionIntoBasicBlocks(): MutableList<MutableList<AbstractInsnNod
 
     return basicBlocks
 }
+
+fun InsnList.isNotEmpty(): Boolean = size() > 0

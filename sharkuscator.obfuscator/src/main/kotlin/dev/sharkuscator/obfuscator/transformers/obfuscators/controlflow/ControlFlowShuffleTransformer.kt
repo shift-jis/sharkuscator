@@ -4,31 +4,32 @@ import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfigu
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 
 
 object ControlFlowShuffleTransformer : BaseTransformer<TransformerConfiguration>("ControlFlowShuffle", TransformerConfiguration::class.java) {
-    private const val MIN_METHOD_SIZE_FOR_SHUFFLE = 5
+    private const val MIN_METHOD_SIZE_FOR_SHUFFLE = 2
     private const val MAX_RECURSION_DEPTH = 10
 
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
+        val targetMethodNode = event.anytypeNode.node
         if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
             return
         }
 
-        shuffleControlFlow(event.anytypeNode.node)
+        shuffleControlFlow(targetMethodNode, targetMethodNode.instructions)
     }
 
     override fun transformerStrength(): TransformerStrength {
         return TransformerStrength.LIGHT
     }
 
-    private fun shuffleControlFlow(targetMethodNode: MethodNode, recursionDepth: Int = 0) {
-        val instructions = targetMethodNode.instructions
+    private fun shuffleControlFlow(targetMethodNode: MethodNode, instructions: InsnList, recursionDepth: Int = 0) {
         if (instructions.size() <= MIN_METHOD_SIZE_FOR_SHUFFLE || recursionDepth >= MAX_RECURSION_DEPTH) {
             return
         }
@@ -51,22 +52,20 @@ object ControlFlowShuffleTransformer : BaseTransformer<TransformerConfiguration>
             currentInstruction = currentInstruction.next
         }
 
-        val firstBlockInstructions = InsnList()
-        instructionsToMove.forEach { instruction ->
-            instructions.remove(instruction)
-            firstBlockInstructions.add(instruction)
-        }
-
-        firstBlockInstructions.insert(firstBlockLabel)
-        firstBlockInstructions.add(JumpInsnNode(Opcodes.GOTO, secondBlockLabel))
-
-        instructions.insert(lastInstruction, firstBlockInstructions)
+        instructions.insert(lastInstruction, AssemblyHelper.buildInstructionList {
+            instructionsToMove.forEach { instruction ->
+                instructions.remove(instruction)
+                add(instruction)
+            }
+            insert(firstBlockLabel)
+            add(JumpInsnNode(Opcodes.GOTO, secondBlockLabel))
+        })
         instructions.insertBefore(splitInstruction, JumpInsnNode(Opcodes.GOTO, firstBlockLabel))
         instructions.insertBefore(splitInstruction, secondBlockLabel)
 
         targetMethodNode.localVariables?.removeIf { variableNode ->
             instructions.indexOf(variableNode.end) < instructions.indexOf(variableNode.start)
         }
-        shuffleControlFlow(targetMethodNode, recursionDepth + 1)
+        shuffleControlFlow(targetMethodNode, instructions, recursionDepth + 1)
     }
 }
