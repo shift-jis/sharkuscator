@@ -1,10 +1,7 @@
 package dev.sharkuscator.obfuscator.extensions
 
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LookupSwitchInsnNode
-import org.objectweb.asm.tree.TableSwitchInsnNode
+import org.objectweb.asm.tree.*
 import kotlin.random.Random
 import kotlin.random.nextInt
 

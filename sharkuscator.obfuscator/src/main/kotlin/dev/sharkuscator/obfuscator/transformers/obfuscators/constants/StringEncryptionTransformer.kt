@@ -7,13 +7,13 @@ import dev.sharkuscator.obfuscator.extensions.isConstructor
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.XorStringObfuscationStrategy
+import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.DESStringObfuscationStrategy
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.containsNonEmptyStrings
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
 object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("StringEncryption", TransformerConfiguration::class.java) {
-    val obfuscationStrategy = XorStringObfuscationStrategy()
+    val obfuscationStrategy = DESStringObfuscationStrategy()
 
     @EventHandler
     @Suppress("unused")
@@ -45,9 +45,9 @@ object StringEncryptionTransformer : BaseTransformer<TransformerConfiguration>("
                 return@buildDecryptionRoutine shouldTransformClass(event.context, it)
             }
         }
-//        event.context.classSource.iterate().filter { shouldTransformClass(event.context, it) }.forEach { classNode ->
-//            obfuscationStrategy.initializeKeyChunkFields(classNode)
-//        }
+        event.context.classSource.iterate().filter { shouldTransformClass(event.context, it) }.forEach { classNode ->
+            obfuscationStrategy.initializeKeyChunkFields(classNode)
+        }
     }
 
     override fun transformerStrength(): TransformerStrength {

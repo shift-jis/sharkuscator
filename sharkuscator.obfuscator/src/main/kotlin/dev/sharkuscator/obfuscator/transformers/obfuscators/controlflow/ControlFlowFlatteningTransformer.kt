@@ -2,10 +2,17 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.*
+import dev.sharkuscator.obfuscator.extensions.getQualifiedName
+import dev.sharkuscator.obfuscator.extensions.isConstructor
+import dev.sharkuscator.obfuscator.extensions.isStaticInitializer
+import dev.sharkuscator.obfuscator.extensions.partitionIntoBasicBlocks
+import dev.sharkuscator.obfuscator.extensions.requireSizeOrElse
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
+import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
 import meteordevelopment.orbit.EventHandler
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.LabelNode
 
 @Deprecated("Not implemented yet")
 object ControlFlowFlatteningTransformer : BaseTransformer<TransformerConfiguration>("ControlFlowFlattening", TransformerConfiguration::class.java) {
