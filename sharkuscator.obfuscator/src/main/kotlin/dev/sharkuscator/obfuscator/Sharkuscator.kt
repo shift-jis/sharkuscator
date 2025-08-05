@@ -28,6 +28,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ResourceRen
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ParameterRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.ReflectRenameTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous.VariableRenameTransformer
+import dev.sharkuscator.obfuscator.transformers.shrinkers.KotlinMetadataRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.NopOperationRemoveTransformer
 import dev.sharkuscator.obfuscator.transformers.shrinkers.SourceStripperTransformer
@@ -82,6 +83,7 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         NativeObfuscateTransformer,
 
         // shrinks
+        KotlinMetadataRemoveTransformer,
         LocalVariableRemoveTransformer,
         NopOperationRemoveTransformer,
         SourceStripperTransformer,
