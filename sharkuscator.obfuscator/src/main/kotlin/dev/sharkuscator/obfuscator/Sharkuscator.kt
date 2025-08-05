@@ -18,9 +18,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTrans
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SignatureInflationTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SyntheticAccessTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberComplexityTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.NumberMaskingTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.StringEncryptionTransformer
-import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowFlatteningTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowMangleTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow.ControlFlowShuffleTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.ClassRenameTransformer
@@ -72,11 +70,11 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
         ResourceRenameTransformer,
         ReflectRenameTransformer,
 
-        ControlFlowFlatteningTransformer,
+//        ControlFlowFlatteningTransformer,
         ControlFlowMangleTransformer,
         ControlFlowShuffleTransformer,
         StringEncryptionTransformer,
-        NumberMaskingTransformer,
+//        NumberMaskingTransformer,
         NumberComplexityTransformer,
         SignatureInflationTransformer,
         SyntheticAccessTransformer,

@@ -10,16 +10,7 @@ import org.apache.commons.lang3.RandomStringUtils
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.IincInsnNode
-import org.objectweb.asm.tree.InsnList
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.JumpInsnNode
-import org.objectweb.asm.tree.LabelNode
-import org.objectweb.asm.tree.LdcInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
-import org.objectweb.asm.tree.VarInsnNode
+import org.objectweb.asm.tree.*
 
 class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
     companion object {
@@ -30,7 +21,8 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
 
     override fun initialization(obfuscationContext: ObfuscationContext, targetClassNode: ClassNode) {
         decoderMethodByClass.computeIfAbsent(targetClassNode) {
-            MethodNode(createMethodNode(DECODER_METHOD_ACCESS, "", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;").apply {
+            val decodeMethodNameGenerator = ObfuscationContext.resolveDictionary<MethodNode, ClassNode>(MethodNode::class.java)
+            val decodeMethodNode = createMethodNode(DECODER_METHOD_ACCESS, decodeMethodNameGenerator.generateNextName(targetClassNode), "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;").apply {
                 val loopBeginLabelNode = LabelNode()
                 val loopEndLabelNode = LabelNode()
 
@@ -96,7 +88,8 @@ class XorStringObfuscationStrategy : StringConstantObfuscationStrategy {
                     add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;"))
                     add(InsnNode(Opcodes.ARETURN))
                 }
-            }, targetClassNode)
+            }
+            MethodNode(decodeMethodNode, targetClassNode).also { targetClassNode.addMethod(it) }
         }
     }
 

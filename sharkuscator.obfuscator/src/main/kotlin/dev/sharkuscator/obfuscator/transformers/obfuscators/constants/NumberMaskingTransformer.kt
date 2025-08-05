@@ -9,7 +9,7 @@ import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
-// TODO
+@Deprecated("Not implemented yet")
 object NumberMaskingTransformer : BaseTransformer<TransformerConfiguration>("NumberMasking", TransformerConfiguration::class.java) {
     private val obfuscationStrategy = MaskingNumberObfuscationStrategy()
 

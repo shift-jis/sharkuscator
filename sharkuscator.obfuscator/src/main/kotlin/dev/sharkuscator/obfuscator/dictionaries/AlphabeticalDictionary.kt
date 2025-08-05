@@ -1,6 +1,6 @@
 package dev.sharkuscator.obfuscator.dictionaries
 
-import java.util.Arrays
+import java.util.*
 
 class AlphabeticalDictionary<T> : MappingDictionary<T>("Alphabetical") {
     private val alphabetCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()

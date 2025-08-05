@@ -8,7 +8,6 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.ExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
-import dev.sharkuscator.obfuscator.extensions.isDeclaredSynthetic
 import dev.sharkuscator.obfuscator.extensions.isDeclaredVolatile
 import org.mapleir.asm.ClassNode
 import org.mapleir.asm.FieldNode
