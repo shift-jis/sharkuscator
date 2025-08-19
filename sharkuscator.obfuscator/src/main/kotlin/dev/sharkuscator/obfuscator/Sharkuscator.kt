@@ -13,8 +13,8 @@ import dev.sharkuscator.obfuscator.configuration.exclusions.MixedExclusionRule
 import dev.sharkuscator.obfuscator.configuration.exclusions.StringExclusionRule
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.hierarchies.DefaultHierarchyProvider
-import dev.sharkuscator.obfuscator.hierarchies.HierarchyProvider
+import dev.sharkuscator.commons.providers.DefaultHierarchyProvider
+import dev.sharkuscator.commons.providers.HierarchyProvider
 import dev.sharkuscator.obfuscator.transformers.obfuscators.DynamicInvokeTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.NativeObfuscateTransformer
 import dev.sharkuscator.obfuscator.transformers.obfuscators.SignatureInflationTransformer

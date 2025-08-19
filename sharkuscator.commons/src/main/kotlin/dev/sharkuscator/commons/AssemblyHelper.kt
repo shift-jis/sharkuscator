@@ -213,25 +213,20 @@ object AssemblyHelper {
         return InsnList().apply(builder)
     }
 
-    fun createClassNode(name: String): ClassNode {
+    fun createClassNode(nodeName: String, superName: String = "java/lang/Object"): ClassNode {
         return ClassNode().apply {
-            this.superName = "java/lang/Object"
+            this.superName = superName
             this.version = Opcodes.V1_8
-
             this.access = Opcodes.ACC_PUBLIC
-            this.name = name
+            this.name = nodeName
         }
     }
 
-    fun createFieldNode(access: Int, name: String, descriptor: String, value: Any? = null): FieldNode {
-        return FieldNode(access, name, descriptor, null, value)
+    fun createFieldNode(access: Int, nodeName: String, descriptor: String, value: Any? = null): FieldNode {
+        return FieldNode(access, nodeName, descriptor, null, value)
     }
 
-    fun createMethodNode(access: Int, name: String, descriptor: String): MethodNode {
-        return MethodNode(access, name, descriptor, null, null)
-    }
-
-    fun createInvokeStatic(owner: String, name: String, descriptor: String): MethodInsnNode {
-        return MethodInsnNode(Opcodes.INVOKESTATIC, owner, name, descriptor)
+    fun createMethodNode(access: Int, nodeName: String, descriptor: String): MethodNode {
+        return MethodNode(access, nodeName, descriptor, null, null)
     }
 }

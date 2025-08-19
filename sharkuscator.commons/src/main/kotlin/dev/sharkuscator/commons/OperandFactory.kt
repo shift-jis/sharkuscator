@@ -6,17 +6,13 @@ object OperandFactory {
     fun generateOperandsForAnd(value: Number): Pair<Number, Number> {
         return when (value) {
             is Int, is Byte, is Short -> {
-                val maskAmount = Random.Default.nextInt()
-                val operandA = (Random.Default.nextInt() and maskAmount) or value.toInt()
-                val operandB = (Random.Default.nextInt() and maskAmount.inv()) or value.toInt()
-                operandA to operandB
+                val maskAmount = Random.nextInt()
+                ((Random.nextInt() and maskAmount) or value.toInt()) to ((Random.nextInt() and maskAmount.inv()) or value.toInt())
             }
 
             is Long -> {
-                val maskAmount = Random.Default.nextLong()
-                val operandA = (Random.Default.nextLong() and maskAmount) or value
-                val operandB = (Random.Default.nextLong() and maskAmount.inv()) or value
-                operandA to operandB
+                val maskAmount = Random.nextLong()
+                ((Random.nextLong() and maskAmount) or value) to ((Random.nextLong() and maskAmount.inv()) or value)
             }
 
             else -> throw IllegalStateException("generateOperandsForAnd cannot handle type ${value::class.simpleName} (value: $value)")
@@ -26,12 +22,12 @@ object OperandFactory {
     fun generateOperandsForShift(value: Number): Pair<Number, Number> {
         return when (value) {
             is Int, is Byte, is Short -> {
-                val shiftAmount = Random.Default.nextInt()
+                val shiftAmount = Random.nextInt()
                 (value.toInt() shl shiftAmount) to shiftAmount
             }
 
             is Long -> {
-                val shiftAmount = Random.Default.nextInt()
+                val shiftAmount = Random.nextInt()
                 (value shl shiftAmount) to shiftAmount
             }
 

@@ -1,7 +1,6 @@
-package dev.sharkuscator.obfuscator.hierarchies
+package dev.sharkuscator.commons.providers
 
 import dev.sharkuscator.commons.extensions.classNode
-import dev.sharkuscator.commons.providers.ApplicationClassProvider
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
