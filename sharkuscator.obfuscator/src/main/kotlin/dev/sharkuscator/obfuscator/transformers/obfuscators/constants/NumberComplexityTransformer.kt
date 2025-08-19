@@ -1,12 +1,14 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 
+import dev.sharkuscator.commons.AssemblyHelper.findNumericConstants
+import dev.sharkuscator.commons.extensions.classNode
+import dev.sharkuscator.commons.extensions.isDeclaredAbstract
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies.CombineNumberObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNumericConstants
 import meteordevelopment.orbit.EventHandler
 
 object NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("NumberComplexity", TransformerConfiguration::class.java) {
@@ -15,13 +17,12 @@ object NumberComplexityTransformer : BaseTransformer<TransformerConfiguration>("
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val methodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode) || event.anytypeNode.isAbstract || methodNode.instructions == null) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject) || event.nodeObject.isDeclaredAbstract() || event.nodeObject.instructions == null) {
             return
         }
 
-        findNumericConstants(methodNode.instructions).forEach { (instruction, value) ->
-            obfuscationStrategy.replaceInstructions(event.anytypeNode.owner, methodNode.instructions, instruction, value)
+        findNumericConstants(event.nodeObject.instructions).forEach { (instruction, value) ->
+            obfuscationStrategy.replaceInstructions(event.nodeObject.classNode, event.nodeObject.instructions, instruction, value)
         }
     }
 

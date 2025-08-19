@@ -1,18 +1,16 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
+import dev.sharkuscator.commons.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.commons.AssemblyHelper.createFieldNode
+import dev.sharkuscator.commons.AssemblyHelper.integerPushInstruction
+import dev.sharkuscator.commons.AssemblyHelper.longPushInstruction
+import dev.sharkuscator.commons.extensions.addFieldNode
+import dev.sharkuscator.commons.extensions.isSpongeMixin
+import dev.sharkuscator.commons.extensions.resolveStaticInitializer
+import dev.sharkuscator.commons.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.ObfuscationContext
-import dev.sharkuscator.obfuscator.extensions.addField
-import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
-import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
-import dev.sharkuscator.obfuscator.extensions.shouldSkipTransform
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
 import dev.sharkuscator.obfuscator.transformers.strategies.StringConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createFieldNode
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.longPushInstruction
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.FieldNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import java.nio.charset.StandardCharsets
@@ -62,11 +60,11 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         val keyFieldNameGenerator = ObfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java)
         val decryptionKeyBytes = deriveKeyFromSeed(keyDerivationSeedByClass.getValue(targetClassNode))
 
-        val keyByteIndexChunks = (0..decryptionKeyBytes.size - 1).chunked((1..decryptionKeyBytes.size - 1).random())
+        val keyByteIndexChunks = (0..<decryptionKeyBytes.size).chunked((1..<decryptionKeyBytes.size).random())
         keyByteIndexChunks.forEach { chunkOfIndices ->
-            val selectedHostClassNode = obfuscationContext.classSource.iterate().filter { !it.shouldSkipTransform() && classEligibilityPredicate(it) }.random() ?: return@forEach
+            val selectedHostClassNode = obfuscationContext.classNodeProvider.asIterable().filter { !it.shouldSkipTransform() && classEligibilityPredicate(it) }.random()
             val generatedKeyFieldName = keyFieldNameGenerator.generateNextName(selectedHostClassNode)
-            selectedHostClassNode.addField(createFieldNode(KEY_BYTES_FIELD_ACCESS, generatedKeyFieldName, KEY_BYTES_FIELD_DESCRIPTOR).apply {
+            selectedHostClassNode.addFieldNode(createFieldNode(KEY_BYTES_FIELD_ACCESS, generatedKeyFieldName, KEY_BYTES_FIELD_DESCRIPTOR).apply {
                 if (selectedHostClassNode.isSpongeMixin()) {
                     visibleAnnotations = mutableListOf(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
                 }
@@ -79,7 +77,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
         val switchDefaultLabel = LabelNode()
 
         val staticInitializer = targetClassNode.resolveStaticInitializer()
-        staticInitializer.node.instructions.insert(buildInstructionList {
+        staticInitializer.instructions.insert(buildInstructionList {
             add(constantArrayGenerator.createInitializationInstructions(targetClassNode) { arrayFieldMetadataList ->
                 val initialChunkLength = arrayFieldMetadataList.firstNotNullOfOrNull {
                     it.valueChunks.values.flatten().firstNotNullOfOrNull { (_, chunkValue) -> chunkValue.length }
@@ -254,7 +252,7 @@ class DESStringObfuscationStrategy : StringConstantObfuscationStrategy {
             val loopEndLabelNode = LabelNode()
 
             val staticInitializer = keyChunk.classNode.resolveStaticInitializer()
-            staticInitializer.node.instructions.insert(buildInstructionList {
+            staticInitializer.instructions.insert(buildInstructionList {
                 // 1. long j = keyDerivationSeed;
                 add(longPushInstruction(keyDerivationSeed))
                 add(VarInsnNode(Opcodes.LSTORE, localVarBaseIndex))

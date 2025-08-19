@@ -1,8 +1,8 @@
 package dev.sharkuscator.obfuscator.transformers.strategies
 
 import dev.sharkuscator.obfuscator.ObfuscationContext
-import org.mapleir.asm.ClassNode
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
 
 interface NumericConstantObfuscationStrategy {

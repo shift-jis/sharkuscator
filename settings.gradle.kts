@@ -15,5 +15,6 @@ plugins {
 include("sharkuscator.annotations")
 include("sharkuscator.obfuscator")
 include("sharkuscator.standalone")
+include("sharkuscator.commons")
 
 rootProject.name = "sharkuscator"

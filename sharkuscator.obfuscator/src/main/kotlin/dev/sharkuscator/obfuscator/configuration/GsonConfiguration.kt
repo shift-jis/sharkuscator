@@ -2,9 +2,9 @@ package dev.sharkuscator.obfuscator.configuration
 
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
+import dev.sharkuscator.commons.extensions.asSnakeCase
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
-import dev.sharkuscator.obfuscator.extensions.asSnakeCase
 import dev.sharkuscator.obfuscator.transformers.SharkTransformer
 
 open class GsonConfiguration {

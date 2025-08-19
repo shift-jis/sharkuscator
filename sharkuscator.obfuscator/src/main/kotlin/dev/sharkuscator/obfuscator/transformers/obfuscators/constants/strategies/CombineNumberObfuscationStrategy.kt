@@ -1,10 +1,10 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.strategies
 
+import dev.sharkuscator.commons.AssemblyHelper.obfuscatedNumericPushInstructions
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.transformers.strategies.NumericConstantObfuscationStrategy
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.obfuscatedNumericPushInstructions
-import org.mapleir.asm.ClassNode
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
 import kotlin.random.Random
 

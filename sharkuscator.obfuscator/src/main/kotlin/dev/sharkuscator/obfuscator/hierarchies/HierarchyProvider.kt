@@ -1,7 +1,7 @@
 package dev.sharkuscator.obfuscator.hierarchies
 
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.MethodNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
 
 interface HierarchyProvider {
     fun traverseHierarchy(classNode: ClassNode)

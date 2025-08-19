@@ -1,8 +1,9 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
+import dev.sharkuscator.commons.extensions.classNode
+import dev.sharkuscator.commons.extensions.isStaticInitializer
 import dev.sharkuscator.obfuscator.configuration.transformers.ControlFlowMangleConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.isStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
@@ -20,21 +21,20 @@ object ControlFlowMangleTransformer : BaseTransformer<ControlFlowMangleConfigura
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val targetMethodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        val isGeneratedDynamicInvokerMethod = event.anytypeNode.owner.name == DynamicInvokeTransformer.invokerHostClassName && event.anytypeNode.name == DynamicInvokeTransformer.generatedInvokerMethodName
-        val applicationChancePercentage = if (event.anytypeNode.isStaticInitializer() || isGeneratedDynamicInvokerMethod) 100 else 60
+        val isGeneratedDynamicInvokerMethod = event.nodeObject.classNode.name == DynamicInvokeTransformer.invokerHostClassName && event.nodeObject.name == DynamicInvokeTransformer.generatedInvokerMethodName
+        val applicationChancePercentage = if (event.nodeObject.isStaticInitializer() || isGeneratedDynamicInvokerMethod) 100 else 60
 
         for (mangleMutator in mangleMutators) {
-            val instructionsToProcess = targetMethodNode.instructions.toArray().filter { instructionNode ->
+            val instructionsToProcess = event.nodeObject.instructions.toArray().filter { instructionNode ->
                 mangleMutator.isApplicableFor(instructionNode, applicationChancePercentage)
             }
 
             instructionsToProcess.forEach { instructionNode ->
-                mangleMutator.processInstruction(targetMethodNode.instructions, instructionNode)
+                mangleMutator.processInstruction(event.nodeObject.instructions, instructionNode)
             }
         }
     }

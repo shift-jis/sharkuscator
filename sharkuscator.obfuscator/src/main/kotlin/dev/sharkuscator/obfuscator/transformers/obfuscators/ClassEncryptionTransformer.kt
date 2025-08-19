@@ -3,7 +3,6 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.ClassEncryptionConfiguration
-import dev.sharkuscator.obfuscator.encryption.ClassEncryptor
 import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
@@ -35,5 +34,10 @@ object ClassEncryptionTransformer : BaseTransformer<ClassEncryptionConfiguration
 
     override fun transformerStrength(): TransformerStrength {
         return TransformerStrength.STRONG
+    }
+
+    @Deprecated("Deprecated due to inconsistent behavior across different environments")
+    object ClassEncryptor {
+        external fun encrypt(classData: ByteArray, keyData: ByteArray): ByteArray
     }
 }

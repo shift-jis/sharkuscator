@@ -9,7 +9,7 @@ import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import meteordevelopment.orbit.EventHandler
-import org.mapleir.asm.MethodNode
+import org.objectweb.asm.tree.MethodNode
 
 object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("ParameterRename", RenameConfiguration::class.java) {
     lateinit var parameterMappingDictionary: MappingDictionary<MethodNode>
@@ -22,11 +22,11 @@ object ParameterRenameTransformer : BaseTransformer<RenameConfiguration>("Parame
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        event.anytypeNode.node.parameters?.forEach { it.name = parameterMappingDictionary.generateNextName(event.anytypeNode) }
+        event.nodeObject.parameters?.forEach { it.name = parameterMappingDictionary.generateNextName(event.nodeObject) }
     }
 
     override fun transformerStrength(): TransformerStrength {

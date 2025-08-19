@@ -27,11 +27,11 @@ public class BitwiseStateObject implements OperationTarget {
         sortInstancePool();
     }
 
+    private final int[] instanceShiftMap;
+    private final long[] instanceBitMasks;
     private long stateValue;
     private OperationTarget nextTarget;
     private long auxiliaryStateValue;
-    private final int[] instanceShiftMap;
-    private final long[] instanceBitMasks;
 
     private BitwiseStateObject(long stateValue) {
         this.stateValue = stateValue;
@@ -227,7 +227,7 @@ public class BitwiseStateObject implements OperationTarget {
 
     private long extractBitField(int endBit) {
         // Assuming startBit is always 0 for this overload
-        return applyShiftAndMask(this.stateValue, 0, endBit -1, this.instanceShiftMap, this.instanceBitMasks);
+        return applyShiftAndMask(this.stateValue, 0, endBit - 1, this.instanceShiftMap, this.instanceBitMasks);
     }
 
     private long extractBitField(int startBit, int endBit) {

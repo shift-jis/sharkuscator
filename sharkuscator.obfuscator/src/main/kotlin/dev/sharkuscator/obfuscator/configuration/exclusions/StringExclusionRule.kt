@@ -1,9 +1,9 @@
 package dev.sharkuscator.obfuscator.configuration.exclusions
 
-import dev.sharkuscator.obfuscator.extensions.getQualifiedName
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.FieldNode
-import org.mapleir.asm.MethodNode
+import dev.sharkuscator.commons.extensions.getQualifiedName
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
 
 class StringExclusionRule(private val rule: Regex) : ExclusionRule {
     override fun excluded(string: String): Boolean {

@@ -10,7 +10,7 @@ import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.shrinkers.LocalVariableRemoveTransformer
 import meteordevelopment.orbit.EventHandler
-import org.mapleir.asm.MethodNode
+import org.objectweb.asm.tree.MethodNode
 
 object VariableRenameTransformer : BaseTransformer<RenameConfiguration>("VariableRename", RenameConfiguration::class.java) {
     lateinit var variableMappingDictionary: MappingDictionary<MethodNode>
@@ -23,12 +23,12 @@ object VariableRenameTransformer : BaseTransformer<RenameConfiguration>("Variabl
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransformer(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode) || LocalVariableRemoveTransformer.configuration.enabled) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject) || LocalVariableRemoveTransformer.configuration.enabled) {
             return
         }
 
-        event.anytypeNode.node.localVariables?.filter { it.name != "this" }?.forEach {
-            it.name = variableMappingDictionary.generateNextName(event.anytypeNode)
+        event.nodeObject.localVariables?.filter { it.name != "this" }?.forEach {
+            it.name = variableMappingDictionary.generateNextName(event.nodeObject)
         }
     }
 

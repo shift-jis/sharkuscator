@@ -3,6 +3,9 @@ package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
+import dev.sharkuscator.commons.extensions.containsMainMethod
+import dev.sharkuscator.commons.extensions.isDeclaredAsAnnotation
+import dev.sharkuscator.commons.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
@@ -11,9 +14,6 @@ import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
 import dev.sharkuscator.obfuscator.dictionaries.MappingDictionary
 import dev.sharkuscator.obfuscator.events.AssemblerEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.containsMainMethod
-import dev.sharkuscator.obfuscator.extensions.isDeclaredAsAnnotation
-import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
@@ -39,12 +39,12 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformClass(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformClass(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
         var targetPackagePath = effectiveClassPrefix
-        if (event.anytypeNode.isSpongeMixin()) {
+        if (event.nodeObject.isSpongeMixin()) {
             targetPackagePath = when {
                 targetPackagePath.isEmpty() -> "$generatedMixinPackageSegment/"
                 targetPackagePath.endsWith("/") -> "$targetPackagePath$generatedMixinPackageSegment/"
@@ -53,11 +53,11 @@ object ClassRenameTransformer : BaseTransformer<RenameConfiguration>("ClassRenam
         }
 
         var classMapping = classMappingDictionary.generateNextName(targetPackagePath)
-        if (classMappingDictionary.generatesUnsafeNames() && (event.anytypeNode.containsMainMethod() || event.anytypeNode.isDeclaredAsAnnotation())) {
+        if (classMappingDictionary.generatesUnsafeNames() && (event.nodeObject.containsMainMethod() || event.nodeObject.isDeclaredAsAnnotation())) {
             classMapping = ObfuscationContext.defaultDictionary.generateNextName(targetPackagePath)
         }
 
-        ObfuscatorServices.symbolRemapper.setMapping(event.anytypeNode.name, "$targetPackagePath${configuration.namePrefix.substringAfterLast("/")}$classMapping")
+        ObfuscatorServices.symbolRemapper.setMapping(event.nodeObject.name, "$targetPackagePath${configuration.namePrefix.substringAfterLast("/")}$classMapping")
     }
 
     @EventHandler

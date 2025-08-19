@@ -3,8 +3,8 @@ package dev.sharkuscator.tests.long_constant.masking;
 import java.util.Random;
 
 public class LongMaskingDemo {
+    public static final int[] TRANSFORMATION_TABLE = {5, -3, 12, 0, -7, 2, 8, -1, 0, 15, -4, 11};
     private static final Random RANDOM_INSTANCE = new Random();
-    public static final int[] TRANSFORMATION_TABLE = { 5, -3, 12, 0, -7, 2, 8, -1, 0, 15, -4, 11 };
 
     public static void main(String[] args) {
         long originalValue = RANDOM_INSTANCE.nextLong();
@@ -35,7 +35,7 @@ public class LongMaskingDemo {
             } else if (transformation < 0) {
                 intermediateValue = (intermediateValue >>> -transformation) | (intermediateValue << (64 - -transformation));
             } else {
-                intermediateValue ^= (transformKey * (long)(index + 1));
+                intermediateValue ^= (transformKey * (long) (index + 1));
             }
         }
         return intermediateValue ^ maskingKey;

@@ -16,10 +16,10 @@ public class StateConfigurator implements OperationTarget {
     // --- インスタンスメンバー ---
     // OperationTargetオブジェクト間のマッピングを保持
     private final Hashtable<OperationTarget, OperationTarget> operationMap = new Hashtable<>();
-    // 関連付けられた次のOperationTarget
-    private OperationTarget nextTarget;
     // このConfiguratorインスタンスが保持するint配列の状態
     private final int[] internalShiftMapState;
+    // 関連付けられた次のOperationTarget
+    private OperationTarget nextTarget;
     // このConfiguratorインスタンスが保持するlong状態値
     private long internalLongState;
 

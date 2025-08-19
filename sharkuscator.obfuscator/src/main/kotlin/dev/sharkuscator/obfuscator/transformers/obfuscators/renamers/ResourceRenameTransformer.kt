@@ -1,5 +1,8 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers
 
+import dev.sharkuscator.commons.AssemblyHelper.findNonEmptyStrings
+import dev.sharkuscator.commons.extensions.isDeclaredAbstract
+import dev.sharkuscator.commons.extensions.isDeclaredNative
 import dev.sharkuscator.obfuscator.configuration.GsonConfiguration
 import dev.sharkuscator.obfuscator.configuration.transformers.RenameConfiguration
 import dev.sharkuscator.obfuscator.dictionaries.DictionaryFactory
@@ -9,7 +12,6 @@ import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
 object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("ResourceRename", RenameConfiguration::class.java) {
@@ -30,13 +32,12 @@ object ResourceRenameTransformer : BaseTransformer<RenameConfiguration>("Resourc
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val methodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || exclusions.excluded(event.anytypeNode) || event.anytypeNode.isNative || event.anytypeNode.isAbstract || methodNode.instructions == null) {
+        if (!isEligibleForExecution() || exclusions.excluded(event.nodeObject) || event.nodeObject.isDeclaredNative() || event.nodeObject.isDeclaredAbstract() || event.nodeObject.instructions == null) {
             return
         }
 
-        findNonEmptyStrings(methodNode.instructions).forEach { (instruction, string) ->
-            if (event.obfuscationContext.jarContents.resourceContents.any { it.name == string }) {
+        findNonEmptyStrings(event.nodeObject.instructions).forEach { (instruction, string) ->
+            if (event.obfuscationContext.downloadedLibrary.resources.any { it.first == string }) {
                 if (!resourceNameMappings.containsKey(string)) {
                     resourceNameMappings[string] = "${configuration.namePrefix}${resourceMappingDictionary.generateNextName(null)}"
                 }

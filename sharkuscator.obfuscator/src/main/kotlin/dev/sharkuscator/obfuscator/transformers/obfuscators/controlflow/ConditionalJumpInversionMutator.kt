@@ -1,9 +1,9 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
+import dev.sharkuscator.commons.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.commons.AssemblyHelper.invertJumpCondition
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.invertJumpCondition
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList

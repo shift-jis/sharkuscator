@@ -10,12 +10,12 @@ object SourceStripperTransformer : BaseTransformer<TransformerConfiguration>("So
     @EventHandler
     @Suppress("unused")
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (!shouldTransformClass(event.obfuscationContext, event.anytypeNode)) {
+        if (!shouldTransformClass(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        event.anytypeNode.node.sourceDebug = null
-        event.anytypeNode.node.sourceFile = "¯\\_(ツ)_/¯"
+        event.nodeObject.sourceDebug = null
+        event.nodeObject.sourceFile = "¯\\_(ツ)_/¯"
     }
 
     override fun transformerStrength(): TransformerStrength {

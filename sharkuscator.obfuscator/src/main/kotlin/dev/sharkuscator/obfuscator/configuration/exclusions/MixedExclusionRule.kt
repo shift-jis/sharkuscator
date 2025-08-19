@@ -1,8 +1,8 @@
 package dev.sharkuscator.obfuscator.configuration.exclusions
 
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.FieldNode
-import org.mapleir.asm.MethodNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
 
 class MixedExclusionRule(private val rules: List<ExclusionRule>) : ExclusionRule {
     override fun excluded(string: String): Boolean {

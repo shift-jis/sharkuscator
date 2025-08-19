@@ -1,25 +1,26 @@
 package dev.sharkuscator.obfuscator.hierarchies
 
-import org.mapleir.app.service.ApplicationClassSource
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.MethodNode
+import dev.sharkuscator.commons.extensions.classNode
+import dev.sharkuscator.commons.providers.ApplicationClassProvider
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
 
-class DefaultHierarchyProvider(private val classSource: ApplicationClassSource) : HierarchyProvider {
+class DefaultHierarchyProvider(private val classNodeProvider: ApplicationClassProvider) : HierarchyProvider {
     val classChildren: MutableMap<ClassNode, MutableSet<ClassNode>> = mutableMapOf()
     val classParents: MutableMap<ClassNode, MutableSet<ClassNode>> = mutableMapOf()
     private val visitHierarchies: MutableSet<String> = hashSetOf()
 
     override fun traverseHierarchy(classNode: ClassNode) {
         if (visitHierarchies.add(classNode.name)) {
-            if (classNode.node.superName != null) {
-                val resolvedSuperNode = classSource.findClass(classNode.node.superName!!)?.node ?: return
+            if (classNode.superName != null) {
+                val resolvedSuperNode = classNodeProvider.getClassNode(classNode.superName!!) ?: return
                 classParents.computeIfAbsent(classNode) { mutableSetOf() }.add(resolvedSuperNode)
                 classChildren.computeIfAbsent(resolvedSuperNode) { mutableSetOf() }.add(classNode)
                 traverseHierarchy(resolvedSuperNode)
             }
 
-            classNode.node.interfaces.forEach { interfaceName ->
-                val resolvedInterfaceNode = classSource.findClass(interfaceName)?.node ?: return
+            classNode.interfaces.forEach { interfaceName ->
+                val resolvedInterfaceNode = classNodeProvider.getClassNode(interfaceName) ?: return
                 classParents.computeIfAbsent(classNode) { mutableSetOf() }.add(resolvedInterfaceNode)
                 classChildren.computeIfAbsent(resolvedInterfaceNode) { mutableSetOf() }.add(classNode)
                 traverseHierarchy(resolvedInterfaceNode)
@@ -36,7 +37,7 @@ class DefaultHierarchyProvider(private val classSource: ApplicationClassSource) 
     }
 
     override fun getRootMethodNode(methodNode: MethodNode): MethodNode? {
-        return getRootMethodNode(methodNode.owner, methodNode)
+        return getRootMethodNode(methodNode.classNode, methodNode)
     }
 
     private fun getRootMethodNode(classNode: ClassNode, methodNode: MethodNode): MethodNode? {

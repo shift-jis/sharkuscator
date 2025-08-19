@@ -1,11 +1,11 @@
 package dev.sharkuscator.obfuscator.events
 
 import dev.sharkuscator.obfuscator.ObfuscationContext
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.FieldNode
-import org.mapleir.asm.MethodNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
 
-open class TransformerEvents<T>(val obfuscationContext: ObfuscationContext, val anytypeNode: T) : CancellableEvent() {
+open class TransformerEvents<T>(val obfuscationContext: ObfuscationContext, val nodeObject: T) : CancellableEvent() {
     class ClassTransformEvent(obfuscationContext: ObfuscationContext, classNode: ClassNode) : TransformerEvents<ClassNode>(obfuscationContext, classNode)
     class FieldTransformEvent(obfuscationContext: ObfuscationContext, fieldNode: FieldNode) : TransformerEvents<FieldNode>(obfuscationContext, fieldNode)
     class MethodTransformEvent(obfuscationContext: ObfuscationContext, methodNode: MethodNode) : TransformerEvents<MethodNode>(obfuscationContext, methodNode)

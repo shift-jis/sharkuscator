@@ -1,12 +1,12 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.renamers.miscellaneous
 
+import dev.sharkuscator.commons.AssemblyHelper.findNonEmptyStrings
 import dev.sharkuscator.obfuscator.ObfuscatorServices
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerPriority
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -18,11 +18,11 @@ object ReflectRenameTransformer : BaseTransformer<TransformerConfiguration>("Ref
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        findNonEmptyStrings(event.anytypeNode.node.instructions).forEach { (instruction, string) ->
+        findNonEmptyStrings(event.nodeObject.instructions).forEach { (instruction, string) ->
             if (instruction.previous == null) {
                 return@forEach
             }

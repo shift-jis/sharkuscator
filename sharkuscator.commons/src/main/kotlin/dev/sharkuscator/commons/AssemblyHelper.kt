@@ -1,18 +1,11 @@
-package dev.sharkuscator.obfuscator.utilities
+package dev.sharkuscator.commons
 
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
-import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.BasicValue
-import org.objectweb.asm.tree.analysis.Frame
 import kotlin.random.Random
-
 
 object AssemblyHelper {
     private const val MAX_OBFUSCATION_RECURSION_DEPTH = 1
-    private const val INJECTION_SAFETY_PADDING = 5
-    private const val STACK_ANALYSIS_BUFFER = 50
 
     private val constNumberOpcodesMap = mapOf<Int, Number>(
         Opcodes.ICONST_M1 to -1,
@@ -59,59 +52,6 @@ object AssemblyHelper {
         }
     }
 
-    private fun getFirstAvailableLocalVarIndex(methodNode: MethodNode): Int {
-        var nextIndex = if ((methodNode.access and Opcodes.ACC_STATIC) != 0) 0 else 1
-        Type.getArgumentTypes(methodNode.desc).forEach { argType ->
-            nextIndex += argType.size
-        }
-        return nextIndex
-    }
-
-    fun isMethodScopedLocalVar(methodNode: MethodNode, varIndex: Int): Boolean {
-        return varIndex >= getFirstAvailableLocalVarIndex(methodNode)
-    }
-
-    fun isIndexSafeForInjection(localVarUsageRanges: Map<Int, IntRange>, instructionIndex: Int): Boolean {
-        return localVarUsageRanges.values.none { usageRange ->
-            instructionIndex in (usageRange.first - INJECTION_SAFETY_PADDING)..(usageRange.last + INJECTION_SAFETY_PADDING)
-        }
-    }
-
-    fun findLocalVarUsageRanges(methodNode: MethodNode): Map<Int, IntRange> {
-        val localVarRanges = mutableMapOf<Int, IntRange>()
-        methodNode.instructions.filter { it is VarInsnNode }.forEachIndexed { index, instruction ->
-            val varIndex = (instruction as VarInsnNode).`var`
-            if (!isMethodScopedLocalVar(methodNode, varIndex)) {
-                return@forEachIndexed
-            }
-
-            localVarRanges.compute(varIndex) { _, currentRange ->
-                if (currentRange == null) {
-                    IntRange(index, index)
-                } else {
-                    IntRange(minOf(currentRange.first, index), maxOf(currentRange.last, index))
-                }
-            }
-        }
-        return localVarRanges
-    }
-
-    fun analyzeStackFrames(classNode: ClassNode, methodNode: MethodNode): Array<Frame<BasicValue>?> {
-        val methodToAnalyze = MethodNode(Opcodes.ASM9, methodNode.access, methodNode.name, methodNode.desc, methodNode.signature, methodNode.exceptions?.toTypedArray())
-        methodNode.accept(methodToAnalyze)
-
-        methodToAnalyze.maxStack += STACK_ANALYSIS_BUFFER
-        val analyzer = Analyzer(SimpleMergeInterpreter)
-
-        try {
-            analyzer.analyze(classNode.name, methodToAnalyze)
-        } finally {
-            methodToAnalyze.maxStack -= STACK_ANALYSIS_BUFFER
-        }
-
-        return analyzer.frames
-    }
-
     fun integerPushInstruction(value: Number): AbstractInsnNode {
         return when (value) {
             -1 -> InsnNode(Opcodes.ICONST_M1)
@@ -152,7 +92,7 @@ object AssemblyHelper {
         }
     }
 
-    fun xorPushInstruction(value: Number, operand: Long = Random.nextLong()): InsnList {
+    fun xorPushInstruction(value: Number, operand: Long = Random.Default.nextLong()): InsnList {
         return when (value) {
             is Int, is Byte, is Short -> buildInstructionList {
                 add(integerPushInstruction(value.toInt() xor operand.toInt()))
@@ -178,21 +118,21 @@ object AssemblyHelper {
         val isIntegerFamily = value is Int || value is Byte || value is Short
         val isLongFamily = value is Long
 
-        if ((isIntegerFamily || isLongFamily) && Random.nextBoolean()) {
+        if ((isIntegerFamily || isLongFamily) && Random.Default.nextBoolean()) {
             val allowFurtherRecursion = recursionDepth < MAX_OBFUSCATION_RECURSION_DEPTH
 
-            if (Random.nextBoolean()) {
+            if (Random.Default.nextBoolean()) {
                 if (isIntegerFamily) {
                     val intValue = value.toInt()
-                    val (operandA, operandB) = Mathematics.generateOperandsForAnd(intValue)
+                    val (operandA, operandB) = OperandFactory.generateOperandsForAnd(intValue)
 
-                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                    if (allowFurtherRecursion && Random.Default.nextBoolean()) {
                         instructions.add(obfuscatedNumericPushInstructions(operandA.toInt(), recursionDepth + 1))
                     } else {
                         instructions.add(integerPushInstruction(operandA.toInt()))
                     }
 
-                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                    if (allowFurtherRecursion && Random.Default.nextBoolean()) {
                         instructions.add(obfuscatedNumericPushInstructions(operandB.toInt(), recursionDepth + 1))
                     } else {
                         instructions.add(integerPushInstruction(operandB.toInt()))
@@ -201,15 +141,15 @@ object AssemblyHelper {
                     instructions.add(InsnNode(Opcodes.IAND))
                 } else {
                     val longValue = value.toLong()
-                    val (operandA, operandB) = Mathematics.generateOperandsForAnd(longValue)
+                    val (operandA, operandB) = OperandFactory.generateOperandsForAnd(longValue)
 
-                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                    if (allowFurtherRecursion && Random.Default.nextBoolean()) {
                         instructions.add(obfuscatedNumericPushInstructions(operandA.toLong(), recursionDepth + 1))
                     } else {
                         instructions.add(longPushInstruction(operandA.toLong()))
                     }
 
-                    if (allowFurtherRecursion && Random.nextBoolean()) {
+                    if (allowFurtherRecursion && Random.Default.nextBoolean()) {
                         instructions.add(obfuscatedNumericPushInstructions(operandB.toLong(), recursionDepth + 1))
                     } else {
                         instructions.add(longPushInstruction(operandB.toLong()))
@@ -220,13 +160,13 @@ object AssemblyHelper {
             } else {
                 if (isIntegerFamily) {
                     val intValue = value.toInt()
-                    val randomXorOperand = Random.nextInt()
+                    val randomXorOperand = Random.Default.nextInt()
                     instructions.add(integerPushInstruction(intValue xor randomXorOperand))
                     instructions.add(integerPushInstruction(randomXorOperand))
                     instructions.add(InsnNode(Opcodes.IXOR))
                 } else {
                     val longValue = value.toLong()
-                    val randomXorOperand = Random.nextLong()
+                    val randomXorOperand = Random.Default.nextLong()
                     instructions.add(longPushInstruction(longValue xor randomXorOperand))
                     instructions.add(longPushInstruction(randomXorOperand))
                     instructions.add(InsnNode(Opcodes.LXOR))

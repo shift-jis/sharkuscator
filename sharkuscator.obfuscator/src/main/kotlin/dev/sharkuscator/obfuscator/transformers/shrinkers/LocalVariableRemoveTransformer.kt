@@ -10,11 +10,11 @@ object LocalVariableRemoveTransformer : BaseTransformer<TransformerConfiguration
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        if (!shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        event.anytypeNode.node.localVariables = null
+        event.nodeObject.localVariables = null
     }
 
     override fun transformerStrength(): TransformerStrength {

@@ -9,12 +9,12 @@ import meteordevelopment.orbit.EventHandler
 object KotlinMetadataRemoveTransformer : BaseTransformer<TransformerConfiguration>("KotlinMetadataRemove", TransformerConfiguration::class.java) {
     @EventHandler
     private fun onClassTransform(event: TransformerEvents.ClassTransformEvent) {
-        if (event.anytypeNode.node.invisibleAnnotations != null) {
-            event.anytypeNode.node.invisibleAnnotations.removeIf { it.desc == "Lkotlin/jvm/internal/SourceDebugExtension;" }
+        if (event.nodeObject.invisibleAnnotations != null) {
+            event.nodeObject.invisibleAnnotations.removeIf { it.desc == "Lkotlin/jvm/internal/SourceDebugExtension;" }
         }
 
-        if (event.anytypeNode.node.visibleAnnotations != null) {
-            event.anytypeNode.node.visibleAnnotations.removeIf { it.desc == "Lkotlin/Metadata;" }
+        if (event.nodeObject.visibleAnnotations != null) {
+            event.nodeObject.visibleAnnotations.removeIf { it.desc == "Lkotlin/Metadata;" }
         }
     }
 

@@ -11,12 +11,11 @@ object NopOperationRemoveTransformer : BaseTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val targetMethodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        targetMethodNode.instructions.removeAll { it.opcode == Opcodes.NOP }
+        event.nodeObject.instructions.removeAll { it.opcode == Opcodes.NOP }
     }
 
     override fun transformerStrength(): TransformerStrength {

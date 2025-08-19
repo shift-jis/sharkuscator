@@ -1,16 +1,14 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators
 
+import dev.sharkuscator.commons.AssemblyHelper.buildInstructionList
+import dev.sharkuscator.commons.AssemblyHelper.createFieldNode
+import dev.sharkuscator.commons.AssemblyHelper.createMethodNode
+import dev.sharkuscator.commons.AssemblyHelper.integerPushInstruction
+import dev.sharkuscator.commons.extensions.addFieldNode
+import dev.sharkuscator.commons.extensions.addMethodNode
+import dev.sharkuscator.commons.extensions.isSpongeMixin
 import dev.sharkuscator.obfuscator.ObfuscationContext
 import dev.sharkuscator.obfuscator.ObfuscatorServices
-import dev.sharkuscator.obfuscator.extensions.addField
-import dev.sharkuscator.obfuscator.extensions.isSpongeMixin
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.buildInstructionList
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createFieldNode
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.createMethodNode
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.integerPushInstruction
-import org.mapleir.asm.ClassNode
-import org.mapleir.asm.FieldNode
-import org.mapleir.asm.MethodNode
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 import kotlin.random.Random
@@ -22,7 +20,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
         private const val INSTRUCTION_CHAR_OFFSET = 0xAB00
     }
 
-    class ArrayFieldMetadata<T>(sourceFieldNode: org.objectweb.asm.tree.FieldNode, val fieldIndex: Int, val valueChunks: MutableMap<T, MutableList<Pair<AbstractInsnNode, T>>>) {
+    class ArrayFieldMetadata<T>(sourceFieldNode: FieldNode, val fieldIndex: Int, val valueChunks: MutableMap<T, MutableList<Pair<AbstractInsnNode, T>>>) {
         val fieldDescriptor: String = sourceFieldNode.desc
         val fieldName: String = sourceFieldNode.name
 
@@ -58,19 +56,19 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
         val generatedFieldsForClass = generatedArrayFieldsByClass.computeIfAbsent(targetClassNode) { mutableListOf() }
         (1..requestedFieldCount.coerceIn(1, maxFieldsPerClass)).forEach { fieldIndex ->
             val arrayFieldName = ObfuscationContext.resolveDictionary<FieldNode, ClassNode>(FieldNode::class.java).generateNextName(targetClassNode)
-            targetClassNode.addField(FieldNode(createFieldNode(CONSTANT_ARRAY_FIELD_ACCESS, arrayFieldName, "[$arrayJvmTypeDescriptor").apply {
+            targetClassNode.addFieldNode(createFieldNode(CONSTANT_ARRAY_FIELD_ACCESS, arrayFieldName, "[$arrayJvmTypeDescriptor").apply {
                 generatedFieldsForClass.add(ArrayFieldMetadata(this, fieldIndex - 1, mutableMapOf()))
                 if (targetClassNode.isSpongeMixin()) {
                     visibleAnnotations = mutableListOf(AnnotationNode("Lorg/spongepowered/asm/mixin/Unique;"))
                 }
-            }, targetClassNode))
+            })
         }
     }
 
     fun createAndAddArrayGetterMethod(targetClassNode: ClassNode) {
         val arrayGetterMethodName = arrayGetterMethodNameByClass[targetClassNode] ?: return
         val arrayFieldMetadataList = generatedArrayFieldsByClass[targetClassNode] ?: return
-        targetClassNode.addMethod(MethodNode(createMethodNode(CONSTANT_GETTER_METHOD_ACCESS, arrayGetterMethodName, getterMethodDescriptor).apply {
+        targetClassNode.addMethodNode(createMethodNode(CONSTANT_GETTER_METHOD_ACCESS, arrayGetterMethodName, getterMethodDescriptor).apply {
             val loopBeginLabelNode = LabelNode()
             val loopEndLabelNode = LabelNode()
 
@@ -151,7 +149,7 @@ class ConstantArrayGenerator<T>(private val arrayElementType: Class<T>, private 
                 add(MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;"))
                 add(InsnNode(Opcodes.ARETURN))
             }
-        }, targetClassNode))
+        })
     }
 
     fun addValueToRandomArray(targetClassNode: ClassNode, instruction: AbstractInsnNode, element: T, chunkCount: Int = 1, transformer: T.() -> T): String {

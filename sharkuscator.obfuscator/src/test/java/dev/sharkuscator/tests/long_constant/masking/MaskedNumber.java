@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 @RequiredArgsConstructor
 public class MaskedNumber {
     private final MaskedNumber[] associatedObjects = new MaskedNumber[2];
-    private final int[] transformationTable = { 5, -3, 12, 0, -7, 2, 8, -1, 0, 15, -4, 11 };
+    private final int[] transformationTable = {5, -3, 12, 0, -7, 2, 8, -1, 0, 15, -4, 11};
     private final long obfuscatedValue;
 
     public static LongMaskingConfigurator resolveConfigurator(long obfuscatedValue) {

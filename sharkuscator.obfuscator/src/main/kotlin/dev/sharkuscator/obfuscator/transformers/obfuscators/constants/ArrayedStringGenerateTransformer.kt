@@ -1,15 +1,16 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.constants
 
+import dev.sharkuscator.commons.AssemblyHelper.containsNonEmptyStrings
+import dev.sharkuscator.commons.AssemblyHelper.findNonEmptyStrings
+import dev.sharkuscator.commons.extensions.classNode
+import dev.sharkuscator.commons.extensions.isConstructor
+import dev.sharkuscator.commons.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.ObfuscatorEvents
 import dev.sharkuscator.obfuscator.events.TransformerEvents
-import dev.sharkuscator.obfuscator.extensions.isConstructor
-import dev.sharkuscator.obfuscator.extensions.resolveStaticInitializer
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
 import dev.sharkuscator.obfuscator.transformers.obfuscators.constants.generators.ConstantArrayGenerator
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.containsNonEmptyStrings
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper.findNonEmptyStrings
 import meteordevelopment.orbit.EventHandler
 
 @Deprecated(
@@ -22,23 +23,21 @@ object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfigurati
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val targetClassNode = event.anytypeNode.owner
-        val targetMethodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        if (event.anytypeNode.isConstructor() || targetMethodNode.instructions == null || !containsNonEmptyStrings(targetMethodNode.instructions)) {
+        if (event.nodeObject.isConstructor() || event.nodeObject.instructions == null || !containsNonEmptyStrings(event.nodeObject.instructions)) {
             return
         }
 
-        constantArrayGenerator.createAndAddArrayField(targetClassNode)
-        findNonEmptyStrings(targetMethodNode.instructions).forEach { (instruction, string) ->
-            val instructionString = constantArrayGenerator.addValueToRandomArray(targetClassNode, instruction, string) {
+        constantArrayGenerator.createAndAddArrayField(event.nodeObject.classNode)
+        findNonEmptyStrings(event.nodeObject.instructions).forEach { (instruction, string) ->
+            val instructionString = constantArrayGenerator.addValueToRandomArray(event.nodeObject.classNode, instruction, string) {
                 return@addValueToRandomArray this
             }
-            targetMethodNode.instructions.insert(instruction, constantArrayGenerator.createGetterInvocation(targetClassNode, instructionString))
-            targetMethodNode.instructions.remove(instruction)
+            event.nodeObject.instructions.insert(instruction, constantArrayGenerator.createGetterInvocation(event.nodeObject.classNode, instructionString))
+            event.nodeObject.instructions.remove(instruction)
         }
     }
 
@@ -49,9 +48,9 @@ object ArrayedStringGenerateTransformer : BaseTransformer<TransformerConfigurati
             return
         }
 
-        event.context.classSource.iterate().filter { !event.context.exclusions.excluded(it) && !exclusions.excluded(it) }.forEach { classNode ->
+        event.context.classNodeProvider.asIterable().filter { !event.context.exclusions.excluded(it) && !exclusions.excluded(it) }.forEach { classNode ->
             val staticInitializer = classNode.resolveStaticInitializer()
-            staticInitializer.node.instructions.insert(constantArrayGenerator.createInitializationInstructions(classNode) { arrayFieldMetadataList ->
+            staticInitializer.instructions.insert(constantArrayGenerator.createInitializationInstructions(classNode) { arrayFieldMetadataList ->
             })
             constantArrayGenerator.createAndAddArrayGetterMethod(classNode)
         }

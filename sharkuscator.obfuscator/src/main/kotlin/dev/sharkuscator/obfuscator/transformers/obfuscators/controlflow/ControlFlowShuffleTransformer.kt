@@ -1,10 +1,10 @@
 package dev.sharkuscator.obfuscator.transformers.obfuscators.controlflow
 
+import dev.sharkuscator.commons.AssemblyHelper
 import dev.sharkuscator.obfuscator.configuration.transformers.TransformerConfiguration
 import dev.sharkuscator.obfuscator.events.TransformerEvents
 import dev.sharkuscator.obfuscator.transformers.BaseTransformer
 import dev.sharkuscator.obfuscator.transformers.TransformerStrength
-import dev.sharkuscator.obfuscator.utilities.AssemblyHelper
 import meteordevelopment.orbit.EventHandler
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
@@ -17,12 +17,11 @@ object ControlFlowShuffleTransformer : BaseTransformer<TransformerConfiguration>
     @EventHandler
     @Suppress("unused")
     private fun onMethodTransform(event: TransformerEvents.MethodTransformEvent) {
-        val targetMethodNode = event.anytypeNode.node
-        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.anytypeNode)) {
+        if (!isEligibleForExecution() || !shouldTransformMethod(event.obfuscationContext, event.nodeObject)) {
             return
         }
 
-        shuffleControlFlow(targetMethodNode, targetMethodNode.instructions)
+        shuffleControlFlow(event.nodeObject, event.nodeObject.instructions)
     }
 
     override fun transformerStrength(): TransformerStrength {
