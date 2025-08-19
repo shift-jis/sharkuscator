@@ -161,16 +161,8 @@ class Sharkuscator(private val configurationFilePath: Path, private val inputJar
     }
 
     private fun resolveLibraries(): List<File> {
-        return configuration.libraries.flatMap { libraryPath ->
-            val libraryFile = File(libraryPath)
-            when {
-                libraryFile.isDirectory -> libraryFile.listFiles()?.filter { it.isFile }?.toList() ?: emptyList()
-                libraryFile.isFile -> listOf(libraryFile)
-                else -> {
-                    ObfuscatorServices.sharkLogger.warn("Library path '$libraryPath' is not a valid file or directory, skipping.")
-                    emptyList()
-                }
-            }
+        return configuration.libraries.map { File(it) }.flatMap { file ->
+            if (file.isDirectory) file.listFiles()?.filter { it.isFile }?.toList() ?: emptyList() else listOf(file)
         }
     }
 
