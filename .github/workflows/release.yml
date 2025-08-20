@@ -29,7 +29,10 @@ jobs:
       - name: Collect all jars
         run: |
           mkdir -p artifacts
-          find . -path "*/build/libs/*.jar" -exec cp {} artifacts/ \;
+          find . -path "*/build/libs/*.jar" \
+            -not -path "./buildSrc/*" \
+            -not -path "./sharkuscator.commons/*" \
+            -exec cp {} artifacts/ \;
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
